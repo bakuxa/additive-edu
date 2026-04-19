@@ -22,6 +22,7 @@ body {
     margin: 0 auto;
     overflow: hidden;
 }
+
 .logo {
     position: absolute;
     width: clamp(200px, 11vw, 211px);
@@ -36,13 +37,14 @@ body {
     height: auto;
     object-fit: contain;
 }
+
 .hero-text {
     position: absolute;
     width: 90%;
     max-width: 900px;
     left: 50%;
     transform: translateX(-50%);
-    top: clamp(30px, 3vh, 35px);
+    top: clamp(40px, 3vh, 35px);
     font-family: 'Poppins', sans-serif;
     font-weight: 800;
     font-size: clamp(20px, 2.5vw, 36px);
@@ -61,24 +63,43 @@ body {
     color: transparent;
     display: inline-block;
 }
-
 .main-image {
     position: absolute;
-    width: 100%;
-    max-width: 1200px;
-    left: clamp(-150px, -5vw, -130px);
-    top: clamp(200px, 15vh, 200px);
-    pointer-events: none; /* изображение пропускает клики сквозь себя */
-    z-index: 20; 
+    width: 30%;
+    max-width: 500px;
+    left: 15%;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 20;
+    border-radius: 300px 300px 0 0;
+    overflow: hidden;
 }
 
 .main-image img {
-    width: 92%;
+    width: 100%;
     height: auto;
     object-fit: contain;
     display: block;
 }
 
+.image-caption {
+    background: linear-gradient(180deg, #9AEFEE 0%, #029FA3 100%);
+    border-radius: 5px;
+    padding: 12px 15px;
+    text-align: center;
+    margin-top: 0;
+}
+
+.image-caption span {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: clamp(14px, 1.5vw, 18px);
+    line-height: 1.3;
+    text-align: center;
+    color: #FFFFFF;
+    display: block;
+}
 .vector-bg {
     position: absolute;
     left: clamp(-300px, 30vw, -130px);
@@ -92,12 +113,13 @@ body {
     height: 60%;
 }
 
-.login-card {
+/* ========== КАРТОЧКА РЕГИСТРАЦИИ ========== */
+.register-card {
     position: relative;
     width: min(90%, 600px);
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto;
-    margin-top: clamp(50px, 20vh, 200px);
+    margin-top: clamp(20px, 20vh, 130px);
     margin-right: clamp(20px, 5vw, 120px);
     margin-left: auto;
     background: #EDFBFA;
@@ -105,44 +127,44 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: clamp(20px, 4vh, 40px) clamp(15px, 3vw, 30px);
+    padding: clamp(10px, 2vh, 10px) clamp(15px, 3vw, 30px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
     z-index: 10;
 }
 
-.login-title {
+.register-title {
     font-family: 'Poppins', sans-serif;
     font-weight: 900;
     font-size: clamp(24px, 3vw, 36px);
-    line-height: 1.3;
+    line-height: 1.2;
     text-align: center;
     color: #000000;
     margin-bottom: 12px;
 }
 
-.login-subtitle {
-    max-width: 400px;
+.register-subtitle {
+    max-width: 500px;
     font-family: 'Poppins', sans-serif;
     font-weight: 400;
-    font-size: clamp(13px, 1.5vw, 16px);
-    line-height: 1.4;
+    font-size: clamp(13px, 1.5vw, 15px);
+    line-height: 1.3;
     text-align: center;
     color: #505050;
-    margin-bottom: 35px;
-    padding: 0 10px;
+    margin-bottom: 15px;
+    padding: 0 5px;
 }
 
 .input-field {
     position: relative;
     width: 100%;
     max-width: 380px;
-    margin-bottom: 22px;
+    margin-bottom: 18px;
 }
 
 .input-field label {
     position: absolute;
     left: 16px;
-    top: -10px;
+    top: -9px;
     font-family: 'Poppins', sans-serif;
     font-weight: 500;
     font-size: 13px;
@@ -155,15 +177,15 @@ body {
 
 .input-field input {
     width: 100%;
-    height: clamp(45px, 6vh, 50px);
+    height: 40px;
     background: #FFFFFF;
     border: 1.5px solid #0E95B9;
-    border-radius: 15px;
+    border-radius: 12px;
     font-family: 'Poppins', sans-serif;
     font-weight: 400;
     font-size: clamp(13px, 1.5vw, 15px);
     color: #333333;
-    padding: 0 16px;
+    padding: 0 14px;
     outline: none;
     transition: all 0.2s ease;
 }
@@ -184,7 +206,7 @@ body {
     font-size: clamp(12px, 1.2vw, 14px);
 }
 
-.login-btn {
+.register-btn-main {
     width: min(180px, 50%);
     height: clamp(35px, 4vh, 40px);
     background: #029FA3;
@@ -196,24 +218,24 @@ body {
     color: #FFFFFF;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-bottom: 18px;
+    margin-bottom: 10px;
 }
 
-.login-btn:hover {
+.register-btn-main:hover {
     background: #028b8f;
     transform: scale(1.02);
 }
 
-.register-prompt {
+.login-prompt {
     font-family: 'Poppins', sans-serif;
     font-weight: 400;
-    font-size: clamp(12px, 1.5vw, 16px);
+    font-size: clamp(13px, 1.5vw, 15px);
     text-align: center;
     color: #505050;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
-.register-btn {
+.login-btn {
     width: min(200px, 55%);
     height: clamp(35px, 4vh, 40px);
     background: #029FA3;
@@ -227,7 +249,7 @@ body {
     transition: all 0.2s ease;
 }
 
-.register-btn:hover {
+.login-btn:hover {
     background: #028b8f;
     transform: scale(1.02);
 }
