@@ -1,0 +1,633 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #FFFFFF;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.page-container {
+    position: relative;
+    width: 100%;
+    max-width: 1440px;
+    min-height: 100vh;
+    background: #FFFFFF;
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+
+.vector-bg {
+    position: absolute;
+    width: 1458px;
+    height: 2263px;
+    left: -4px;
+    top: 100px;
+    filter: blur(2px);
+    opacity: 0.3;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.logo {
+    position: absolute;
+    width: 225px;
+    height: auto;
+    left: 20px;
+    top: 20px;
+    z-index: 100;
+}
+
+.logo img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+
+.auth-buttons {
+    position: absolute;
+    right: 50px;
+    top: 30px;
+    display: flex;
+    gap: 30px;
+    z-index: 100;
+}
+
+.register-link {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: #000000;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 8px 10px;
+    text-decoration: none;
+}
+
+.register-link:hover {
+    transform: scale(1.05);
+    opacity: 0.95;
+}
+
+.login-link {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    color: #FFFFFF;
+    background: linear-gradient(180deg, #9AEFEE 0%, #029FA3 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 8px 60px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.login-link:hover {
+    transform: scale(1.1);
+    opacity: 0.95;
+}
+
+/* Векторное изображение */
+.auth-vector {
+    position: absolute;
+    pointer-events: none;
+    width: 100%;
+    top: -30px;
+}
+
+.auth-vector img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.hero-title {
+    position: absolute;
+    width: 600px;
+    left: 100px;
+    top: 180px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 800;
+    font-size: 44px;
+    line-height: 55px;
+    letter-spacing: 0.5px;
+    color: #21383E;
+    z-index: 10;
+    max-width: 600px; 
+}
+
+.gradient-text {
+    background: linear-gradient(180deg, #86E0D9 0%, #4D7E85 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    display: inline; 
+}
+.hero-subtitle {
+    position: absolute;
+    width: 500px;
+    left: 100px;
+    top: 350px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 26px;
+    letter-spacing: 0.5px;
+    color: #21383E;
+    opacity: 0.7;
+    z-index: 10;
+}
+.hero-card {
+    position: absolute;
+    left: 100px;
+    top: 450px;
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 15px 30px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 50px;
+}
+
+.hero-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 26px;
+    letter-spacing: 0.5px;
+    color: #21383E;
+    white-space: nowrap;
+}
+
+.start-btn {
+    background: linear-gradient(180deg, #9AEFEE 0%, #029FA3 100%);
+    border: none;
+    border-radius: 10px;
+    padding: 20px 25px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.start-btn:hover {
+    transform: scale(1.1);
+    opacity: 0.95;
+}
+.dot-ornament {
+    position: absolute;
+    width: 81.5px;
+    height: 91.5px;
+    left: 60px;
+    top: 500px;
+    display: grid;
+    grid-template-columns: repeat(10, 1.5px);
+    gap: 8px;
+    z-index: 9;
+}
+
+.dot {
+    width: 1.5px;
+    height: 1.5px;
+    background: #21383E;
+}
+.image-1 {
+    position: absolute;
+    width: 25%;
+    max-width: 450px;
+    left: 52%;
+    top: 330px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 300px 300px 0 0;
+    overflow: hidden;
+}
+
+.image-1 img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+.image-2 {
+   position: absolute;
+    width: 25%;
+    max-width: 450px;
+    left: 15%;
+    top: 700px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 300px 300px;
+    overflow: hidden;
+}
+
+.image-2 img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+.image-3 {
+    position: absolute;
+    width: 23%;
+    max-width: 450px;
+    left: 73%;
+    top: 635px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 0;
+    border-radius: 0 0 300px 300px;
+    overflow: hidden;
+}
+
+.image-3 img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+/* ========== БЛОК ПРЕИМУЩЕСТВ ========== */
+.advantages-section {
+    position: relative;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    top: 1000px;
+    padding: 80px 100px;
+    z-index: 10;
+}
+
+.advantages-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 55px;
+    color: #21383E;
+    margin-bottom: 20px;
+}
+
+.title-line {
+    width: 320px;
+    height: 4px;
+    background: #029FA3;
+    margin-bottom: 40px;
+}
+
+.advantages-quote {
+    max-width: 500px;
+}
+
+.advantages-quote p {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 30px;
+    width: 400px;
+    color: #21383E;
+    opacity: 0.7;
+    margin: 0;
+}
+/* ========== ШАХМАТНЫЙ ПОРЯДОК ========== */
+.chess-block {
+    position: relative;
+    width: 600px;
+    margin-left: auto;
+    margin-right: 0;
+    display: flex;
+    gap: 30px;
+    top: 600px;
+    right: 70px;
+}
+
+.chess-column-left {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: 316px;
+}
+
+.chess-column-right {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    width: 316px;
+    margin-top: 78px;
+    margin-bottom: 78px;
+}
+
+.chess-left {
+    background: linear-gradient(180deg, #8ED1D1 0%, #029FA3 100%);
+    border-radius: 30px 30px 0 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    height: 115px;
+}
+
+.chess-right {
+    background: linear-gradient(180deg, #8ED1D1 0%, #029FA3 100%);
+    border-radius: 30px 30px 30px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+    height: 115px;
+}
+
+.chess-left span,
+.chess-right span {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 22px;
+    line-height: 32px;
+    color: #FFFFFF;
+}/* ========== ДЛЯ КОГО ПОЛЕЗНО? ========== */
+.useful-section {
+    position: relative;
+    width: 100%;
+    max-width: 1280px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 60px;
+    padding: 0 60px;
+    z-index: 10;
+    top: 800px;
+}
+
+.useful-image {
+    flex-shrink: 0;
+    width: 546px;
+    height: 365px;
+    border-radius: 28px;
+    overflow: hidden;
+}
+
+.useful-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.useful-content {
+    flex: 1;
+    max-width: 600px;
+}
+
+.useful-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 50px;
+    line-height: 62px;
+    letter-spacing: -0.5px;
+    color: #121212;
+    margin-bottom: 30px;
+}
+
+.useful-text p {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 26px;
+    letter-spacing: 0.346px;
+    color: #21383E;
+    margin-bottom: 25px;
+}
+
+.useful-text-second {
+    margin-top: 20px;
+}
+/* ========== СФЕРЫ ПРИМЕНЕНИЯ ========== */
+.applications-section {
+    position: relative;
+    width: 100%;
+    max-width: 1280px;
+    top: 850px;
+}
+
+.applications-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 32px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.applications-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.app-row {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.app-btn {
+    width: 210px;
+    height: 46px;
+    background: linear-gradient(90deg, #6FB9B7 52%, #029FA3 100%);
+    border: none;
+    border-radius: 20px;
+    font-family: 'Nunito', 'Poppins', sans-serif;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 27px;
+    text-align: center;
+    color: #FFFFFF;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.app-btn:hover {
+    transform: scale(1.05);
+    opacity: 0.95;
+}
+/* ========== ПРОГРАММА ОБУЧЕНИЯ С КУРСАМИ ========== */
+.program-courses-wrapper {
+    position: relative;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    display: flex;
+    gap: 60px;
+    padding: 0 60px;
+    z-index: 10;
+    top: 950px;
+}
+
+/* Левая часть */
+.program-left {
+    flex-shrink: 0;
+    max-width: 400px;
+}
+
+.program-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 44px;
+    line-height: 55px;
+    color: #21383E;
+    margin-bottom: 20px;
+}
+
+.program-line {
+    width: 320px;
+    height: 4px;
+    background: #029FA3;
+    margin-bottom: 40px;
+}
+
+.program-quote {
+    max-width: 400px;
+}
+
+.program-quote p {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 18px;
+    line-height: 30px;
+    color: #21383E;
+    opacity: 0.7;
+    margin: 0;
+}
+
+/* Правая часть - курсы */
+.courses-right {
+    flex: 1;
+    max-width: 700px;
+    margin-top: 170px;
+}
+
+.course-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    padding-bottom: 20px;
+    margin-bottom: 0px;
+}
+
+.course-card:last-child {
+    margin-bottom: 0;
+}
+
+.course-left {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    flex: 1;
+}
+
+.course-number {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 900;
+    font-size: 36px;
+    line-height: 46px;
+    letter-spacing: -0.5px;
+    background: linear-gradient(0deg, #029FA3, #029FA3);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    flex-shrink: 0;
+    min-width: 60px;
+}
+
+.course-info {
+    flex: 1;
+}
+
+.course-title {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 32px;
+    color: #404852;
+    margin: 0 0 8px 0;
+}
+
+.course-lessons {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 20px;
+    color: #404852;
+    opacity: 0.7;
+}
+
+.course-right {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    width: 50px;
+}
+
+.course-expand {
+    width: 30px;
+    height: 30px;
+    background: none;
+    border: none;
+    font-size: 50px;
+    font-weight: 400;
+    color: #029FA3;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.course-expand:hover {
+    transform: scale(1.1);
+    opacity: 0.95;
+}
+
+.course-line {
+    width: 100%;
+    height: 2px;
+    background: #029FA3;
+    margin: 0 0 20px 0;
+}
+
+/* Векторное изображение на фоне */
+.bg-vector {
+    position: absolute;
+    pointer-events: none;
+    width: 100%;
+    top: -820px;
+    left: 0;
+    z-index: 0;
+}
+
+.bg-vector img {
+    width: 100%;
+    height: auto;
+}
+
