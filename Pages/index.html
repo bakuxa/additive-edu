@@ -26,7 +26,7 @@
     <div class="content">
         <div class="hero-title">
             Прокачай свой уровень <br>
-            в <span class="gradient-text">аддитивных<br>технологиях</span>
+            в <span class="gradient-text">аддитивных<br> технологиях</span>
         </div>
         
         <div class="hero-subtitle">
@@ -77,6 +77,9 @@
         </div>
         
         <div class="chess-column-right">
+            <div class="chess-right">
+                <span>Адаптивное тестирование</span>
+            </div>
             <div class="chess-right">
                 <span>Адаптивное тестирование</span>
             </div>
@@ -264,5 +267,42 @@
         // Запускаем функцию после загрузки страницы
         document.addEventListener('DOMContentLoaded', initCourseAccordion);
     </script>
+
+<script>
+    function initMobileLayout() {
+        if (window.innerWidth <= 480 && window.innerHeight <= 700) {
+            const content = document.querySelector('.content');
+            if (content && !document.querySelector('.mobile-hero')) {
+                // Получаем элементы
+                const heroTitle = document.querySelector('.hero-title');
+                const heroCard = document.querySelector('.hero-card');
+                const image1 = document.querySelector('.image-1');
+                
+                if (heroTitle && heroCard && image1) {
+                    // Создаём контейнер для картинки и заголовка
+                    const mobileHero = document.createElement('div');
+                    mobileHero.className = 'mobile-hero';
+                    
+                    const imageBlock = document.createElement('div');
+                    imageBlock.className = 'mobile-hero-image';
+                    const imgClone = image1.querySelector('img').cloneNode(true);
+                    imageBlock.appendChild(imgClone);
+                    
+                    const titleClone = heroTitle.cloneNode(true);
+                    
+                    mobileHero.appendChild(imageBlock);
+                    mobileHero.appendChild(titleClone);
+                    
+                    heroTitle.style.display = 'none';
+                    image1.style.display = 'none';
+                    
+                    content.insertBefore(mobileHero, heroCard);
+                }
+            }
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', initMobileLayout);
+</script>
 </body>
 </html>

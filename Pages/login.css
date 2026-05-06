@@ -106,7 +106,7 @@ body {
     flex-direction: column;
     align-items: center;
     padding: clamp(20px, 4vh, 40px) clamp(15px, 3vw, 30px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
     z-index: 10;
 }
 
@@ -230,4 +230,111 @@ body {
 .register-btn:hover {
     background: #028b8f;
     transform: scale(1.02);
+}
+/* ========== АДАПТАЦИЯ ДЛЯ 375px ========== */
+@media (max-width: 480px) {
+    body {
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-start;
+        padding: 0;
+    }
+
+    .page-container {
+        max-width: 375px;
+        min-height: 100vh;
+        overflow: visible;
+        padding: 0 15px;
+    }
+
+    .logo {
+        position: relative;
+        width: 120px;
+        left: auto;
+        top: auto;
+        margin: 20px auto 10px auto;
+        display: flex;
+        justify-content: center;
+    }
+
+    .hero-text {
+        position: relative;
+        width: 100%;
+        left: auto;
+        top: auto;
+        transform: none;
+        font-size: 20px;
+        line-height: 1.3;
+        margin: 0 0 20px 0;
+        padding: 0 10px;
+    }
+
+    .main-image {
+        display: none;
+    }
+
+    .vector-bg {
+        display: none;
+    }
+
+    .login-card {
+        position: relative;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto 30px auto;
+        padding: 25px 20px;
+        border-radius: 25px;
+    }
+
+    .login-title {
+        font-size: 24px;
+        margin-bottom: 10px;
+    }
+
+    .login-subtitle {
+        font-size: 13px;
+        margin-bottom: 25px;
+        padding: 0 5px;
+    }
+
+    .input-field {
+        max-width: 100%;
+        margin-bottom: 18px;
+    }
+
+    .input-field label {
+        font-size: 12px;
+        top: -8px;
+        left: 12px;
+    }
+
+    .input-field input {
+        height: 45px;
+        font-size: 14px;
+        padding: 0 14px;
+    }
+
+    .input-field input::placeholder {
+        font-size: 13px;
+    }
+
+    .login-btn {
+        width: 100%;
+        max-width: 200px;
+        height: 42px;
+        font-size: 15px;
+        margin-bottom: 20px;
+    }
+
+    .register-prompt {
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+
+    .register-btn {
+        width: 100%;
+        max-width: 200px;
+        height: 42px;
+        font-size: 15px;
+    }
 }
