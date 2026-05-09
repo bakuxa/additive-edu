@@ -4,15 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Регистрация | Аддитивные технологии</title>
-    <link rel="stylesheet" href="register.css">
+    <link rel="stylesheet" href="/css/register.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="page-container">
         
-        <div class="vector-bg"><img src="/Pages/img/Vector1.png"></div>
+        <div class="vector-bg"><img src="/img/Vector1.png"></div>
         <div class="logo">
-            <img src="/Pages/img/logo.png" alt="Логотип">
+            <img src="/img/logo.png" alt="Логотип">
         </div>
         
         <div class="hero-text">
@@ -20,7 +20,7 @@
         </div>
         
        <div class="main-image">
-            <img src="/Pages/img/photo2.png" alt="3D печать">
+            <img src="/img/photo2.png" alt="3D печать">
             <div class="image-caption">
                 <span>Станьте специалистом <br>в области 3D-печати</span>
             </div>
@@ -73,5 +73,56 @@
         </div>
     
     </div>
+
+    <script>
+    document.getElementById('registerBtn').addEventListener('click', async function() {
+        const formData = {
+            lastName: document.getElementById('surname').value.trim(),
+            firstName: document.getElementById('name').value.trim(),
+            middleName: document.getElementById('patronymic').value.trim(),
+            group: document.getElementById('group').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
+            password: document.getElementById('password').value
+        };
+
+        // Простая валидация
+        if (!formData.lastName || !formData.firstName || !formData.email || !formData.password) {
+            alert('Пожалуйста, заполните обязательные поля (Фамилия, Имя, Email, Пароль)');
+            return;
+        }
+
+        if (formData.password.length < 6) {
+            alert('Пароль должен содержать не менее 6 символов');
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Регистрация успешна! Теперь вы можете войти.');
+                window.location.href = '/Home/Login';
+            } else {
+                alert(result.message || 'Ошибка при регистрации');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка при подключении к серверу');
+        }
+    });
+
+    document.getElementById('loginBtn').addEventListener('click', function() {
+        window.location.href = '/Home/Login';
+    });
+</script>
 </body>
 </html>
