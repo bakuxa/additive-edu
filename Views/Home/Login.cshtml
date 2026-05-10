@@ -11,9 +11,12 @@
     <div class="page-container">
         
         <div class="vector-bg"><img src="/img/Vector1.png"></div>
-        <div class="logo">
-            <img src="/img/logo.png" alt="Логотип">
-        </div>
+        <a href="/Home/Index" class="logo-link">
+            <div class="logo">
+                <img src="/img/logo.png" alt="Логотип">
+            </div>
+        </a>
+        
         
         <div class="hero-text">
             Прокачай свой уровень в <span class="gradient-text">аддитивных технологиях</span>
@@ -45,5 +48,72 @@
         </div>
     
     </div>
+   <script>
+        function showModal(message) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <p>${message}</p>
+                    <button class="modal-ok-btn" id="modalOkBtn">OK</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.getElementById('modalOkBtn').addEventListener('click', () => {
+                overlay.remove();
+            });
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', async function() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                showModal('Пожалуйста, заполните все поля');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('user', JSON.stringify({
+                        userId: result.userId,
+                        email: result.email,
+                        lastName: result.lastName,
+                        firstName: result.firstName,
+                        middleName: result.middleName,
+                        phone: result.phone,
+                        registrationDate: result.registrationDate,
+                        groupName: result.groupName,
+                        photoUrl: result.photoUrl,
+                        roleId: result.roleId
+                    }));
+                    
+                    showModal('Вход выполнен успешно!');
+                    setTimeout(() => {
+                        window.location.href = '/Home/Profile';
+                    }, 1500);
+                } else {
+                    showModal(result.message || 'Ошибка при входе');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showModal('Произошла ошибка при подключении к серверу');
+            }
+        });
+
+        document.getElementById('registerBtn').addEventListener('click', function() {
+            window.location.href = '/Home/Register';
+        });
+    </script>
 </body>
 </html>

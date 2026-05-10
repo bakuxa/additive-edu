@@ -26,14 +26,12 @@ namespace AdditiveEdu.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Проверка, существует ли пользователь с таким email
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == registerDto.Email);
             if (existingUser != null)
             {
                 return BadRequest(new { message = "Пользователь с таким email уже существует" });
             }
 
-            // Поиск или создание группы
             var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupName == registerDto.Group);
             if (group == null)
             {
@@ -42,7 +40,6 @@ namespace AdditiveEdu.Controllers
                 await _context.SaveChangesAsync();
             }
 
-            // Хеширование пароля (простой способ, в реальном проекте используйте BCrypt или Identity)
             var passwordHash = HashPassword(registerDto.Password);
 
             var user = new User
@@ -54,7 +51,7 @@ namespace AdditiveEdu.Controllers
                 MiddleName = registerDto.MiddleName,
                 Phone = registerDto.Phone,
                 GroupID = group.GroupID,
-                RoleID = 3, // Студент
+                RoleID = 3,
                 RegistrationDate = DateTime.UtcNow,
                 Blocked = false
             };
@@ -63,6 +60,51 @@ namespace AdditiveEdu.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Регистрация успешно завершена", userId = user.UserID });
+        }
+
+       [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Подгружаем группу
+            var user = await _context.Users
+                .Include(u => u.Group)
+                .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
+            
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Неверный email или пароль" });
+            }
+
+            var passwordHash = HashPassword(loginDto.Password);
+            
+            if (user.PasswordHash != passwordHash)
+            {
+                return Unauthorized(new { message = "Неверный email или пароль" });
+            }
+
+            if (user.Blocked)
+            {
+                return Unauthorized(new { message = "Ваш аккаунт заблокирован" });
+            }
+
+            return Ok(new { 
+                message = "Вход выполнен успешно", 
+                userId = user.UserID,
+                email = user.Email,
+                lastName = user.LastName,
+                firstName = user.FirstName,
+                middleName = user.MiddleName ?? "",
+                phone = user.Phone ?? "",
+                registrationDate = user.RegistrationDate.ToString("dd MMMM yyyy г."),
+                groupName = user.Group?.GroupName ?? "",
+                roleId = user.RoleID,
+                photoUrl = user.PhotoUrl ?? "",
+            });
         }
 
         private string HashPassword(string password)

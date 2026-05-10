@@ -10,7 +10,6 @@
 </head>
 <body>
     <div class="page-container">
-        <!-- Фоновые векторы (только они с absolute) -->
         <div class="vector-bg vector-1">
             <img src="/img/vector-bg-1.png" alt="фон">
         </div>
@@ -18,7 +17,6 @@
             <img src="/img/vector-bg-2.png" alt="фон">
         </div>
         
-        <!-- Боковое меню -->
         <aside class="sidebar">
             <div class="sidebar-active"></div>
             <div class="sidebar-header">
@@ -26,23 +24,23 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-item active">
-                    <img src="/Pages/img/icon/profile-icon.png" alt="Профиль" class="nav-icon">
+                    <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon">
                     <span>Профиль</span>
                 </div>
                 <div class="nav-item">
-                    <img src="/Pages/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
+                    <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
                     <span>Мои курсы</span>
                 </div>
                 <div class="nav-item">
-                    <img src="/Pages/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
+                    <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
                     <span>Достижения</span>
                 </div>
                 <div class="nav-item">
-                    <img src="/Pages/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon">
+                    <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon">
                     <span>Рейтинг</span>
                 </div>
-                <div class="nav-item">
-                    <img src="/Pages/img/icon/logout-icon.png" alt="Выйти" class="nav-icon">
+                <div class="nav-item" id="logoutBtn">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon">
                     <span>Выйти</span>
                 </div>
             </nav>
@@ -51,150 +49,305 @@
             </div>
         </aside>
         
-        <!-- Основной контент -->
         <main class="main-content">
-            <!-- Верхняя панель -->
             <div class="top-bar">
                 <h1 class="page-title">Профиль пользователя</h1>
-                <div class="notification-btn">
-                    <img src="/Pages/img/icon/logout-icon2.png" alt="">
+                <div class="notification-btn" id="notificationBtn">
+                    <img src="/img/icon/logout-icon2.png" alt="">
                 </div>
             </div>
             
-            <!-- Карточка профиля -->
             <div class="profile-card">
-                <button class="edit-profile-btn">
-                    <img src="/Pages/img/icon/edit-icon.png" alt="Редактировать профиль">
+                <button class="edit-profile-btn" id="editProfileBtn">
+                    <img src="/img/icon/edit-icon.png" alt="Редактировать профиль">
                 </button>
                 <div class="profile-avatar">
-                    <img src="/Pages/img/photo_profile.png" alt="Аватар">
+                    <img id="avatarImg" src="/img/photo_profile.png" alt="Аватар">
                 </div>
                 <div class="profile-info">
-                    <h3 class="profile-name">Прохорова Николь Владимировна</h3>
-                    
-                    <div class="profile-details">
-                        <div class="detail-row">
-                            <span class="detail-label">Дата регистрации:</span>
-                            <span class="detail-value">24 ноября 2022 г.</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Номер телефона:</span>
-                            <span class="detail-value">+7 (921) 834-85-43</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Электронная почта:</span>
-                            <span class="detail-value">number@gmail.com</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Пароль:</span>
-                            <span class="detail-value">***********</span>
-                        </div>
-                        <div class="detail-row">
-                            <span class="detail-label">Статус:</span>
-                            <span class="detail-value status-active">Активный</span>
-                        </div>
+                    <h3 class="profile-name" id="profileName"></h3>
+                    <div class="profile-details" id="profileDetails"></div>
+                    <div id="editActions" class="edit-actions" style="display: none;">
+                        <button class="cancel-btn" id="cancelEditBtn">Отмена</button>
+                        <button class="save-btn" id="saveProfileBtn">Сохранить</button>
                     </div>
                 </div>
             </div>
             
-            <!-- Нижние карточки -->
-<div class="stats-row">
-    <!-- Текущие результаты (слева) -->
-    <div class="current-results-card">
-        <h3 class="results-title">Текущие результаты</h3>
-        
-        <div class="results-list">
-            <!-- Результат 1: Опыт -->
-            <div class="result-item">
-                <div class="result-label">Опыт</div>
-                <div class="result-progress">
-                    <div class="progress-bar-fill" style="width: 70%;"></div>
+            <div class="stats-row">
+                <div class="current-results-card">
+                    <h3 class="results-title">Текущие результаты</h3>
+                    <div class="results-list">
+                        <div class="result-item">
+                            <div class="result-label">Опыт</div>
+                            <div class="result-progress">
+                                <div class="progress-bar-fill" style="width: 70%;"></div>
+                            </div>
+                            <div class="result-percent">
+                                <span class="current-value">1540</span>
+                                <span class="separator">/</span>
+                                <span class="max-value">2000</span>
+                                <span class="unit">XP</span>
+                            </div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Уровень</div>
+                            <div class="result-progress">
+                                <div class="progress-bar-fill" style="width: 30%;"></div>
+                            </div>
+                            <div class="result-percent">
+                                <span class="current-value">3</span>
+                                <span class="separator">/</span>
+                                <span class="max-value">10</span>
+                            </div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Прогресс по курсу</div>
+                            <div class="result-progress">
+                                <div class="progress-bar-fill" style="width: 32%;"></div>
+                            </div>
+                            <div class="result-percent">
+                                <span class="current-value">32</span>
+                                <span class="separator">/</span>
+                                <span class="max-value">100</span>
+                                <span class="unit">%</span>
+                            </div>
+                        </div>
+                        <div class="result-item">
+                            <div class="result-label">Средний балл</div>
+                            <div class="result-progress">
+                                <div class="progress-bar-fill" style="width: 77%;"></div>
+                            </div>
+                            <div class="result-percent">
+                                <span class="current-value">77</span>
+                                <span class="separator">/</span>
+                                <span class="max-value">100</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="result-percent">
-                    <span class="current-value" data-current="1540">1540</span>
-                    <span class="separator">/</span>
-                    <span class="max-value" data-max="2000">2000</span>
-                    <span class="unit">XP</span>
-                </div>
-            </div>
-            
-            <!-- Результат 2: Уровень -->
-            <div class="result-item">
-                <div class="result-label">Уровень</div>
-                <div class="result-progress">
-                    <div class="progress-bar-fill" style="width: 30%;"></div>
-                </div>
-                <div class="result-percent">
-                    <span class="current-value" data-current="3">3</span>
-                    <span class="separator">/</span>
-                    <span class="max-value" data-max="10">10</span>
-                </div>
-            </div>
-            
-            <!-- Результат 3: Прогресс по курсу -->
-            <div class="result-item">
-                <div class="result-label">Прогресс по курсу</div>
-                <div class="result-progress">
-                    <div class="progress-bar-fill" style="width: 32%;"></div>
-                </div>
-                <div class="result-percent">
-                    <span class="current-value" data-current="32">32</span>
-                    <span class="separator">/</span>
-                    <span class="max-value" data-max="100">100</span>
-                    <span class="unit">%</span>
-                </div>
-            </div>
-            
-            <!-- Результат 4: Средний балл -->
-            <div class="result-item">
-                <div class="result-label">Средний балл</div>
-                <div class="result-progress">
-                    <div class="progress-bar-fill" style="width: 77%;"></div>
-                </div>
-                <div class="result-percent">
-                    <span class="current-value" data-current="77">77</span>
-                    <span class="separator">/</span>
-                    <span class="max-value" data-max="100">100</span>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Достижения (справа) - теперь ОТДЕЛЬНЫЙ блок -->
-    <div class="achievements-card">
-        <h4 class="achievements-title">Достижения:</h4>
-        <div class="achievements-list">
-            <div class="achievement-item">
-                <div class="achievement-info">
-                    <span class="achievement-name">Начинающий</span>
-                    <span class="achievement-value">30%</span>
-                </div>
-                <div class="achievement-progress">
-                    <div class="progress-bar" style="width: 30%"></div>
+                <div class="achievements-card">
+                    <h4 class="achievements-title">Достижения:</h4>
+                    <div class="achievements-list">
+                        <div class="achievement-item">
+                            <div class="achievement-info">
+                                <span class="achievement-name">Начинающий</span>
+                                <span class="achievement-value">30%</span>
+                            </div>
+                            <div class="achievement-progress">
+                                <div class="progress-bar" style="width: 30%"></div>
+                            </div>
+                        </div>
+                        <div class="achievement-item">
+                            <div class="achievement-info">
+                                <span class="achievement-name">Знаток</span>
+                                <span class="achievement-value">60%</span>
+                            </div>
+                            <div class="achievement-progress">
+                                <div class="progress-bar" style="width: 60%"></div>
+                            </div>
+                        </div>
+                        <div class="achievement-item">
+                            <div class="achievement-info">
+                                <span class="achievement-name">Эксперт</span>
+                                <span class="achievement-value">20%</span>
+                            </div>
+                            <div class="achievement-progress">
+                                <div class="progress-bar" style="width: 20%"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="achievement-item">
-                <div class="achievement-info">
-                    <span class="achievement-name">Знаток</span>
-                    <span class="achievement-value">60%</span>
-                </div>
-                <div class="achievement-progress">
-                    <div class="progress-bar" style="width: 60%"></div>
-                </div>
-            </div>
-            <div class="achievement-item">
-                <div class="achievement-info">
-                    <span class="achievement-name">Эксперт</span>
-                    <span class="achievement-value">20%</span>
-                </div>
-                <div class="achievement-progress">
-                    <div class="progress-bar" style="width: 20%"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
         </main>
     </div>
+
+   <script>
+        let currentUser = null;
+        let isEditing = false;
+        let originalUserData = null;
+
+        function showModal(message) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <p>${message}</p>
+                    <button class="modal-ok-btn" id="modalOkBtn">OK</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.getElementById('modalOkBtn').addEventListener('click', () => {
+                overlay.remove();
+            });
+        }
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
+            }
+            return user;
+        }
+
+        function displayProfile(user, editMode = false, preserveOriginal = false) {
+            if (!preserveOriginal && editMode) {
+                originalUserData = JSON.parse(JSON.stringify(user));
+            }
+            
+            let fullName = `${user.lastName} ${user.firstName}`;
+            if (user.middleName) fullName += ` ${user.middleName}`;
+            document.getElementById('profileName').textContent = fullName;
+            
+            const avatarImg = document.getElementById('avatarImg');
+            if (avatarImg) {
+                if (user.photoUrl && user.photoUrl !== '') {
+                    avatarImg.src = user.photoUrl;
+                } else {
+                    avatarImg.src = '/img/no_photo_profile.png';
+                }
+            }
+            
+            const fields = [
+                { label: 'Дата регистрации:', value: user.registrationDate || 'не указана', key: 'registrationDate', editable: false },
+                { label: 'Номер телефона:', value: user.phone || 'не указан', key: 'phone', editable: true },
+                { label: 'Электронная почта:', value: user.email || 'не указан', key: 'email', editable: true },
+                { label: 'Группа:', value: user.groupName || 'не указана', key: 'groupName', editable: true },
+                { label: 'Фото URL:', value: user.photoUrl || '', key: 'photoUrl', editable: true },
+                { label: 'Статус:', value: 'Активный', key: 'status', editable: false }
+            ];
+            
+            const container = document.getElementById('profileDetails');
+            container.innerHTML = '';
+            
+            fields.forEach(field => {
+                const row = document.createElement('div');
+                row.className = 'detail-row';
+                
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'detail-label';
+                labelSpan.textContent = field.label;
+                
+                if (editMode && field.editable) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'edit-input';
+                    input.value = field.value;
+                    input.id = `edit_${field.key}`;
+                    row.appendChild(labelSpan);
+                    row.appendChild(input);
+                } else {
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'detail-value';
+                    if (field.label.includes('Статус')) {
+                        valueSpan.classList.add('status-active');
+                    }
+                    if (field.key === 'photoUrl') {
+                        valueSpan.textContent = (field.value && field.value !== '') ? 'Есть' : 'Нет изображения';
+                    } else {
+                        valueSpan.textContent = field.value;
+                    }
+                    row.appendChild(labelSpan);
+                    row.appendChild(valueSpan);
+                }
+                container.appendChild(row);
+            });
+            
+            const editActions = document.getElementById('editActions');
+            editActions.style.display = editMode ? 'flex' : 'none';
+            
+            const editBtn = document.getElementById('editProfileBtn');
+            if (editMode) {
+                editBtn.classList.add('editing');
+            } else {
+                editBtn.classList.remove('editing');
+            }
+        }
+
+        async function saveProfile() {
+            const user = loadUserData();
+            if (!user) return;
+            
+            const updatedData = {
+                userId: user.userId,
+                phone: document.getElementById('edit_phone')?.value || '',
+                email: document.getElementById('edit_email')?.value || '',
+                groupName: document.getElementById('edit_groupName')?.value || '',
+                photoUrl: document.getElementById('edit_photoUrl')?.value || ''
+            };
+            
+            try {
+                const response = await fetch('/api/profile/update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    user.phone = updatedData.phone;
+                    user.email = updatedData.email;
+                    user.groupName = updatedData.groupName;
+                    user.photoUrl = updatedData.photoUrl;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    const avatarImg = document.getElementById('avatarImg');
+                    if (avatarImg) {
+                        avatarImg.src = updatedData.photoUrl || '/img/no_photo_profile.png';
+                    }
+                    
+                    showModal('Профиль успешно обновлён!');
+                    isEditing = false;
+                    displayProfile(user, false);
+                } else {
+                    showModal(result.message || 'Ошибка при обновлении');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showModal('Произошла ошибка при подключении к серверу');
+            }
+        }
+
+        const user = loadUserData();
+        if (user) {
+            currentUser = user;
+            displayProfile(user, false);
+        }
+        
+        document.getElementById('editProfileBtn').addEventListener('click', () => {
+            if (!isEditing) {
+                const freshUser = JSON.parse(localStorage.getItem('user'));
+                if (freshUser) {
+                    currentUser = freshUser;
+                    isEditing = true;
+                    displayProfile(currentUser, true, false);
+                }
+            }
+        });
+        
+        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+            if (originalUserData) {
+                isEditing = false;
+                displayProfile(originalUserData, false);
+                currentUser = JSON.parse(JSON.stringify(originalUserData));
+                localStorage.setItem('user', JSON.stringify(currentUser));
+            }
+        });
+        
+        document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+        
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+        
+        document.getElementById('notificationBtn').addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+    </script>
 </body>
 </html>

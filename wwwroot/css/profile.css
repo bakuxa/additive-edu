@@ -454,3 +454,188 @@ body {
     background: linear-gradient(90deg, #9AEFEE 0%, #029FA3 100%);
     border-radius: 10px;
 }
+
+
+.edit-input {
+    border: 1px solid #029FA3;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    width: 250px;
+    background: #fff;
+}
+
+.edit-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+    padding: 8px 25px;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.save-btn {
+    background: linear-gradient(135deg, #029FA3, #8ED1D1);
+    color: white;
+}
+
+.save-btn:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.cancel-btn {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.cancel-btn:hover {
+    background: #ccc;
+}
+
+.edit-profile-btn.editing {
+    background: rgba(2, 159, 164, 0.2);
+}
+
+.custom-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #029FA3, #8ED1D1);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+.edit-input {
+    border: 1px solid #029FA3;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    width: 250px;
+    background: #fff;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.edit-input:focus {
+    border-color: #8ED1D1;
+    box-shadow: 0 0 5px rgba(2, 159, 163, 0.3);
+}
+
+.edit-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+    padding: 8px 25px;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.save-btn {
+    background: linear-gradient(135deg, #029FA3, #8ED1D1);
+    color: white;
+}
+
+.save-btn:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+.cancel-btn {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.cancel-btn:hover {
+    background: #ccc;
+}
+
+.edit-profile-btn.editing {
+    background: rgba(2, 159, 164, 0.2);
+}
+
+/* Модальное окно */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 16px;
+    padding: 30px 40px;
+    text-align: center;
+    border: 2px solid #029FA3;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    min-width: 300px;
+}
+
+.modal-content p {
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    color: #21383E;
+    margin-bottom: 20px;
+}
+
+.modal-ok-btn {
+    background: linear-gradient(135deg, #029FA3, #8ED1D1);
+    color: white;
+    border: none;
+    padding: 8px 30px;
+    border-radius: 8px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.modal-ok-btn:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}

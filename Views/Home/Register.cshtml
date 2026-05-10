@@ -9,17 +9,18 @@
 </head>
 <body>
     <div class="page-container">
-        
-        <div class="vector-bg"><img src="/img/Vector1.png"></div>
-        <div class="logo">
-            <img src="/img/logo.png" alt="Логотип">
-        </div>
+        <div class="vector-bg"><img src="/img/Vector1.png" alt=""></div>
+        <a href="/Home/Index" class="logo-link">
+            <div class="logo">
+                <img src="/img/logo.png" alt="Логотип">
+            </div>
+        </a>
         
         <div class="hero-text">
             Прокачай свой уровень в <span class="gradient-text">аддитивных технологиях</span>
         </div>
         
-       <div class="main-image">
+        <div class="main-image">
             <img src="/img/photo2.png" alt="3D печать">
             <div class="image-caption">
                 <span>Станьте специалистом <br>в области 3D-печати</span>
@@ -32,97 +33,104 @@
             
             <div class="input-field">
                 <label for="surname">Фамилия</label>
-                <input type="text" id="surname" name="surname" placeholder="Иванов" autocomplete="family-name">
+                <input type="text" id="surname" placeholder="Иванов">
             </div>
-            
             <div class="input-field">
                 <label for="name">Имя</label>
-                <input type="text" id="name" name="name" placeholder="Иван" autocomplete="given-name">
+                <input type="text" id="name" placeholder="Иван">
             </div>
-            
             <div class="input-field">
                 <label for="patronymic">Отчество</label>
-                <input type="text" id="patronymic" name="patronymic" placeholder="Иванович" autocomplete="additional-name">
+                <input type="text" id="patronymic" placeholder="Иванович">
             </div>
-            
             <div class="input-field">
                 <label for="group">Группа</label>
-                <input type="text" id="group" name="group" placeholder="ЦИС-27" autocomplete="off">
+                <input type="text" id="group" placeholder="ЦИС-27">
             </div>
-            
             <div class="input-field">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" placeholder="example@mail.com" autocomplete="email">
+                <input type="email" id="email" placeholder="example@mail.com">
             </div>
-            
             <div class="input-field">
                 <label for="phone">Телефон</label>
-                <input type="tel" id="phone" name="phone" placeholder="+7 (999) 123-45-67" autocomplete="tel">
+                <input type="tel" id="phone" placeholder="+7 (999) 123-45-67">
             </div>
-            
             <div class="input-field">
                 <label for="password">Пароль</label>
-                <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="new-password">
+                <input type="password" id="password" placeholder="••••••••">
             </div>
             
             <button class="register-btn-main" id="registerBtn">Зарегистрироваться</button>
             
             <p class="login-prompt">Уже есть аккаунт? Вернитесь на страницу входа</p>
-            
             <button class="login-btn" id="loginBtn">Войти в аккаунт</button>
         </div>
-    
     </div>
 
     <script>
-    document.getElementById('registerBtn').addEventListener('click', async function() {
-        const formData = {
-            lastName: document.getElementById('surname').value.trim(),
-            firstName: document.getElementById('name').value.trim(),
-            middleName: document.getElementById('patronymic').value.trim(),
-            group: document.getElementById('group').value.trim(),
-            email: document.getElementById('email').value.trim(),
-            phone: document.getElementById('phone').value.trim(),
-            password: document.getElementById('password').value
-        };
+        function showModal(message, redirectUrl = null) {
+            document.querySelectorAll('.modal-overlay').forEach(el => el.remove());
 
-        // Простая валидация
-        if (!formData.lastName || !formData.firstName || !formData.email || !formData.password) {
-            alert('Пожалуйста, заполните обязательные поля (Фамилия, Имя, Email, Пароль)');
-            return;
-        }
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <p class="modal-message">${message}</p>
+                    <button class="modal-ok-btn" id="modalOkBtn">OK</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
 
-        if (formData.password.length < 6) {
-            alert('Пароль должен содержать не менее 6 символов');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
+            document.getElementById('modalOkBtn').addEventListener('click', () => {
+                overlay.remove();
+                if (redirectUrl) window.location.href = redirectUrl;
             });
-
-            const result = await response.json();
-
-            if (response.ok) {
-                alert('Регистрация успешна! Теперь вы можете войти.');
-                window.location.href = '/Home/Login';
-            } else {
-                alert(result.message || 'Ошибка при регистрации');
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка при подключении к серверу');
         }
-    });
 
-    document.getElementById('loginBtn').addEventListener('click', function() {
-        window.location.href = '/Home/Login';
-    });
-</script>
+        document.getElementById('registerBtn').addEventListener('click', async function() {
+            const formData = {
+                lastName: document.getElementById('surname').value.trim(),
+                firstName: document.getElementById('name').value.trim(),
+                middleName: document.getElementById('patronymic').value.trim(),
+                group: document.getElementById('group').value.trim(),
+                email: document.getElementById('email').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                password: document.getElementById('password').value
+            };
+
+            if (!formData.lastName || !formData.firstName || !formData.email || !formData.password) {
+                showModal('Пожалуйста, заполните обязательные поля (Фамилия, Имя, Email, Пароль)');
+                return;
+            }
+
+            if (formData.password.length < 6) {
+                showModal('Пароль должен содержать не менее 6 символов');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showModal('Регистрация успешна! Теперь вы можете войти.', '/Home/Login');
+                } else {
+                    showModal(result.message || 'Ошибка при регистрации');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showModal('Произошла ошибка при подключении к серверу');
+            }
+        });
+
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            window.location.href = '/Home/Login';
+        });
+    </script>
 </body>
 </html>
