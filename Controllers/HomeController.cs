@@ -25,4 +25,8 @@ public class HomeController : Controller
     {
         return View();
     }
+    public IActionResult Achievements()
+    {
+        return View();
+    }
 }

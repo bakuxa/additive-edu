@@ -1,0 +1,220 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Достижения | Аддитивные технологии</title>
+    <link rel="stylesheet" href="/css/achievements.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон" onerror="this.style.display='none'">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон" onerror="this.style.display='none'">
+        </div>
+
+        <aside class="sidebar">
+            <div class="sidebar-active"></div>
+            <div class="sidebar-header">
+                <h2 class="menu-title">Меню</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item" id="profileNav">
+                    <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon" onerror="this.style.display='none'">
+                    <span>Профиль</span>
+                </div>
+                <div class="nav-item" id="coursesNav">
+                    <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon" onerror="this.style.display='none'">
+                    <span>Мои курсы</span>
+                </div>
+                <div class="nav-item active" id="achievementsNav">
+                    <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon" onerror="this.style.display='none'">
+                    <span>Достижения</span>
+                </div>
+                <div class="nav-item" id="ratingNav">
+                    <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon" onerror="this.style.display='none'">
+                    <span>Рейтинг</span>
+                </div>
+                <div class="nav-item" id="logoutBtn">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon" onerror="this.style.display='none'">
+                    <span>Выйти</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <img src="/img/logo.png" alt="Логотип" class="footer-logo" onerror="this.style.display='none'">
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <h1 class="page-title">Мои достижения</h1>
+                <div class="logout-btn-top" id="logoutBtnTop">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти" onerror="this.style.display='none'">
+                </div>
+            </div>
+
+            <!-- Статистика достижений -->
+            <div class="stats-card">
+                <div class="stats-header">
+                    <span class="stats-title">Прогресс коллекционирования</span>
+                    <span class="stats-percent" id="statsPercent">0%</span>
+                </div>
+                <div class="stats-progress">
+                    <div class="stats-progress-fill" id="statsProgressFill" style="width: 0%;"></div>
+                </div>
+                <div class="stats-info">
+                    <span id="unlockedCount">0</span> из <span id="totalCount">0</span> достижений получено
+                </div>
+            </div>
+
+            <!-- Сетка достижений -->
+            <div class="achievements-grid" id="achievementsGrid">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Загрузка достижений...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
+            }
+            return user;
+        }
+
+        function getEmojiForTitle(title) {
+            const emojiMap = {
+                'Первый слой': '🎯',
+                'Знаток FDM': '🏆',
+                'Мастер настройки': '⚙️',
+                'Мастер 3D-печати': '🖨️',
+                'Сравнительный аналитик': '📊',
+                'Активный ученик': '📚',
+                'Эксперт FDM': '⭐',
+                'Путешественник': '🗺️',
+                'Быстрый старт': '🚀',
+                'Любознательный': '🔍',
+                'Лидер рейтинга': '👑'
+            };
+            return emojiMap[title] || '🏅';
+        }
+
+        async function loadAchievements() {
+            const user = loadUserData();
+            if (!user) return;
+            currentUser = user;
+
+            const grid = document.getElementById('achievementsGrid');
+            grid.innerHTML = '<div class="loading-spinner"><div class="spinner"></div><p>Загрузка достижений...</p></div>';
+
+            try {
+                const response = await fetch(`/api/AchievementsApi/user/${user.userId}`);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Сервер вернул ${response.status}: ${errorText.substring(0, 100)}`);
+                }
+                
+                const data = await response.json();
+                
+                const percent = data.unlockedPercent || 0;
+                document.getElementById('statsPercent').textContent = `${percent}%`;
+                document.getElementById('statsProgressFill').style.width = `${percent}%`;
+                document.getElementById('unlockedCount').textContent = data.totalUnlocked;
+                document.getElementById('totalCount').textContent = data.totalAchievements;
+
+                renderAchievements(data.achievements);
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                grid.innerHTML = `<div class="error-message">
+                    ⚠️ Ошибка загрузки достижений: ${error.message}<br><br>
+                    <button onclick="location.reload()" style="padding: 8px 20px; background: #029FA4; color: white; border: none; border-radius: 8px; cursor: pointer;">Повторить</button>
+                </div>`;
+            }
+        }
+
+        function renderAchievements(achievements) {
+            const grid = document.getElementById('achievementsGrid');
+            
+            if (!achievements || achievements.length === 0) {
+                grid.innerHTML = '<div class="empty-message">✨ Достижения пока не добавлены ✨</div>';
+                return;
+            }
+
+            grid.innerHTML = achievements.map(achievement => `
+                <div class="achievement-card ${achievement.isUnlocked ? 'unlocked' : 'locked'}">
+                    <div class="achievement-check">
+                        ${achievement.isUnlocked 
+                            ? '<div class="check-icon">✓</div>' 
+                            : '<div class="lock-icon">🔒</div>'}
+                    </div>
+                    <div class="achievement-icon">
+                        ${getEmojiForTitle(achievement.title)}
+                    </div>
+                    <div class="achievement-content">
+                        <h3 class="achievement-title">${escapeHtml(achievement.title)}</h3>
+                        <p class="achievement-description">${escapeHtml(achievement.description)}</p>
+                        ${achievement.isUnlocked && achievement.unlockedAt ? 
+                            `<div class="achievement-date">📅 Получено: ${achievement.unlockedAt}</div>` : 
+                            `<div class="achievement-date" style="color: #8E9CA8;">🔒 ${escapeHtml(achievement.conditionDescription || 'Выполните условие для получения')}</div>`
+                        }
+                        <div class="achievement-points">
+                            <span>⭐</span>
+                            <span class="points-value">${achievement.pointsReward} XP</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        }
+
+        // Навигация
+        document.getElementById('profileNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Profile';
+        });
+
+        document.getElementById('coursesNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Courses';
+        });
+
+        document.getElementById('ratingNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Rating';
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', logout);
+        document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
+
+        // Загрузка данных при старте
+        loadAchievements();
+    </script>
+</body>
+</html>
