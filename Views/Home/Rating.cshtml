@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Рейтинг | Аддитивные технологии</title>
+    <link rel="stylesheet" href="/css/rating.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+        
+        <aside class="sidebar">
+            <div class="sidebar-active"></div>
+            <div class="sidebar-header">
+                <h2 class="menu-title">Меню</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item" id="profileNav">
+                    <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon">
+                    <span>Профиль</span>
+                </div>
+                <div class="nav-item">
+                    <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
+                    <span>Мои курсы</span>
+                </div>
+                <div class="nav-item">
+                    <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
+                    <span>Достижения</span>
+                </div>
+                <div class="nav-item active">
+                    <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon">
+                    <span>Рейтинг</span>
+                </div>
+                <div class="nav-item" id="logoutBtn">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon">
+                    <span>Выйти</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <img src="/img/logo.png" alt="Логотип" class="footer-logo">
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <div class="top-bar">
+                <h1 class="page-title">🏆 Рейтинговая таблица</h1>
+                <div class="notification-btn" id="notificationBtn">
+                    <img src="/img/icon/logout-icon2.png" alt="">
+                </div>
+            </div>
+            
+            <!-- Кастомный выпадающий список фильтра -->
+            <div class="rating-filters">
+                <div class="custom-select-wrapper">
+                    <div class="custom-select-trigger" id="groupFilterTrigger">
+                        <span id="selectedGroupName">Все группы</span>
+                        <span class="custom-select-arrow"></span>
+                    </div>
+                    <div class="custom-select-dropdown" id="groupFilterDropdown">
+                        <div class="custom-select-option selected" data-value="all">Все группы</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="rating-container">
+                <div class="rating-header">
+                    <div class="rank-cell">#</div>
+                    <div class="user-cell">Участник</div>
+                    <div class="level-cell">Уровень</div>
+                    <div class="exp-cell">Опыт</div>
+                    <div class="badges-cell">Награды</div>
+                </div>
+                
+                <div class="rating-list" id="ratingList">
+                    <div class="loading-message">Загрузка рейтинга...</div>
+                </div>
+            </div>
+            
+            <div class="pagination" id="pagination"></div>
+        </main>
+    </div>
+
+    <script>
+        let currentGroupId = 'all';
+        let currentPage = 1;
+        let totalPages = 1;
+
+        // Навигация
+        document.getElementById('profileNav').addEventListener('click', function() {
+            window.location.href = '/Home/Profile';
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+
+        document.getElementById('notificationBtn').addEventListener('click', function() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+
+        // Кастомный выпадающий список
+        const selectWrapper = document.querySelector('.custom-select-wrapper');
+        const selectTrigger = document.getElementById('groupFilterTrigger');
+        const selectDropdown = document.getElementById('groupFilterDropdown');
+        const selectedGroupNameSpan = document.getElementById('selectedGroupName');
+
+        if (selectTrigger && selectDropdown) {
+            selectTrigger.addEventListener('click', () => {
+                selectWrapper.classList.toggle('open');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!selectWrapper.contains(e.target)) {
+                    selectWrapper.classList.remove('open');
+                }
+            });
+        }
+
+        // Загрузка списка групп
+        async function loadGroups() {
+            try {
+                const response = await fetch('/api/rating/groups');
+                const groups = await response.json();
+                
+                if (!selectDropdown) return;
+                
+                selectDropdown.innerHTML = '';
+                const allOption = document.createElement('div');
+                allOption.className = 'custom-select-option selected';
+                allOption.dataset.value = 'all';
+                allOption.textContent = 'Все группы';
+                selectDropdown.appendChild(allOption);
+                
+                groups.forEach(group => {
+                    const option = document.createElement('div');
+                    option.className = 'custom-select-option';
+                    option.dataset.value = group.groupId;
+                    option.textContent = group.groupName;
+                    selectDropdown.appendChild(option);
+                });
+                
+                document.querySelectorAll('.custom-select-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        const value = option.dataset.value;
+                        const text = option.textContent;
+                        currentGroupId = value;
+                        selectedGroupNameSpan.textContent = text;
+                        
+                        // Обновляем класс selected
+                        document.querySelectorAll('.custom-select-option').forEach(opt => {
+                            opt.classList.remove('selected');
+                        });
+                        option.classList.add('selected');
+                        
+                        selectWrapper.classList.remove('open');
+                        loadRating(1);
+                    });
+                });
+            } catch (error) {
+                console.error('Ошибка загрузки групп:', error);
+            }
+        }
+
+        // Загрузка рейтинга
+        async function loadRating(page = 1) {
+            currentPage = page;
+            const container = document.getElementById('ratingList');
+            if (!container) return;
+            
+            // Анимация загрузки
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(10px)';
+            
+            try {
+                const groupParam = (currentGroupId && currentGroupId !== 'all') ? `&groupId=${currentGroupId}` : '';
+                const url = `/api/rating/list?page=${page}&pageSize=10${groupParam}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                const ratingData = data.items;
+                totalPages = data.totalPages;
+                
+                const user = JSON.parse(localStorage.getItem('user'));
+                const currentUserId = user?.userId;
+                
+                if (!ratingData || ratingData.length === 0) {
+                    container.innerHTML = '<div class="loading-message">Нет данных для отображения</div>';
+                    updatePagination();
+                    container.style.opacity = '1';
+                    container.style.transform = 'translateY(0)';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                const startRank = (page - 1) * 10;
+                ratingData.forEach((item, index) => {
+                    const rank = startRank + index + 1;
+                    const isCurrentUser = (item.userId === currentUserId);
+                    
+                    let topClass = '';
+                    if (rank === 1) topClass = 'top-1';
+                    else if (rank === 2) topClass = 'top-2';
+                    else if (rank === 3) topClass = 'top-3';
+                    
+                    let medal = rank;
+                    if (rank === 1) medal = '🥇 1';
+                    else if (rank === 2) medal = '🥈 2';
+                    else if (rank === 3) medal = '🥉 3';
+                    
+                    const row = document.createElement('div');
+                    row.className = `rating-item ${topClass} ${isCurrentUser ? 'current-user' : ''}`;
+                    row.innerHTML = `
+                        <div class="rank-cell">${medal}</div>
+                        <div class="user-cell">
+                            <div class="user-avatar" style="background: ${getAvatarColor(rank)};">
+                                <span>${escapeHtml(item.avatarInitials) || 'УЧ'}</span>
+                            </div>
+                            <div class="user-info">
+                                <span class="user-name">${escapeHtml(item.userName)} ${isCurrentUser ? '<span style="color: #029FA3; font-weight: 700;">(Вы)</span>' : ''}</span>
+                                <span class="user-group">${escapeHtml(item.userGroup) || '—'}</span>
+                            </div>
+                        </div>
+                        <div class="level-cell">${item.level}</div>
+                        <div class="exp-cell">${formatNumber(item.experience)} XP</div>
+                        <div class="badges-cell">🏅 ${item.achievementsCount}</div>
+                    `;
+                    container.appendChild(row);
+                });
+                
+                updatePagination();
+                
+                setTimeout(() => {
+                    container.style.opacity = '1';
+                    container.style.transform = 'translateY(0)';
+                }, 50);
+                
+            } catch (error) {
+                console.error('Ошибка загрузки рейтинга:', error);
+                container.innerHTML = '<div class="loading-message">Ошибка загрузки данных</div>';
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }
+        }
+
+        function getAvatarColor(rank) {
+            if (rank === 1) return 'linear-gradient(135deg, #FFD700, #FFA500)';
+            if (rank === 2) return 'linear-gradient(135deg, #C0C0C0, #A8A8A8)';
+            if (rank === 3) return 'linear-gradient(135deg, #CD7F32, #B8860B)';
+            return 'linear-gradient(135deg, #029FA3, #8ED1D1)';
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function formatNumber(num) {
+            if (!num && num !== 0) return '0';
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        }
+
+        function updatePagination() {
+            const paginationContainer = document.getElementById('pagination');
+            if (!paginationContainer) return;
+            
+            if (totalPages <= 1) {
+                paginationContainer.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 1; i <= totalPages; i++) {
+                html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            }
+            paginationContainer.innerHTML = html;
+            
+            document.querySelectorAll('.page-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const page = parseInt(btn.dataset.page);
+                    loadRating(page);
+                });
+            });
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGroups();
+            loadRating(1);
+        });
+    </script>
+</body>
+</html>

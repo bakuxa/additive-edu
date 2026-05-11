@@ -348,6 +348,11 @@
             localStorage.removeItem('user');
             window.location.href = '/Home/Index';
         });
+
+        // Переход на страницу Рейтинг
+        document.querySelector('.nav-item:nth-child(4)').addEventListener('click', function() {
+            window.location.href = '/Home/Rating';
+        });
     </script>
 </body>
 </html>

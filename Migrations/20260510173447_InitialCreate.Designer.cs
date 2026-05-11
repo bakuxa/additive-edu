@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace additiveedu.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260509190725_InitialCreate")]
+    [Migration("20260510173447_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,6 +24,37 @@ namespace additiveedu.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("AdditiveEdu.Models.Achievement", b =>
+                {
+                    b.Property<int>("AchievementID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("achievementid");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("AchievementID"));
+
+                    b.Property<string>("AchievementDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("achievement_description");
+
+                    b.Property<string>("AchievementTitle")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("achievement_title");
+
+                    b.Property<string>("ConditionDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("condition_description");
+
+                    b.Property<int>("PointsReward")
+                        .HasColumnType("integer")
+                        .HasColumnName("points_reward");
+
+                    b.HasKey("AchievementID");
+
+                    b.ToTable("Achievement");
+                });
 
             modelBuilder.Entity("AdditiveEdu.Models.Group", b =>
                 {
@@ -42,6 +73,42 @@ namespace additiveedu.Migrations
                     b.HasKey("GroupID");
 
                     b.ToTable("Group");
+                });
+
+            modelBuilder.Entity("AdditiveEdu.Models.Rating", b =>
+                {
+                    b.Property<int>("RatingID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("ratingid");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("RatingID"));
+
+                    b.Property<int>("CurrentLevel")
+                        .HasColumnType("integer")
+                        .HasColumnName("current_level");
+
+                    b.Property<int>("Experience")
+                        .HasColumnType("integer")
+                        .HasColumnName("experience");
+
+                    b.Property<int?>("PositionInRating")
+                        .HasColumnType("integer")
+                        .HasColumnName("position_in_rating");
+
+                    b.Property<int>("TotalScore")
+                        .HasColumnType("integer")
+                        .HasColumnName("total_score");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("RatingID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("Rating");
                 });
 
             modelBuilder.Entity("AdditiveEdu.Models.Role", b =>
@@ -146,6 +213,47 @@ namespace additiveedu.Migrations
                     b.ToTable("User");
                 });
 
+            modelBuilder.Entity("AdditiveEdu.Models.UserAchievement", b =>
+                {
+                    b.Property<int>("UserAchievementID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("userachievementid");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("UserAchievementID"));
+
+                    b.Property<int>("AchievementID")
+                        .HasColumnType("integer")
+                        .HasColumnName("achievement_id");
+
+                    b.Property<DateTime>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at");
+
+                    b.Property<int>("UserID")
+                        .HasColumnType("integer")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("UserAchievementID");
+
+                    b.HasIndex("AchievementID");
+
+                    b.HasIndex("UserID");
+
+                    b.ToTable("UserAchievement");
+                });
+
+            modelBuilder.Entity("AdditiveEdu.Models.Rating", b =>
+                {
+                    b.HasOne("AdditiveEdu.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("AdditiveEdu.Models.User", b =>
                 {
                     b.HasOne("AdditiveEdu.Models.Group", "Group")
@@ -161,6 +269,25 @@ namespace additiveedu.Migrations
                     b.Navigation("Group");
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("AdditiveEdu.Models.UserAchievement", b =>
+                {
+                    b.HasOne("AdditiveEdu.Models.Achievement", "Achievement")
+                        .WithMany()
+                        .HasForeignKey("AchievementID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("AdditiveEdu.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Achievement");
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

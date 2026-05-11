@@ -59,10 +59,21 @@ namespace AdditiveEdu.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
+            // Создаём запись в рейтинге для нового пользователя
+            var rating = new Rating
+            {
+                UserID = user.UserID,
+                TotalScore = 0,
+                CurrentLevel = 1,
+                Experience = 0
+            };
+            _context.Ratings.Add(rating);
+            await _context.SaveChangesAsync();
+
             return Ok(new { message = "Регистрация успешно завершена", userId = user.UserID });
         }
 
-       [HttpPost("login")]
+        [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             if (!ModelState.IsValid)
@@ -70,7 +81,6 @@ namespace AdditiveEdu.Controllers
                 return BadRequest(ModelState);
             }
 
-            // Подгружаем группу
             var user = await _context.Users
                 .Include(u => u.Group)
                 .FirstOrDefaultAsync(u => u.Email == loginDto.Email);
