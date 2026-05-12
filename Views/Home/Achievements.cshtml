@@ -7,7 +7,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Достижения | Аддитивные технологии</title>
-    <link rel="stylesheet" href="/css/achievements.css">
+        <link rel="stylesheet" href="/css/achievements.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
@@ -47,8 +47,8 @@
                     <span>Выйти</span>
                 </div>
             </nav>
-            <div class="sidebar-footer">
-                <img src="/img/logo.png" alt="Логотип" class="footer-logo" onerror="this.style.display='none'">
+            <div class="sidebar-footer" style="position: absolute; top: 620px; left: 0; right: 0; margin-top: 0;">
+                <img src="/img/logo.png" alt="Логотип" class="footer-logo">
             </div>
         </aside>
 
@@ -84,8 +84,49 @@
         </main>
     </div>
 
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="achievementModal">
+        <div class="modal-container">
+            <div class="modal-close" id="modalCloseBtn">×</div>
+            <div class="modal-congrats" id="modalCongrats">
+                <h2>Поздравляем!</h2>
+                <p>Вы открыли новое достижение</p>
+            </div>
+            <div class="modal-achievement" id="modalAchievementContent">
+                <!-- Динамическое содержимое -->
+            </div>
+            <button class="modal-button" id="modalClaimBtn">Забрать XP</button>
+        </div>
+    </div>
+
     <script>
         let currentUser = null;
+        let currentAchievement = null;
+        
+        // Ключ для хранения в localStorage полученных наград
+        const CLAIMED_REWARDS_KEY = 'claimedAchievements';
+
+        // Получить список уже полученных наград
+        function getClaimedRewards() {
+            const claimed = localStorage.getItem(CLAIMED_REWARDS_KEY);
+            if (!claimed) return {};
+            return JSON.parse(claimed);
+        }
+
+        // Сохранить, что награда за достижение получена
+        function saveClaimedReward(userId, achievementId) {
+            const claimed = getClaimedRewards();
+            const key = `${userId}_${achievementId}`;
+            claimed[key] = new Date().toISOString();
+            localStorage.setItem(CLAIMED_REWARDS_KEY, JSON.stringify(claimed));
+        }
+
+        // Проверить, получал ли пользователь награду за это достижение
+        function isRewardClaimed(userId, achievementId) {
+            const claimed = getClaimedRewards();
+            const key = `${userId}_${achievementId}`;
+            return !!claimed[key];
+        }
 
         function loadUserData() {
             const user = JSON.parse(localStorage.getItem('user'));
@@ -111,6 +152,170 @@
                 'Лидер рейтинга': '👑'
             };
             return emojiMap[title] || '🏅';
+        }
+
+        function showModal(achievement) {
+            currentAchievement = achievement;
+            const user = loadUserData();
+            
+            const modalContent = document.getElementById('modalAchievementContent');
+            const modalCongrats = document.getElementById('modalCongrats');
+            
+            // Меняем содержимое модального окна в зависимости от статуса достижения
+            const isUnlocked = achievement.isUnlocked;
+            const alreadyClaimed = user ? isRewardClaimed(user.userId, achievement.achievementId) : false;
+            
+            if (isUnlocked) {
+                // Если достижение получено
+                modalCongrats.innerHTML = `
+                    <h2>Поздравляем! 🎉</h2>
+                    <p>Вы открыли новое достижение</p>
+                `;
+            } else {
+                // Если достижение ещё не получено
+                modalCongrats.innerHTML = `
+                    <h2>🔒 Достижение не открыто</h2>
+                    <p>Постарайся лучше, чтобы получить это достижение!</p>
+                `;
+            }
+            
+            modalContent.innerHTML = `
+                <div class="modal-achievement-icon">
+                    ${getEmojiForTitle(achievement.title)}
+                </div>
+                <div class="modal-achievement-info">
+                    <h3 class="modal-achievement-title">${escapeHtml(achievement.title)}</h3>
+                    <p class="modal-achievement-desc">${escapeHtml(achievement.description)}</p>
+                    <div class="modal-points">
+                        <span>⭐</span>
+                        <span>${achievement.pointsReward} XP</span>
+                    </div>
+                    ${!isUnlocked ? `
+                        <div class="modal-condition" style="margin-top: 10px; padding: 8px 12px; background: #F0F0F0; border-radius: 12px;">
+                            <span style="font-size: 12px; color: #666;">Условие получения:</span>
+                            <p style="font-size: 12px; color: #029FA4; margin-top: 4px;">${escapeHtml(achievement.conditionDescription || 'Выполните задание для открытия достижения')}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            const modalBtn = document.getElementById('modalClaimBtn');
+            
+            // Проверяем, можно ли получить награду
+            const canClaim = isUnlocked && !alreadyClaimed;
+            
+            if (canClaim) {
+                modalBtn.textContent = 'Забрать XP';
+                modalBtn.classList.remove('locked-btn');
+                modalBtn.disabled = false;
+            } else if (alreadyClaimed) {
+                modalBtn.textContent = '✅ XP уже получены';
+                modalBtn.classList.add('locked-btn');
+                modalBtn.disabled = true;
+            } else {
+                modalBtn.textContent = '🔒 Достижение ещё не получено';
+                modalBtn.classList.add('locked-btn');
+                modalBtn.disabled = true;
+            }
+            
+            document.getElementById('achievementModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('achievementModal').classList.remove('active');
+            currentAchievement = null;
+        }
+
+        async function claimXP() {
+            if (!currentAchievement || !currentAchievement.isUnlocked) return;
+            
+            const user = loadUserData();
+            if (!user) return;
+            
+            // Проверяем, не получал ли уже награду
+            if (isRewardClaimed(user.userId, currentAchievement.achievementId)) {
+                showToast('Вы уже получили XP за это достижение!');
+                closeModal();
+                return;
+            }
+            
+            const modalBtn = document.getElementById('modalClaimBtn');
+            modalBtn.textContent = '⏳ Обработка...';
+            modalBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/AchievementsApi/claim-xp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.userId,
+                        achievementId: currentAchievement.achievementId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok && result.success) {
+                    // Сохраняем в localStorage, что награда получена
+                    saveClaimedReward(user.userId, currentAchievement.achievementId);
+                    
+                    modalBtn.textContent = `✅ +${result.xpEarned} XP получено!`;
+                    
+                    // Обновляем данные пользователя в localStorage
+                    const updatedUser = JSON.parse(localStorage.getItem('user'));
+                    if (updatedUser) {
+                        updatedUser.experience = result.newExperience;
+                        updatedUser.level = result.newLevel;
+                        localStorage.setItem('user', JSON.stringify(updatedUser));
+                    }
+                    
+                    setTimeout(() => {
+                        closeModal();
+                        loadAchievements(); // Обновляем список
+                    }, 1500);
+                } else {
+                    modalBtn.textContent = result.message || '❌ Ошибка';
+                    setTimeout(() => {
+                        if (currentAchievement && currentAchievement.isUnlocked && 
+                            !isRewardClaimed(user.userId, currentAchievement.achievementId)) {
+                            modalBtn.textContent = 'Забрать XP';
+                            modalBtn.disabled = false;
+                        }
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                modalBtn.textContent = '❌ Ошибка сервера';
+                setTimeout(() => {
+                    if (currentAchievement && currentAchievement.isUnlocked && 
+                        !isRewardClaimed(user.userId, currentAchievement.achievementId)) {
+                        modalBtn.textContent = 'Забрать XP';
+                        modalBtn.disabled = false;
+                    }
+                }, 2000);
+            }
+        }
+
+        function showToast(message) {
+            // Создаем всплывающее уведомление
+            const toast = document.createElement('div');
+            toast.className = 'custom-toast';
+            toast.textContent = message;
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #029FA4, #8ED1D1);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 12px;
+                font-family: 'Poppins', sans-serif;
+                font-size: 14px;
+                z-index: 1001;
+                animation: slideIn 0.3s ease-out;
+            `;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
 
         async function loadAchievements() {
@@ -150,14 +355,16 @@
 
         function renderAchievements(achievements) {
             const grid = document.getElementById('achievementsGrid');
+            const user = loadUserData();
             
             if (!achievements || achievements.length === 0) {
-                grid.innerHTML = '<div class="empty-message">✨ Достижения пока не добавлены ✨</div>';
+                grid.innerHTML = '<div class="empty-message">Достижения пока не добавлены</div>';
                 return;
             }
 
             grid.innerHTML = achievements.map(achievement => `
-                <div class="achievement-card ${achievement.isUnlocked ? 'unlocked' : 'locked'}">
+                <div class="achievement-card ${achievement.isUnlocked ? 'unlocked' : 'locked'}" 
+                    onclick='showModal(${JSON.stringify(achievement).replace(/'/g, "&#39;")})'>
                     <div class="achievement-check">
                         ${achievement.isUnlocked 
                             ? '<div class="check-icon">✓</div>' 
@@ -177,6 +384,10 @@
                             <span>⭐</span>
                             <span class="points-value">${achievement.pointsReward} XP</span>
                         </div>
+                        ${achievement.isUnlocked && user && isRewardClaimed(user.userId, achievement.achievementId) ? 
+                            `<div style="font-size: 10px; color: #029FA4; margin-top: 5px;">✅ Награда получена</div>` : 
+                            (achievement.isUnlocked ? `<div style="font-size: 10px; color: #FF9800; margin-top: 5px;">✨ Награда доступна</div>` : '')
+                        }
                     </div>
                 </div>
             `).join('');
@@ -212,8 +423,17 @@
 
         document.getElementById('logoutBtn')?.addEventListener('click', logout);
         document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
+        
+        // Модальное окно
+        document.getElementById('modalCloseBtn')?.addEventListener('click', closeModal);
+        document.getElementById('modalClaimBtn')?.addEventListener('click', claimXP);
+        
+        document.getElementById('achievementModal')?.addEventListener('click', (e) => {
+            if (e.target === document.getElementById('achievementModal')) {
+                closeModal();
+            }
+        });
 
-        // Загрузка данных при старте
         loadAchievements();
     </script>
 </body>

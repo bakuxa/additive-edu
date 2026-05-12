@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using AdditiveEdu.Data;
+using AdditiveEdu.Models;
 
 namespace AdditiveEdu.Controllers
 {
@@ -81,6 +82,113 @@ namespace AdditiveEdu.Controllers
                     ? Math.Round((double)result.Count(a => a.isUnlocked) / result.Count * 100, 0)
                     : 0
             });
+        }
+
+        // ==================== ДОБАВЛЕННЫЙ МЕТОД ====================
+        // DTO для запроса
+        public class ClaimXPRequest
+        {
+            public int UserId { get; set; }
+            public int AchievementId { get; set; }
+        }
+
+        // DTO для ответа
+        public class ClaimXPResponse
+        {
+            public bool Success { get; set; }
+            public string Message { get; set; } = string.Empty;
+            public int XpEarned { get; set; }
+            public int NewExperience { get; set; }
+            public int NewLevel { get; set; }
+        }
+
+        [HttpPost("claim-xp")]
+        public async Task<IActionResult> ClaimXP([FromBody] ClaimXPRequest request)
+        {
+            try
+            {
+                // Проверяем существование пользователя
+                var user = await _context.Users.FindAsync(request.UserId);
+                if (user == null)
+                {
+                    return NotFound(new ClaimXPResponse 
+                    { 
+                        Success = false, 
+                        Message = "Пользователь не найден" 
+                    });
+                }
+
+                // Проверяем существование достижения
+                var achievement = await _context.Achievements.FindAsync(request.AchievementId);
+                if (achievement == null)
+                {
+                    return NotFound(new ClaimXPResponse 
+                    { 
+                        Success = false, 
+                        Message = "Достижение не найдено" 
+                    });
+                }
+
+                // Проверяем, получил ли пользователь это достижение
+                var userAchievement = await _context.UserAchievements
+                    .FirstOrDefaultAsync(ua => ua.UserID == request.UserId && ua.AchievementID == request.AchievementId);
+                
+                if (userAchievement == null)
+                {
+                    return BadRequest(new ClaimXPResponse 
+                    { 
+                        Success = false, 
+                        Message = "Вы ещё не получили это достижение" 
+                    });
+                }
+
+                // Находим или создаем запись в Rating
+                var rating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserID == request.UserId);
+                if (rating == null)
+                {
+                    rating = new Rating
+                    {
+                        UserID = request.UserId,
+                        TotalScore = 0,
+                        CurrentLevel = 1,
+                        Experience = 0,
+                        PositionInRating = 0
+                    };
+                    _context.Ratings.Add(rating);
+                    await _context.SaveChangesAsync();
+                    
+                    // Перезагружаем чтобы получить Id
+                    rating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserID == request.UserId);
+                }
+
+                // Начисляем XP
+                int xpEarned = achievement.PointsReward;
+                rating.Experience += xpEarned;
+                rating.TotalScore += xpEarned;
+                
+                // Обновляем уровень (каждые 100 XP = +1 уровень)
+                int newLevel = (rating.Experience / 100) + 1;
+                rating.CurrentLevel = newLevel;
+                
+                await _context.SaveChangesAsync();
+
+                return Ok(new ClaimXPResponse
+                {
+                    Success = true,
+                    Message = $"Вы получили {xpEarned} XP!",
+                    XpEarned = xpEarned,
+                    NewExperience = rating.Experience,
+                    NewLevel = rating.CurrentLevel
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ClaimXPResponse
+                {
+                    Success = false,
+                    Message = $"Ошибка сервера: {ex.Message}"
+                });
+            }
         }
     }
 }

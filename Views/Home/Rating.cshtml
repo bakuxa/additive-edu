@@ -44,21 +44,23 @@
                     <span>Выйти</span>
                 </div>
             </nav>
-            <div class="sidebar-footer">
+           <div class="sidebar-footer" style="position: absolute; top: 620px; left: 0; right: 0; margin-top: 0;">
                 <img src="/img/logo.png" alt="Логотип" class="footer-logo">
             </div>
         </aside>
         
         <main class="main-content">
             <div class="top-bar">
-                <h1 class="page-title">🏆 Рейтинговая таблица</h1>
+                <h1 class="page-title">Рейтинговая таблица</h1>
                 <div class="notification-btn" id="notificationBtn">
                     <img src="/img/icon/logout-icon2.png" alt="">
                 </div>
             </div>
             
-            <!-- Кастомный выпадающий список фильтра -->
             <div class="rating-filters">
+                <div class="pagination-top" id="paginationTop">
+                    <!-- Пагинация будет здесь -->
+                </div>
                 <div class="custom-select-wrapper">
                     <div class="custom-select-trigger" id="groupFilterTrigger">
                         <span id="selectedGroupName">Все группы</span>
@@ -72,7 +74,7 @@
             
             <div class="rating-container">
                 <div class="rating-header">
-                    <div class="rank-cell">#</div>
+                    <div class="rank-cell">№</div>
                     <div class="user-cell">Участник</div>
                     <div class="level-cell">Уровень</div>
                     <div class="exp-cell">Опыт</div>
@@ -83,8 +85,6 @@
                     <div class="loading-message">Загрузка рейтинга...</div>
                 </div>
             </div>
-            
-            <div class="pagination" id="pagination"></div>
         </main>
     </div>
 
@@ -92,21 +92,6 @@
         let currentGroupId = 'all';
         let currentPage = 1;
         let totalPages = 1;
-
-        // Навигация
-        document.getElementById('profileNav').addEventListener('click', function() {
-            window.location.href = '/Home/Profile';
-        });
-
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            localStorage.removeItem('user');
-            window.location.href = '/Home/Index';
-        });
-
-        document.getElementById('notificationBtn').addEventListener('click', function() {
-            localStorage.removeItem('user');
-            window.location.href = '/Home/Index';
-        });
 
         // Кастомный выпадающий список
         const selectWrapper = document.querySelector('.custom-select-wrapper');
@@ -276,24 +261,58 @@
         }
 
         function updatePagination() {
-            const paginationContainer = document.getElementById('pagination');
-            if (!paginationContainer) return;
+            const paginationContainerTop = document.getElementById('paginationTop');
+            if (!paginationContainerTop) return;
             
             if (totalPages <= 1) {
-                paginationContainer.innerHTML = '';
+                paginationContainerTop.innerHTML = '';
                 return;
             }
             
             let html = '';
-            for (let i = 1; i <= totalPages; i++) {
+            
+            // Кнопка "Назад"
+            if (currentPage > 1) {
+                html += `<button class="page-btn" data-page="${currentPage - 1}">←</button>`;
+            }
+            
+            // Номера страниц
+            const maxVisible = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+            
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+            
+            if (startPage > 1) {
+                html += `<button class="page-btn" data-page="1">1</button>`;
+                if (startPage > 2) html += `<span class="page-dots">...</span>`;
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
                 html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
             }
-            paginationContainer.innerHTML = html;
             
-            document.querySelectorAll('.page-btn').forEach(btn => {
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) html += `<span class="page-dots">...</span>`;
+                html += `<button class="page-btn" data-page="${totalPages}">${totalPages}</button>`;
+            }
+            
+            // Кнопка "Вперед"
+            if (currentPage < totalPages) {
+                html += `<button class="page-btn" data-page="${currentPage + 1}">→</button>`;
+            }
+            
+            paginationContainerTop.innerHTML = html;
+            
+            // Добавляем обработчики
+            document.querySelectorAll('#paginationTop .page-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     const page = parseInt(btn.dataset.page);
-                    loadRating(page);
+                    if (!isNaN(page)) {
+                        loadRating(page);
+                    }
                 });
             });
         }
@@ -302,6 +321,25 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadGroups();
             loadRating(1);
+        });
+
+         // Навигация
+        document.getElementById('profileNav').addEventListener('click', function() {
+            window.location.href = '/Home/Profile';
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+
+        document.getElementById('notificationBtn').addEventListener('click', function() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+        // Переход на страницу Достижения
+        document.querySelector('.nav-item:nth-child(3)').addEventListener('click', function() {
+            window.location.href = '/Home/Achievements';
         });
     </script>
 </body>
