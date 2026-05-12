@@ -74,102 +74,131 @@
                 </div>
             </div>
             
-            <div class="stats-row">
-                <div class="current-results-card">
-                    <h3 class="results-title">Текущие результаты</h3>
-                    <div class="results-list">
-                        <div class="result-item">
-                            <div class="result-label">Опыт</div>
-                            <div class="result-progress">
-                                <div class="progress-bar-fill" id="expProgressFill" style="width: 0%;"></div>
-                            </div>
-                            <div class="result-percent">
-                                <span class="current-value" id="expCurrent">0</span>
-                                <span class="separator">/</span>
-                                <span class="max-value" id="expMax">100</span>
-                                <span class="unit">XP</span>
-                            </div>
-                        </div>
-                        <div class="result-item">
-                            <div class="result-label">Уровень</div>
-                            <div class="result-progress">
-                                <div class="progress-bar-fill" id="levelProgressFill" style="width: 0%;"></div>
-                            </div>
-                            <div class="result-percent">
-                                <span class="current-value" id="levelCurrent">1</span>
-                                <span class="separator">/</span>
-                                <span class="max-value" id="levelMax">10</span>
+            <!-- Объединенный блок статистики с 3 вертикальными ячейками -->
+            <div class="unified-stats-card">
+                <div class="stats-header">
+                    <h3 class="stats-title-main">Моя статистика</h3>
+                    <div class="level-badge" id="levelBadge">Уровень <span id="headerLevel">1</span></div>
+                </div>
+                
+                <div class="stats-grid-unified">
+                    <!-- Опыт -->
+                    <div class="stat-card">
+                        <div class="stat-icon">🌟</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Опыт</div>
+                            <div class="stat-value-large" id="expCurrent">0</div>
+                            <div class="progress-wrapper">
+                                <div class="progress-bar-unified">
+                                    <div class="progress-fill" id="expProgressFill" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span>0 XP</span>
+                                    <span id="expMax">100 XP</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="result-item">
-                            <div class="result-label">Прогресс по курсу</div>
-                            <div class="result-progress">
-                                <div class="progress-bar-fill" id="courseProgressFill" style="width: 0%;"></div>
-                            </div>
-                            <div class="result-percent">
-                                <span class="current-value" id="courseCurrent">0</span>
-                                <span class="separator">/</span>
-                                <span class="max-value">100</span>
-                                <span class="unit">%</span>
+                    </div>
+                    
+                    <!-- Прогресс по курсу -->
+                    <div class="stat-card">
+                        <div class="stat-icon">📚</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Прогресс по курсу</div>
+                            <div class="stat-value-large" id="courseCurrent">0<span class="small-unit">%</span></div>
+                            <div class="progress-wrapper">
+                                <div class="progress-bar-unified">
+                                    <div class="progress-fill" id="courseProgressFill" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span>0%</span>
+                                    <span>100%</span>
+                                </div>
                             </div>
                         </div>
-                        <div class="result-item">
-                            <div class="result-label">Средний балл</div>
-                            <div class="result-progress">
-                                <div class="progress-bar-fill" id="avgScoreFill" style="width: 0%;"></div>
-                            </div>
-                            <div class="result-percent">
-                                <span class="current-value" id="avgScoreCurrent">0</span>
-                                <span class="separator">/</span>
-                                <span class="max-value">100</span>
+                    </div>
+                    
+                    <!-- Средний балл -->
+                    <div class="stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Средний балл</div>
+                            <div class="stat-value-large" id="avgScoreCurrent">0<span class="small-unit">/100</span></div>
+                            <div class="progress-wrapper">
+                                <div class="progress-bar-unified">
+                                    <div class="progress-fill" id="avgScoreFill" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span>0</span>
+                                    <span>100</span>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="recent-achievements-card">
-                    <div class="achievements-header">
-                        <h4 class="achievements-title">🏆 Недавние достижения</h4>
-                        <a href="/Home/Achievements" class="achievements-link">Все достижения →</a>
+                
+                <!-- Новая строка с 3 вертикальными ячейками: достижения, XP, прогресс -->
+                <div class="stats-grid-unified stats-grid-second">
+                    <!-- Получено достижений -->
+                    <div class="stat-card">
+                        <div class="stat-icon">🏆</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Получено достижений</div>
+                            <div class="stat-value-large">
+                                <span id="unlockedAchievements">0</span><span class="small-unit">/<span id="totalAchievements">0</span></span>
+                            </div>
+                            <div class="progress-wrapper">
+                                <div class="progress-bar-unified">
+                                    <div class="progress-fill" id="achievementsProgressFill" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span>0%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="achievements-list" id="recentAchievements">
-                        <div class="loading-small">Загрузка...</div>
+                    
+                    <!-- Всего XP за достижения -->
+                    <div class="stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Всего XP за достижения</div>
+                            <div class="stat-value-large" id="totalXp">0</div>
+                            <div class="xp-bonus-text">
+                                Бонусные очки за коллекционирование
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Прогресс коллекционирования -->
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Прогресс коллекционирования</div>
+                            <div class="stat-value-large" id="achievementsProgress">0<span class="small-unit">%</span></div>
+                            <div class="progress-wrapper">
+                                <div class="progress-bar-unified">
+                                    <div class="progress-fill" id="collectionProgressFill" style="width: 0%;"></div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span>Начало</span>
+                                    <span>Мастер</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Блок с общей статистикой достижений -->
-            <div class="achievements-stats-card">
-                <h4 class="stats-subtitle">📈 Общая статистика</h4>
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <div class="stat-icon">🏅</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Всего достижений</span>
-                            <span class="stat-value" id="totalAchievements">0</span>
-                        </div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-icon">✅</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Получено</span>
-                            <span class="stat-value" id="unlockedAchievements">0</span>
-                        </div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-icon">🎯</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Прогресс</span>
-                            <span class="stat-value" id="achievementsProgress">0%</span>
-                        </div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-icon">⭐</div>
-                        <div class="stat-info">
-                            <span class="stat-label">Всего XP</span>
-                            <span class="stat-value" id="totalXp">0</span>
-                        </div>
-                    </div>
+            
+            <!-- Таблица недавних достижений -->
+            <div class="recent-achievements-table">
+                <div class="table-header">
+                    <h4>Недавние достижения</h4>
+                    <a href="/Home/Achievements" class="table-link">Все достижения →</a>
+                </div>
+                <div class="table-container" id="recentAchievementsTable">
+                    <div class="loading-small">Загрузка...</div>
                 </div>
             </div>
         </main>
@@ -222,7 +251,6 @@
                 }
             }
             
-            // Оригинальные поля без эмодзи
             const fields = [
                 { label: 'Дата регистрации:', value: user.registrationDate || 'не указана', key: 'registrationDate', editable: false },
                 { label: 'Номер телефона:', value: user.phone || 'не указан', key: 'phone', editable: true },
@@ -337,17 +365,12 @@
                 const expPercent = Math.min((stats.experience / stats.nextLevelExp) * 100, 100);
                 document.getElementById('expProgressFill').style.width = `${expPercent}%`;
                 document.getElementById('expCurrent').textContent = stats.experience;
-                document.getElementById('expMax').textContent = stats.nextLevelExp;
-                
-                const levelPercent = (stats.level / 10) * 100;
-                document.getElementById('levelProgressFill').style.width = `${levelPercent}%`;
-                document.getElementById('levelCurrent').textContent = stats.level;
-                
+                document.getElementById('expMax').textContent = `${stats.nextLevelExp} XP`;
                 document.getElementById('courseProgressFill').style.width = `${stats.courseProgress}%`;
-                document.getElementById('courseCurrent').textContent = stats.courseProgress;
-                
+                document.getElementById('courseCurrent').innerHTML = `${stats.courseProgress}<span class="small-unit">%</span>`;
                 document.getElementById('avgScoreFill').style.width = `${stats.averageScore}%`;
-                document.getElementById('avgScoreCurrent').textContent = stats.averageScore;
+                document.getElementById('avgScoreCurrent').innerHTML = `${stats.averageScore}<span class="small-unit">/100</span>`;
+                document.getElementById('headerLevel').textContent = stats.level;
                 
                 const updatedUser = JSON.parse(localStorage.getItem('user'));
                 if (updatedUser) {
@@ -365,7 +388,7 @@
             const user = loadUserData();
             if (!user) return;
             
-            const container = document.getElementById('recentAchievements');
+            const container = document.getElementById('recentAchievementsTable');
             if (!container) return;
             
             try {
@@ -374,9 +397,16 @@
                 
                 const data = await response.json();
                 
-                document.getElementById('totalAchievements').textContent = data.totalAchievements;
-                document.getElementById('unlockedAchievements').textContent = data.totalUnlocked;
-                document.getElementById('achievementsProgress').textContent = `${data.unlockedPercent}%`;
+                // Обновляем статистику достижений
+                const unlocked = data.totalUnlocked;
+                const total = data.totalAchievements;
+                const percent = data.unlockedPercent || 0;
+                
+                document.getElementById('unlockedAchievements').textContent = unlocked;
+                document.getElementById('totalAchievements').textContent = total;
+                document.getElementById('achievementsProgress').textContent = percent;
+                document.getElementById('achievementsProgressFill').style.width = `${percent}%`;
+                document.getElementById('collectionProgressFill').style.width = `${percent}%`;
                 
                 const totalXp = data.achievements
                     .filter(a => a.isUnlocked)
@@ -418,20 +448,33 @@
                         .replace(/'/g, '&#39;');
                 }
                 
-                container.innerHTML = recentAchievements.map(achievement => `
-                    <div class="achievement-item" onclick="window.location.href='/Home/Achievements'">
-                        <div class="achievement-icon-small">
-                            ${getAchievementIcon(achievement.title)}
-                        </div>
-                        <div class="achievement-info-small">
-                            <span class="achievement-name-small">${escapeHtml(achievement.title)}</span>
-                            <span class="achievement-date-small">📅 ${achievement.unlockedAt || 'Недавно'}</span>
-                        </div>
-                        <div class="achievement-points-small">
-                            ⭐ ${achievement.pointsReward} XP
-                        </div>
-                    </div>
-                `).join('');
+                container.innerHTML = `
+                    <table class="achievements-table">
+                        <thead>
+                            <tr>
+                                <th>Достижение</th>
+                                <th>Описание</th>
+                                <th>XP</th>
+                                <th>Дата</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${recentAchievements.map(achievement => `
+                                <tr onclick="window.location.href='/Home/Achievements'" style="cursor: pointer;">
+                                    <td class="achievement-cell">
+                                        <div class="achievement-icon-table">
+                                            ${getAchievementIcon(achievement.title)}
+                                        </div>
+                                        <span class="achievement-name-table">${escapeHtml(achievement.title)}</span>
+                                    </td>
+                                    <td class="desc-cell">${escapeHtml(achievement.description)}</td>
+                                    <td class="xp-cell">⭐ ${achievement.pointsReward}</td>
+                                    <td class="date-cell">📅 ${achievement.unlockedAt || 'Недавно'}</td>
+                                　　
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
                 
             } catch (error) {
                 console.error('Ошибка загрузки достижений:', error);
