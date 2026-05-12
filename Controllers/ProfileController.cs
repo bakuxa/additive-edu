@@ -16,14 +16,13 @@ namespace AdditiveEdu.Controllers
             _context = context;
         }
 
-        // DTO для обновления профиля
         public class UpdateProfileDto
         {
             public int UserId { get; set; }
             public string? Phone { get; set; }
             public string? Email { get; set; }
             public string? GroupName { get; set; }
-            public string? PhotoUrl { get; set; }  // ← добавить
+            public string? PhotoUrl { get; set; }
         }
 
         [HttpPut("update")]
@@ -69,7 +68,7 @@ namespace AdditiveEdu.Controllers
                 photoUrl = user.PhotoUrl ?? ""
             });
         }
-        // Получение данных пользователя по ID
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUser(int id)
         {
@@ -94,6 +93,61 @@ namespace AdditiveEdu.Controllers
                 groupName = user.Group?.GroupName ?? "",
                 photoUrl = user.PhotoUrl ?? "",
                 roleId = user.RoleID
+            });
+        }
+
+        public class UserStatsDto
+        {
+            public int Experience { get; set; }
+            public int Level { get; set; }
+            public int CourseProgress { get; set; }
+            public int AverageScore { get; set; }
+            public int NextLevelExp { get; set; }
+            public int CurrentLevelExp { get; set; }
+            public int ExperienceToNextLevel { get; set; }
+        }
+
+        [HttpGet("stats/{userId}")]
+        public async Task<IActionResult> GetUserStats(int userId)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                return NotFound(new { message = "Пользователь не найден" });
+            }
+
+            var rating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserID == userId);
+            
+            int experience = rating?.Experience ?? 0;
+            int level = rating?.CurrentLevel ?? 1;
+            
+            int nextLevelExp = (level) * 100;
+            int currentLevelExp = (level - 1) * 100;
+            int experienceToNextLevel = nextLevelExp - experience;
+            if (experienceToNextLevel < 0) experienceToNextLevel = 0;
+            
+            var totalLessons = await _context.Lessons.CountAsync();
+            var completedLessons = await _context.LessonProgresses
+                .Where(lp => lp.UserID == userId && lp.IsCompleted == true)
+                .CountAsync();
+            
+            int courseProgress = totalLessons > 0 ? (int)((double)completedLessons / totalLessons * 100) : 0;
+            
+            // ===== РАСКОММЕНТИРОВАНО ДЛЯ СРЕДНЕГО БАЛЛА =====
+            var taskResults = await _context.TaskResults
+                .Where(tr => tr.UserID == userId)
+                .ToListAsync();
+            int averageScore = taskResults.Any() ? (int)taskResults.Average(tr => tr.Score) : 0;
+            
+            return Ok(new UserStatsDto
+            {
+                Experience = experience,
+                Level = level,
+                CourseProgress = courseProgress,
+                AverageScore = averageScore,
+                NextLevelExp = nextLevelExp,
+                CurrentLevelExp = currentLevelExp,
+                ExperienceToNextLevel = experienceToNextLevel
             });
         }
     }

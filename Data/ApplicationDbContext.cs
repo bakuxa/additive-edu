@@ -16,6 +16,9 @@ namespace AdditiveEdu.Data
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<Achievement> Achievements { get; set; }
         public DbSet<UserAchievement> UserAchievements { get; set; }
+       public DbSet<Lesson> Lessons { get; set; }                    // ← добавить
+        public DbSet<LessonProgress> LessonProgresses { get; set; }   // ← добавить
+        public DbSet<TaskResult> TaskResults { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -23,8 +26,7 @@ namespace AdditiveEdu.Data
 
             modelBuilder.Entity<Role>().HasData(
                 new Role { RoleID = 1, RoleName = "Студент" },
-                new Role { RoleID = 2, RoleName = "Преподаватель" },
-                new Role { RoleID = 3, RoleName = "Администратор" }
+                new Role { RoleID = 2, RoleName = "Преподаватель" }
             );
         }
     }

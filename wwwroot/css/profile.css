@@ -24,7 +24,7 @@ body {
     overflow: hidden;
 }
 
-/* ========== ВЕКТОРЫ (только они с absolute) ========== */
+/* ========== ВЕКТОРЫ ========== */
 .vector-bg {
     position: absolute;
     width: 871px;
@@ -47,6 +47,7 @@ body {
     left: 683px;
     top: -100px;
 }
+
 /* ========== БОКОВОЕ МЕНЮ ========== */
 .sidebar {
     position: relative;
@@ -184,6 +185,7 @@ body {
     width: 20px;
     height: 20px;
 }
+
 /* Карточка профиля */
 .profile-card {
     position: relative;
@@ -196,7 +198,7 @@ body {
     margin-bottom: 25px;
 }
 
-/* Кнопка редактирования в правом верхнем углу */
+/* Кнопка редактирования */
 .edit-profile-btn {
     position: absolute;
     top: 20px;
@@ -286,7 +288,9 @@ body {
 
 .status-active {
     color: #029FA4;
-}/* ========== ТЕКУЩИЕ РЕЗУЛЬТАТЫ ========== */
+}
+
+/* ========== ТЕКУЩИЕ РЕЗУЛЬТАТЫ ========== */
 .stats-row {
     display: flex;
     gap: 25px;
@@ -320,7 +324,6 @@ body {
     gap: 18px;
 }
 
-/* ИСПРАВЛЕНО: убираем flex-wrap, фиксируем ширину колонок */
 .result-item {
     display: flex;
     align-items: center;
@@ -357,7 +360,6 @@ body {
     border-radius: 5px 0 0 5px;
 }
 
-/* ИСПРАВЛЕНО: фиксированная ширина для значений */
 .result-percent {
     font-family: 'Poppins', sans-serif;
     font-weight: 600;
@@ -393,146 +395,6 @@ body {
     opacity: 0.5;
 }
 
-/* ========== ДОСТИЖЕНИЯ ========== */
-.achievements-title {
-    font-family: 'Nunito', sans-serif;
-    font-weight: 700;
-    font-size: 20px;
-    line-height: 40px;
-    letter-spacing: 0.5px;
-    color: #21383E;
-    margin-bottom: 20px;
-}
-
-.achievements-list {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.achievement-item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.achievement-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.achievement-name {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 26px;
-    letter-spacing: 0.5px;
-    color: #21383E;
-    opacity: 0.7;
-}
-
-.achievement-value {
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 26px;
-    letter-spacing: 0.5px;
-    color: #029FA3;
-}
-
-.achievement-progress {
-    width: 100%;
-    height: 10px;
-    background: #E8EEEE;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.achievement-progress .progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #9AEFEE 0%, #029FA3 100%);
-    border-radius: 10px;
-}
-
-
-.edit-input {
-    border: 1px solid #029FA3;
-    border-radius: 8px;
-    padding: 6px 12px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    width: 250px;
-    background: #fff;
-}
-
-.edit-actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 15px;
-    justify-content: flex-end;
-}
-
-.save-btn, .cancel-btn {
-    padding: 8px 25px;
-    border-radius: 8px;
-    font-family: 'Poppins', sans-serif;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-}
-
-.save-btn {
-    background: linear-gradient(135deg, #029FA3, #8ED1D1);
-    color: white;
-}
-
-.save-btn:hover {
-    transform: scale(1.05);
-    opacity: 0.9;
-}
-
-.cancel-btn {
-    background: #e0e0e0;
-    color: #333;
-}
-
-.cancel-btn:hover {
-    background: #ccc;
-}
-
-.edit-profile-btn.editing {
-    background: rgba(2, 159, 164, 0.2);
-}
-
-.custom-toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: linear-gradient(135deg, #029FA3, #8ED1D1);
-    color: white;
-    padding: 12px 24px;
-    border-radius: 12px;
-    font-family: 'Poppins', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 9999;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
 .edit-input {
     border: 1px solid #029FA3;
     border-radius: 8px;
@@ -638,4 +500,158 @@ body {
 .modal-ok-btn:hover {
     transform: scale(1.05);
     opacity: 0.9;
+}
+
+/* ========== КАРТОЧКА НЕДАВНИХ ДОСТИЖЕНИЙ ========== */
+.recent-achievements-card {
+    background: #FFFFFF;
+    border-radius: 30px;
+    padding: 20px 25px;
+    box-shadow: 0px 8.6px 8.6px rgba(47, 65, 88, 0.25);
+    width: 100%;
+    max-width: 460px;
+}
+
+/* ========== БЛОК ОБЩЕЙ СТАТИСТИКИ ========== */
+.achievements-stats-card {
+    background: #FFFFFF;
+    border-radius: 30px;
+    padding: 20px 25px;
+    box-shadow: 0px 8.6px 8.6px rgba(47, 65, 88, 0.25);
+    margin-top: 25px;
+    width: 100%;
+}
+
+.stats-subtitle {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #21383E;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+}
+
+.stat-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    background: #F8F9FA;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+}
+
+.stat-box:hover {
+    background: #F0FCFC;
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    font-size: 28px;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.stat-label {
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    color: #8A9AA5;
+}
+
+.stat-value {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    color: #029FA4;
+}
+
+
+
+/* ========== НОВЫЕ СТИЛИ ДЛЯ ДОСТИЖЕНИЙ В ПРОФИЛЕ ========== */
+.achievements-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.achievements-link {
+    font-family: 'Poppins', sans-serif;
+    font-size: 12px;
+    color: #029FA4;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.achievements-link:hover {
+    color: #8ED1D1;
+    transform: translateX(3px);
+}
+
+.achievement-icon-small {
+    width: 45px;
+    height: 45px;
+    background: linear-gradient(135deg, #E8F4F4 0%, #D0E8E8 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.achievement-info-small {
+    flex: 1;
+}
+
+.achievement-name-small {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: #21383E;
+    display: block;
+    margin-bottom: 4px;
+}
+
+.achievement-date-small {
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    color: #8A9AA5;
+}
+
+.achievement-points-small {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 12px;
+    color: #FF9800;
+    background: #FFF8E1;
+    padding: 4px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.loading-small {
+    text-align: center;
+    padding: 30px;
+    color: #8A9AA5;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+}
+
+.empty-achievements {
+    text-align: center;
+    padding: 30px;
+    color: #8A9AA5;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
 }

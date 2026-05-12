@@ -81,33 +81,33 @@
                         <div class="result-item">
                             <div class="result-label">Опыт</div>
                             <div class="result-progress">
-                                <div class="progress-bar-fill" style="width: 70%;"></div>
+                                <div class="progress-bar-fill" id="expProgressFill" style="width: 0%;"></div>
                             </div>
                             <div class="result-percent">
-                                <span class="current-value">1540</span>
+                                <span class="current-value" id="expCurrent">0</span>
                                 <span class="separator">/</span>
-                                <span class="max-value">2000</span>
+                                <span class="max-value" id="expMax">100</span>
                                 <span class="unit">XP</span>
                             </div>
                         </div>
                         <div class="result-item">
                             <div class="result-label">Уровень</div>
                             <div class="result-progress">
-                                <div class="progress-bar-fill" style="width: 30%;"></div>
+                                <div class="progress-bar-fill" id="levelProgressFill" style="width: 0%;"></div>
                             </div>
                             <div class="result-percent">
-                                <span class="current-value">3</span>
+                                <span class="current-value" id="levelCurrent">1</span>
                                 <span class="separator">/</span>
-                                <span class="max-value">10</span>
+                                <span class="max-value" id="levelMax">10</span>
                             </div>
                         </div>
                         <div class="result-item">
                             <div class="result-label">Прогресс по курсу</div>
                             <div class="result-progress">
-                                <div class="progress-bar-fill" style="width: 32%;"></div>
+                                <div class="progress-bar-fill" id="courseProgressFill" style="width: 0%;"></div>
                             </div>
                             <div class="result-percent">
-                                <span class="current-value">32</span>
+                                <span class="current-value" id="courseCurrent">0</span>
                                 <span class="separator">/</span>
                                 <span class="max-value">100</span>
                                 <span class="unit">%</span>
@@ -116,10 +116,10 @@
                         <div class="result-item">
                             <div class="result-label">Средний балл</div>
                             <div class="result-progress">
-                                <div class="progress-bar-fill" style="width: 77%;"></div>
+                                <div class="progress-bar-fill" id="avgScoreFill" style="width: 0%;"></div>
                             </div>
                             <div class="result-percent">
-                                <span class="current-value">77</span>
+                                <span class="current-value" id="avgScoreCurrent">0</span>
                                 <span class="separator">/</span>
                                 <span class="max-value">100</span>
                             </div>
@@ -127,35 +127,47 @@
                     </div>
                 </div>
 
-                <div class="achievements-card">
-                    <h4 class="achievements-title">Достижения:</h4>
-                    <div class="achievements-list">
-                        <div class="achievement-item">
-                            <div class="achievement-info">
-                                <span class="achievement-name">Начинающий</span>
-                                <span class="achievement-value">30%</span>
-                            </div>
-                            <div class="achievement-progress">
-                                <div class="progress-bar" style="width: 30%"></div>
-                            </div>
+                <div class="recent-achievements-card">
+                    <div class="achievements-header">
+                        <h4 class="achievements-title">🏆 Недавние достижения</h4>
+                        <a href="/Home/Achievements" class="achievements-link">Все достижения →</a>
+                    </div>
+                    <div class="achievements-list" id="recentAchievements">
+                        <div class="loading-small">Загрузка...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Блок с общей статистикой достижений -->
+            <div class="achievements-stats-card">
+                <h4 class="stats-subtitle">📈 Общая статистика</h4>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-icon">🏅</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Всего достижений</span>
+                            <span class="stat-value" id="totalAchievements">0</span>
                         </div>
-                        <div class="achievement-item">
-                            <div class="achievement-info">
-                                <span class="achievement-name">Знаток</span>
-                                <span class="achievement-value">60%</span>
-                            </div>
-                            <div class="achievement-progress">
-                                <div class="progress-bar" style="width: 60%"></div>
-                            </div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Получено</span>
+                            <span class="stat-value" id="unlockedAchievements">0</span>
                         </div>
-                        <div class="achievement-item">
-                            <div class="achievement-info">
-                                <span class="achievement-name">Эксперт</span>
-                                <span class="achievement-value">20%</span>
-                            </div>
-                            <div class="achievement-progress">
-                                <div class="progress-bar" style="width: 20%"></div>
-                            </div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Прогресс</span>
+                            <span class="stat-value" id="achievementsProgress">0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-info">
+                            <span class="stat-label">Всего XP</span>
+                            <span class="stat-value" id="totalXp">0</span>
                         </div>
                     </div>
                 </div>
@@ -163,7 +175,7 @@
         </main>
     </div>
 
-   <script>
+    <script>
         let currentUser = null;
         let isEditing = false;
         let originalUserData = null;
@@ -210,6 +222,7 @@
                 }
             }
             
+            // Оригинальные поля без эмодзи
             const fields = [
                 { label: 'Дата регистрации:', value: user.registrationDate || 'не указана', key: 'registrationDate', editable: false },
                 { label: 'Номер телефона:', value: user.phone || 'не указан', key: 'phone', editable: true },
@@ -311,13 +324,130 @@
             }
         }
 
+        async function loadUserStats() {
+            const user = loadUserData();
+            if (!user) return;
+            
+            try {
+                const response = await fetch(`/api/profile/stats/${user.userId}`);
+                if (!response.ok) throw new Error('Ошибка загрузки статистики');
+                
+                const stats = await response.json();
+                
+                const expPercent = Math.min((stats.experience / stats.nextLevelExp) * 100, 100);
+                document.getElementById('expProgressFill').style.width = `${expPercent}%`;
+                document.getElementById('expCurrent').textContent = stats.experience;
+                document.getElementById('expMax').textContent = stats.nextLevelExp;
+                
+                const levelPercent = (stats.level / 10) * 100;
+                document.getElementById('levelProgressFill').style.width = `${levelPercent}%`;
+                document.getElementById('levelCurrent').textContent = stats.level;
+                
+                document.getElementById('courseProgressFill').style.width = `${stats.courseProgress}%`;
+                document.getElementById('courseCurrent').textContent = stats.courseProgress;
+                
+                document.getElementById('avgScoreFill').style.width = `${stats.averageScore}%`;
+                document.getElementById('avgScoreCurrent').textContent = stats.averageScore;
+                
+                const updatedUser = JSON.parse(localStorage.getItem('user'));
+                if (updatedUser) {
+                    updatedUser.experience = stats.experience;
+                    updatedUser.level = stats.level;
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
+                
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        async function loadRecentAchievements() {
+            const user = loadUserData();
+            if (!user) return;
+            
+            const container = document.getElementById('recentAchievements');
+            if (!container) return;
+            
+            try {
+                const response = await fetch(`/api/AchievementsApi/user/${user.userId}`);
+                if (!response.ok) throw new Error('Ошибка загрузки достижений');
+                
+                const data = await response.json();
+                
+                document.getElementById('totalAchievements').textContent = data.totalAchievements;
+                document.getElementById('unlockedAchievements').textContent = data.totalUnlocked;
+                document.getElementById('achievementsProgress').textContent = `${data.unlockedPercent}%`;
+                
+                const totalXp = data.achievements
+                    .filter(a => a.isUnlocked)
+                    .reduce((sum, a) => sum + a.pointsReward, 0);
+                document.getElementById('totalXp').textContent = totalXp;
+                
+                const unlockedAchievements = data.achievements.filter(a => a.isUnlocked);
+                const recentAchievements = unlockedAchievements.slice(-5).reverse();
+                
+                if (recentAchievements.length === 0) {
+                    container.innerHTML = '<div class="empty-achievements">✨ Нет полученных достижений<br>Пройдите уроки, чтобы открыть их!</div>';
+                    return;
+                }
+                
+                function getAchievementIcon(title) {
+                    const iconMap = {
+                        'Первый слой': '🎯',
+                        'Знаток FDM': '🏆',
+                        'Мастер настройки': '⚙️',
+                        'Мастер 3D-печати': '🖨️',
+                        'Сравнительный аналитик': '📊',
+                        'Активный ученик': '📚',
+                        'Эксперт FDM': '⭐',
+                        'Путешественник': '🗺️',
+                        'Быстрый старт': '🚀',
+                        'Любознательный': '🔍',
+                        'Лидер рейтинга': '👑'
+                    };
+                    return iconMap[title] || '🏅';
+                }
+                
+                function escapeHtml(str) {
+                    if (!str) return '';
+                    return str
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;')
+                        .replace(/"/g, '&quot;')
+                        .replace(/'/g, '&#39;');
+                }
+                
+                container.innerHTML = recentAchievements.map(achievement => `
+                    <div class="achievement-item" onclick="window.location.href='/Home/Achievements'">
+                        <div class="achievement-icon-small">
+                            ${getAchievementIcon(achievement.title)}
+                        </div>
+                        <div class="achievement-info-small">
+                            <span class="achievement-name-small">${escapeHtml(achievement.title)}</span>
+                            <span class="achievement-date-small">📅 ${achievement.unlockedAt || 'Недавно'}</span>
+                        </div>
+                        <div class="achievement-points-small">
+                            ⭐ ${achievement.pointsReward} XP
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Ошибка загрузки достижений:', error);
+                container.innerHTML = '<div class="loading-small">Не удалось загрузить достижения</div>';
+            }
+        }
+
         const user = loadUserData();
         if (user) {
             currentUser = user;
             displayProfile(user, false);
+            loadUserStats();
+            loadRecentAchievements();
         }
         
-        document.getElementById('editProfileBtn').addEventListener('click', () => {
+        document.getElementById('editProfileBtn')?.addEventListener('click', () => {
             if (!isEditing) {
                 const freshUser = JSON.parse(localStorage.getItem('user'));
                 if (freshUser) {
@@ -328,7 +458,7 @@
             }
         });
         
-        document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        document.getElementById('cancelEditBtn')?.addEventListener('click', () => {
             if (originalUserData) {
                 isEditing = false;
                 displayProfile(originalUserData, false);
@@ -337,26 +467,24 @@
             }
         });
         
-        document.getElementById('saveProfileBtn').addEventListener('click', saveProfile);
+        document.getElementById('saveProfileBtn')?.addEventListener('click', saveProfile);
         
-        document.getElementById('logoutBtn').addEventListener('click', () => {
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
             localStorage.removeItem('user');
             window.location.href = '/Home/Index';
         });
         
-        document.getElementById('notificationBtn').addEventListener('click', () => {
+        document.getElementById('notificationBtn')?.addEventListener('click', () => {
             localStorage.removeItem('user');
             window.location.href = '/Home/Index';
         });
 
-        // Переход на страницу Рейтинг
-        document.querySelector('.nav-item:nth-child(4)').addEventListener('click', function() {
-            window.location.href = '/Home/Rating';
-        });
-
-        // Переход на страницу Достижения
-        document.querySelector('.nav-item:nth-child(3)').addEventListener('click', function() {
+        document.querySelector('.nav-item:nth-child(3)')?.addEventListener('click', function() {
             window.location.href = '/Home/Achievements';
+        });
+
+        document.querySelector('.nav-item:nth-child(4)')?.addEventListener('click', function() {
+            window.location.href = '/Home/Rating';
         });
     </script>
 </body>
