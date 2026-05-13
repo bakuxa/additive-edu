@@ -1,30 +1,39 @@
 using Microsoft.EntityFrameworkCore;
 using AdditiveEdu.Data;
+using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавление DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Добавление сервисов MVC (обязательно!)
 builder.Services.AddControllersWithViews();
-
-// Добавление контроллеров API (если есть)
 builder.Services.AddControllers();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "AdditiveEdu API",
+        Version = "v1",
+        Description = "API документация проекта AdditiveEdu"
+    });
+});
 
 var app = builder.Build();
 
-// Статические файлы (CSS, JS, изображения)
-app.UseStaticFiles();
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "AdditiveEdu API v1");
+    c.RoutePrefix = "swagger";
+});
 
-// Маршрутизация
+app.UseStaticFiles();
 app.UseRouting();
 
-// Маппинг контроллеров API
 app.MapControllers();
-
-// Маппинг MVC маршрутов
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
