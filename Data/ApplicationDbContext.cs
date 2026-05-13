@@ -16,9 +16,12 @@ namespace AdditiveEdu.Data
         public DbSet<Rating> Ratings { get; set; }
         public DbSet<Achievement> Achievements { get; set; }
         public DbSet<UserAchievement> UserAchievements { get; set; }
-       public DbSet<Lesson> Lessons { get; set; }                    // ← добавить
-        public DbSet<LessonProgress> LessonProgresses { get; set; }   // ← добавить
+       public DbSet<Lesson> Lessons { get; set; }
+        public DbSet<LessonProgress> LessonProgresses { get; set; }   
         public DbSet<TaskResult> TaskResults { get; set; }
+
+        public DbSet<Module> Modules { get; set; }
+        public DbSet<AdditiveEdu.Models.Task> Tasks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

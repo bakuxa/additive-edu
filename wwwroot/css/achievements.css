@@ -1,4 +1,3 @@
-
 * {
     margin: 0;
     padding: 0;
@@ -9,19 +8,24 @@ body {
     font-family: 'Nunito', 'Poppins', sans-serif;
     background: #FFFFFF;
     min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .page-container {
     position: relative;
     width: 100%;
-    min-height: 100vh;
+    max-width: 1280px;
+    min-height: 800px;
     background: #FFFFFF;
     margin: 0 auto;
     display: flex;
-    overflow-x: hidden;
+    overflow: hidden;
 }
 
-/* Векторы */
+/* ========== ВЕКТОРЫ ========== */
+/* ========== ВЕКТОРЫ С ПОВТОРЕНИЕМ ЧЕРЕЗ 700px ========== */
 .vector-bg {
     position: absolute;
     width: 871px;
@@ -35,27 +39,38 @@ body {
     height: 70%;
 }
 
+/* Первый вектор - повторяется каждые 700px по вертикали */
 .vector-1 {
+    position: absolute;
     left: 50px;
     top: 170px;
 }
 
+/* Второй вектор */
 .vector-2 {
+    position: absolute;
     left: 683px;
     top: -100px;
 }
 
-/* Боковое меню */
+.vector-2-repeat {
+    position: absolute;
+    left: 683px;
+    top: calc(100px + 650px);
+}
+
+/* ========== БОКОВОЕ МЕНЮ ========== */
 .sidebar {
-    position: relative;
+    position: fixed;  
+    left: 0;
+    top: 0;
     width: 275px;
+    height: 100vh; 
     background: #FFFFFF;
     box-shadow: 10px 0px 20px rgba(64, 72, 82, 0.1);
     z-index: 10;
-    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
 }
 
 .sidebar-active {
@@ -64,13 +79,13 @@ body {
     background: #029FA4;
     position: absolute;
     right: 0;
-    top: 95px;
+    top: 208px;
 }
 
 .sidebar-header {
     padding: 21px 0 0 0;
     text-align: center;
-    flex-shrink: 0;
+    flex-shrink: 0;  
 }
 
 .menu-title {
@@ -87,6 +102,7 @@ body {
     display: flex;
     flex-direction: column;
     flex: 1;
+    overflow-y: auto;  
 }
 
 .nav-item {
@@ -97,6 +113,7 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     height: 56px;
+    flex-shrink: 0;
 }
 
 .nav-item.active {
@@ -121,13 +138,11 @@ body {
     letter-spacing: 0.5px;
     color: #000000;
 }
-
 .sidebar-footer {
-    flex-shrink: 0;
+    flex-shrink: 0; 
     padding: 30px 0 40px 0;
     display: flex;
     justify-content: center;
-    margin-top: auto;
 }
 
 .footer-logo {
@@ -135,15 +150,15 @@ body {
     height: auto;
 }
 
-/* Основной контент */
+/* ========== ОСНОВНОЙ КОНТЕНТ ========== */
 .main-content {
+    margin-left: 275px; 
     flex: 1;
     padding: 0 30px 30px 30px;
     z-index: 10;
     background: transparent;
     min-height: 100vh;
 }
-
 /* Верхняя панель */
 .top-bar {
     display: flex;

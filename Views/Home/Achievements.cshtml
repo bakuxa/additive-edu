@@ -14,12 +14,15 @@
 <body>
     <div class="page-container">
         <div class="vector-bg vector-1">
-            <img src="/img/vector-bg-1.png" alt="фон" onerror="this.style.display='none'">
+            <img src="/img/vector-bg-1.png" alt="фон">
         </div>
         <div class="vector-bg vector-2">
-            <img src="/img/vector-bg-2.png" alt="фон" onerror="this.style.display='none'">
+            <img src="/img/vector-bg-2.png" alt="фон">
         </div>
-
+        <div class="vector-bg vector-2-repeat">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+        
         <aside class="sidebar">
             <div class="sidebar-active"></div>
             <div class="sidebar-header">
@@ -27,27 +30,27 @@
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-item" id="profileNav">
-                    <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon" onerror="this.style.display='none'">
+                    <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon">
                     <span>Профиль</span>
                 </div>
                 <div class="nav-item" id="coursesNav">
-                    <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon" onerror="this.style.display='none'">
+                    <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
                     <span>Мои курсы</span>
                 </div>
                 <div class="nav-item active" id="achievementsNav">
-                    <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon" onerror="this.style.display='none'">
+                    <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
                     <span>Достижения</span>
                 </div>
                 <div class="nav-item" id="ratingNav">
-                    <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon" onerror="this.style.display='none'">
+                    <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon">
                     <span>Рейтинг</span>
                 </div>
                 <div class="nav-item" id="logoutBtn">
-                    <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon" onerror="this.style.display='none'">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon">
                     <span>Выйти</span>
                 </div>
             </nav>
-            <div class="sidebar-footer" style="position: absolute; top: 620px; left: 0; right: 0; margin-top: 0;">
+            <div class="sidebar-footer">
                 <img src="/img/logo.png" alt="Логотип" class="footer-logo">
             </div>
         </aside>
@@ -416,18 +419,17 @@
         document.getElementById('coursesNav')?.addEventListener('click', () => {
             window.location.href = '/Home/Courses';
         });
-
         document.getElementById('ratingNav')?.addEventListener('click', () => {
             window.location.href = '/Home/Rating';
         });
 
         document.getElementById('logoutBtn')?.addEventListener('click', logout);
         document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
-        
+
         // Модальное окно
         document.getElementById('modalCloseBtn')?.addEventListener('click', closeModal);
         document.getElementById('modalClaimBtn')?.addEventListener('click', claimXP);
-        
+
         document.getElementById('achievementModal')?.addEventListener('click', (e) => {
             if (e.target === document.getElementById('achievementModal')) {
                 closeModal();

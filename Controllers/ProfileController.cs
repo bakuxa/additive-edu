@@ -150,5 +150,75 @@ namespace AdditiveEdu.Controllers
                 ExperienceToNextLevel = experienceToNextLevel
             });
         }
+        // DTO для данных модуля
+        public class ModuleCompetenceDto
+        {
+            public string ModuleName { get; set; }
+            public double Score { get; set; }        // 0-100%
+            public int CompletedTasks { get; set; }
+            public int TotalTasks { get; set; }
+        }
+
+        // API: /api/profile/radar/{userId}
+        [HttpGet("radar/{userId}")]
+        public async Task<IActionResult> GetUserRadarData(int userId)
+        {
+            var modules = await _context.Modules
+                .Where(m => m.IsPublished)
+                .OrderBy(m => m.ModuleNumber)
+                .ToListAsync();
+            
+            var result = new List<ModuleCompetenceDto>();
+            
+            foreach (var module in modules)
+            {
+                // Получаем все уроки модуля
+                var lessons = await _context.Lessons
+                    .Where(l => l.ModuleID == module.ModuleID)
+                    .ToListAsync();
+                
+                // Получаем все задания уроков
+                var taskIds = await _context.Tasks
+                    .Where(t => lessons.Select(l => l.LessonID).Contains(t.LessonID) && t.IsActive)
+                    .Select(t => t.TaskID)
+                    .ToListAsync();
+                
+                // Получаем результаты пользователя по этим заданиям
+                var taskResults = await _context.TaskResults
+                    .Where(tr => tr.UserID == userId && taskIds.Contains(tr.TaskID))
+                    .ToListAsync();
+                
+                // Группируем по заданию, берем максимальный балл (лучшую попытку)
+                var bestScoresByTask = taskResults
+                    .GroupBy(tr => tr.TaskID)
+                    .Select(g => g.Max(t => t.Score))
+                    .ToList();
+                
+                // Максимально возможные баллы за задания
+                var maxScores = await _context.Tasks
+                    .Where(t => taskIds.Contains(t.TaskID))
+                    .Select(t => t.MaxScore)
+                    .ToListAsync();
+                
+                double avgScore = 0;
+                if (maxScores.Any())
+                {
+                    // Сумма набранных баллов / сумма максимальных баллов * 100
+                    double userSum = bestScoresByTask.Sum();
+                    double maxSum = maxScores.Sum();
+                    avgScore = maxSum > 0 ? (userSum / maxSum) * 100 : 0;
+                }
+                
+                result.Add(new ModuleCompetenceDto
+                {
+                    ModuleName = module.ModuleTitle,
+                    Score = Math.Round(avgScore, 1),
+                    CompletedTasks = bestScoresByTask.Count,
+                    TotalTasks = maxScores.Count
+                });
+            }
+            
+            return Ok(result);
+        }
     }
 }
