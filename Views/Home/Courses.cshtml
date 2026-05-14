@@ -1,0 +1,344 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Мои курсы | Аддитивные технологии</title>
+    <link rel="stylesheet" href="/css/courses.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+
+        <aside class="sidebar">
+            <div class="sidebar-active"></div>
+            <div class="sidebar-header">
+                <h2 class="menu-title">Меню</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item" id="profileNav">
+                    <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon">
+                    <span>Профиль</span>
+                </div>
+                <div class="nav-item active" id="coursesNav">
+                    <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
+                    <span>Мои курсы</span>
+                </div>
+                <div class="nav-item" id="achievementsNav">
+                    <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
+                    <span>Достижения</span>
+                </div>
+                <div class="nav-item" id="ratingNav">
+                    <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon">
+                    <span>Рейтинг</span>
+                </div>
+                <div class="nav-item" id="logoutBtn">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon">
+                    <span>Выйти</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <img src="/img/logo.png" alt="Логотип" class="footer-logo">
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <h1 class="page-title">Мои курсы</h1>
+                <div class="logout-btn-top" id="logoutBtnTop">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти">
+                </div>
+            </div>
+
+            <!-- Глобальный прогресс -->
+            <div class="global-progress" id="globalProgress" style="display: none;">
+                <div class="global-progress-header">
+                    <span class="global-progress-title">📊 Общий прогресс обучения</span>
+                    <span class="global-progress-stats" id="globalProgressStats">0%</span>
+                </div>
+                <div class="global-progress-bar">
+                    <div class="global-progress-fill" id="globalProgressFill"></div>
+                </div>
+            </div>
+
+            <!-- Таймлайн курсов -->
+            <div class="courses-timeline" id="coursesTimeline">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Загрузка курсов...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+<script>
+    let modulesData = [];
+    let userProgress = [];
+    
+    // Ключ для хранения активного модуля
+    const ACTIVE_MODULE_KEY = 'lastActiveModule';
+
+    function loadUserData() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            window.location.href = '/Home/Login';
+            return null;
+        }
+        return user;
+    }
+
+    // Сохранить активный модуль
+    function saveActiveModule(moduleId) {
+        localStorage.setItem(ACTIVE_MODULE_KEY, moduleId);
+    }
+
+    // Получить активный модуль
+    function getActiveModule() {
+        const saved = localStorage.getItem(ACTIVE_MODULE_KEY);
+        if (saved && !isNaN(parseInt(saved))) {
+            return parseInt(saved);
+        }
+        return 1;
+    }
+
+    function getDifficultyClass(level) {
+        if (level === 1) return 'easy';
+        if (level === 2) return 'medium';
+        return 'hard';
+    }
+
+    function getDifficultyText(level) {
+        if (level === 1) return 'Начинающий';
+        if (level === 2) return 'Средний';
+        return 'Продвинутый';
+    }
+
+    function toggleModule(moduleId) {
+        const module = document.getElementById(`timeline-module-${moduleId}`);
+        module.classList.toggle('expanded');
+        if (module.classList.contains('expanded')) {
+            saveActiveModule(moduleId);
+        }
+    }
+
+    // Получить прогресс модуля из данных пользователя
+    function getModuleProgress(moduleId) {
+        const progress = userProgress.find(p => p.moduleId === moduleId);
+        return progress ? progress.progressPercent : 0;
+    }
+
+    // Получить статус урока
+    function getLessonStatus(moduleId, lessonId) {
+        const moduleProgress = userProgress.find(p => p.moduleId === moduleId);
+        if (!moduleProgress) return 'locked';
+        
+        // Здесь нужно знать, какие уроки завершены
+        // Для демонстрации используем простую логику
+        // В реальности нужно передавать список завершённых уроков из API
+        
+        // Временно: если прогресс модуля 100% - все уроки пройдены
+        if (moduleProgress.progressPercent === 100) return 'completed';
+        
+        // Заглушка: первый урок пройден, остальные нет
+        return 'pending';
+    }
+
+    async function loadUserProgress(userId) {
+        try {
+            const response = await fetch(`/api/courses/user-progress/${userId}`);
+            if (!response.ok) throw new Error('Ошибка загрузки прогресса');
+            userProgress = await response.json();
+            console.log('Прогресс пользователя:', userProgress);
+        } catch (error) {
+            console.error('Ошибка загрузки прогресса:', error);
+            userProgress = [];
+        }
+    }
+
+    async function loadCourses() {
+        const user = loadUserData();
+        if (!user) return;
+
+        const timeline = document.getElementById('coursesTimeline');
+        
+        // Сначала загружаем прогресс пользователя
+        await loadUserProgress(user.userId);
+
+        try {
+            const response = await fetch('/api/courses/modules');
+            if (!response.ok) throw new Error('Ошибка загрузки');
+
+            const modules = await response.json();
+            modulesData = modules;
+
+            if (!modules || modules.length === 0) {
+                timeline.innerHTML = '<div class="error-message">📚 Курсы пока не добавлены</div>';
+                return;
+            }
+
+            // Расчёт общего прогресса
+            let totalLessons = 0;
+            let totalCompletedLessons = 0;
+            
+            modules.forEach(module => {
+                const moduleProgress = getModuleProgress(module.moduleID);
+                const moduleTotalLessons = module.lessons.length;
+                const moduleCompletedLessons = Math.round(moduleTotalLessons * moduleProgress / 100);
+                
+                totalLessons += moduleTotalLessons;
+                totalCompletedLessons += moduleCompletedLessons;
+            });
+            
+            const globalProgress = totalLessons > 0 ? Math.round((totalCompletedLessons / totalLessons) * 100) : 0;
+            
+            const globalProgressDiv = document.getElementById('globalProgress');
+            if (globalProgress > 0) {
+                globalProgressDiv.style.display = 'block';
+                document.getElementById('globalProgressStats').textContent = `${globalProgress}%`;
+                document.getElementById('globalProgressFill').style.width = `${globalProgress}%`;
+            }
+
+            // Получаем активный модуль
+            const activeModuleId = getActiveModule();
+            const activeModuleExists = modules.some(m => m.moduleID === activeModuleId);
+            const expandedModuleId = activeModuleExists ? activeModuleId : modules[0].moduleID;
+
+            timeline.innerHTML = modules.map((module, index) => {
+                const moduleProgress = getModuleProgress(module.moduleID);
+                
+                // Определяем статус модуля
+                let moduleStatus = 'locked';
+                if (moduleProgress === 100) moduleStatus = 'completed';
+                else if (moduleProgress > 0) moduleStatus = 'current';
+                else if (index === 0) moduleStatus = 'current';
+                
+                const isExpanded = (module.moduleID === expandedModuleId);
+                
+                // Рассчитываем, какие уроки пройдены
+                const completedCount = Math.round(module.lessons.length * moduleProgress / 100);
+                
+                return `
+                    <div class="timeline-module ${moduleStatus} ${isExpanded ? 'expanded' : ''}" id="timeline-module-${module.moduleID}">
+                        <div class="timeline-dot"></div>
+                        <div class="timeline-card" onclick="toggleModule(${module.moduleID})">
+                            <div class="timeline-card-header">
+                                <div class="module-info">
+                                    <div class="module-number-panel">
+                                        Модуль ${module.moduleNumber}
+                                    </div>
+                                    <div class="module-title-section">
+                                        <div class="module-name">${escapeHtml(module.moduleTitle)}</div>
+                                        <div class="module-meta">
+                                            <span class="difficulty-tag ${getDifficultyClass(module.difficultyLevel)}">
+                                                ${getDifficultyText(module.difficultyLevel)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="module-progress">
+                                    <span class="progress-percent">${moduleProgress}%</span>
+                                    <div class="progress-bar-small">
+                                        <div class="progress-fill-small" style="width: ${moduleProgress}%"></div>
+                                    </div>
+                                </div>
+                                <div class="expand-arrow">▼</div>
+                            </div>
+                            <div class="timeline-lessons" onclick="event.stopPropagation()">
+                                ${module.lessons.map((lesson, lessonIndex) => {
+                                    // Определяем статус урока на основе прогресса модуля
+                                    let lessonStatus = 'locked';
+                                    if (lessonIndex < completedCount) {
+                                        lessonStatus = 'completed';
+                                    } else if (lessonIndex === completedCount && moduleProgress > 0 && moduleProgress < 100) {
+                                        lessonStatus = 'pending';
+                                    }
+                                    
+                                    const statusIcon = {
+                                        'completed': '✅',
+                                        'pending': '🕐',
+                                        'locked': '🔒'
+                                    }[lessonStatus];
+                                    
+                                    return `
+                                        <div class="lesson-row">
+                                            <div class="lesson-status-icon ${lessonStatus}">${statusIcon}</div>
+                                            <div class="lesson-content">
+                                                <div class="lesson-title-row">
+                                                    <span class="lesson-name">${escapeHtml(lesson.lessonTitle)}</span>
+                                                    <span class="lesson-order-badge">Урок ${lesson.lessonOrder}</span>
+                                                </div>
+                                                <div class="lesson-desc">${escapeHtml(lesson.lessonDescription || 'Нет описания')}</div>
+                                                <div class="tasks-list">
+                                                    <div class="task-pill">
+                                                        <span class="task-pill-icon">📝</span>
+                                                        <span class="task-pill-title">Тест: Проверка знаний</span>
+                                                        <span class="task-pill-score">100 XP</span>
+                                                    </div>
+                                                    <div class="task-pill">
+                                                        <span class="task-pill-icon">🎮</span>
+                                                        <span class="task-pill-title">Симулятор: Настройка принтера</span>
+                                                        <span class="task-pill-score">150 XP</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                                ${module.lessons.length === 0 ? '<div style="padding: 20px; text-align: center; color: #8A9AA5;">Уроки пока не добавлены</div>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+        } catch (error) {
+            console.error('Ошибка:', error);
+            timeline.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки курсов: ${error.message}</div>`;
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function logout() {
+        localStorage.removeItem('user');
+        window.location.href = '/Home/Index';
+    }
+
+    // Навигация
+    document.getElementById('profileNav')?.addEventListener('click', () => {
+        window.location.href = '/Home/Profile';
+    });
+
+    document.getElementById('achievementsNav')?.addEventListener('click', () => {
+        window.location.href = '/Home/Achievements';
+    });
+
+    document.getElementById('ratingNav')?.addEventListener('click', () => {
+        window.location.href = '/Home/Rating';
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+    document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
+
+    // Загрузка
+    loadCourses();
+</script>
+</body>
+</html>

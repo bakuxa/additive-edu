@@ -24,5 +24,9 @@ namespace AdditiveEdu.Models
 
         [Column("theory_content")]
         public string? TheoryContent { get; set; }
+
+        // Добавьте это навигационное свойство
+        [ForeignKey("ModuleID")]
+        public virtual Module? Module { get; set; }
     }
 }

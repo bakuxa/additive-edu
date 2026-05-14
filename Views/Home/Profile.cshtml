@@ -30,19 +30,19 @@
                 <h2 class="menu-title">Меню</h2>
             </div>
             <nav class="sidebar-nav">
-                <div class="nav-item active">
+                <div class="nav-item active" id="profileNav">
                     <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon">
                     <span>Профиль</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="coursesNav">
                     <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
                     <span>Мои курсы</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="achievementsNav">
                     <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
                     <span>Достижения</span>
                 </div>
-                <div class="nav-item">
+                <div class="nav-item" id="ratingNav">
                     <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon">
                     <span>Рейтинг</span>
                 </div>
@@ -50,6 +50,7 @@
                     <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon">
                     <span>Выйти</span>
                 </div>
+            </nav>
             </nav>
             <div class="sidebar-footer">
                 <img src="/img/logo.png" alt="Логотип" class="footer-logo">
@@ -678,6 +679,9 @@
         document.getElementById('logoutBtn')?.addEventListener('click', () => {
             localStorage.removeItem('user');
             window.location.href = '/Home/Index';
+        });
+        document.getElementById('coursesNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Courses';
         });
         
         document.getElementById('notificationBtn')?.addEventListener('click', () => {

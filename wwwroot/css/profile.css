@@ -35,14 +35,14 @@ body {
 }
 
 .vector-bg img {
-    width: 70%;
-    height: 70%;
+    width: 100%;
+    height: 100%;
 }
 
 /* Первый вектор - повторяется каждые 700px по вертикали */
 .vector-1 {
     position: absolute;
-    left: 50px;
+    left: 0px;
     top: 170px;
 }
 

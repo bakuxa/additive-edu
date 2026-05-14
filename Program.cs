@@ -26,7 +26,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "AdditiveEdu API v1");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "AdditiveEdu API");
     c.RoutePrefix = "swagger";
 });
 
