@@ -63,7 +63,7 @@
             <!-- Глобальный прогресс -->
             <div class="global-progress" id="globalProgress" style="display: none;">
                 <div class="global-progress-header">
-                    <span class="global-progress-title">📊 Общий прогресс обучения</span>
+                    <span class="global-progress-title">Общий прогресс обучения</span>
                     <span class="global-progress-stats" id="globalProgressStats">0%</span>
                 </div>
                 <div class="global-progress-bar">
@@ -164,147 +164,172 @@
         }
     }
 
-    async function loadCourses() {
-        const user = loadUserData();
-        if (!user) return;
+   async function loadCourses() {
+    const user = loadUserData();
+    if (!user) return;
 
-        const timeline = document.getElementById('coursesTimeline');
+    const timeline = document.getElementById('coursesTimeline');
+    
+    await loadUserProgress(user.userId);
+
+    try {
+        const response = await fetch('/api/courses/modules');
+        if (!response.ok) throw new Error('Ошибка загрузки');
+        const modules = await response.json();
+        modulesData = modules;
+
+        if (!modules || modules.length === 0) {
+            timeline.innerHTML = '<div class="error-message">📚 Курсы пока не добавлены</div>';
+            return;
+        }
+
+        // Загружаем задания для каждого урока
+        const tasksMap = {};
+        for (const module of modules) {
+            for (const lesson of module.lessons) {
+                try {
+                    const tasksRes = await fetch(`/api/courses/lesson-tasks/${lesson.lessonID}`);
+                    if (tasksRes.ok) {
+                        const tasks = await tasksRes.json();
+                        tasksMap[lesson.lessonID] = tasks;
+                        console.log(`Урок ${lesson.lessonID} (${lesson.lessonTitle}): ${tasks.length} заданий`);
+                    } else {
+                        tasksMap[lesson.lessonID] = [];
+                    }
+                } catch (e) {
+                    console.error('Ошибка загрузки заданий:', e);
+                    tasksMap[lesson.lessonID] = [];
+                }
+            }
+        }
+
+        // Расчёт общего прогресса
+        let totalLessons = 0;
+        let totalCompletedLessons = 0;
         
-        // Сначала загружаем прогресс пользователя
-        await loadUserProgress(user.userId);
-
-        try {
-            const response = await fetch('/api/courses/modules');
-            if (!response.ok) throw new Error('Ошибка загрузки');
-
-            const modules = await response.json();
-            modulesData = modules;
-
-            if (!modules || modules.length === 0) {
-                timeline.innerHTML = '<div class="error-message">📚 Курсы пока не добавлены</div>';
-                return;
-            }
-
-            // Расчёт общего прогресса
-            let totalLessons = 0;
-            let totalCompletedLessons = 0;
+        modules.forEach(module => {
+            const moduleProgress = getModuleProgress(module.moduleID);
+            const moduleTotalLessons = module.lessons.length;
+            const moduleCompletedLessons = Math.round(moduleTotalLessons * moduleProgress / 100);
             
-            modules.forEach(module => {
-                const moduleProgress = getModuleProgress(module.moduleID);
-                const moduleTotalLessons = module.lessons.length;
-                const moduleCompletedLessons = Math.round(moduleTotalLessons * moduleProgress / 100);
-                
-                totalLessons += moduleTotalLessons;
-                totalCompletedLessons += moduleCompletedLessons;
-            });
-            
-            const globalProgress = totalLessons > 0 ? Math.round((totalCompletedLessons / totalLessons) * 100) : 0;
-            
-            const globalProgressDiv = document.getElementById('globalProgress');
-            if (globalProgress > 0) {
-                globalProgressDiv.style.display = 'block';
-                document.getElementById('globalProgressStats').textContent = `${globalProgress}%`;
-                document.getElementById('globalProgressFill').style.width = `${globalProgress}%`;
-            }
+            totalLessons += moduleTotalLessons;
+            totalCompletedLessons += moduleCompletedLessons;
+        });
+        
+        const globalProgress = totalLessons > 0 ? Math.round((totalCompletedLessons / totalLessons) * 100) : 0;
+        
+        const globalProgressDiv = document.getElementById('globalProgress');
+        if (globalProgress > 0) {
+            globalProgressDiv.style.display = 'block';
+            document.getElementById('globalProgressStats').textContent = `${globalProgress}%`;
+            document.getElementById('globalProgressFill').style.width = `${globalProgress}%`;
+        }
 
-            // Получаем активный модуль
-            const activeModuleId = getActiveModule();
-            const activeModuleExists = modules.some(m => m.moduleID === activeModuleId);
-            const expandedModuleId = activeModuleExists ? activeModuleId : modules[0].moduleID;
+        const activeModuleId = getActiveModule();
+        const activeModuleExists = modules.some(m => m.moduleID === activeModuleId);
+        const expandedModuleId = activeModuleExists ? activeModuleId : modules[0].moduleID;
 
-            timeline.innerHTML = modules.map((module, index) => {
-                const moduleProgress = getModuleProgress(module.moduleID);
-                
-                // Определяем статус модуля
-                let moduleStatus = 'locked';
-                if (moduleProgress === 100) moduleStatus = 'completed';
-                else if (moduleProgress > 0) moduleStatus = 'current';
-                else if (index === 0) moduleStatus = 'current';
-                
-                const isExpanded = (module.moduleID === expandedModuleId);
-                
-                // Рассчитываем, какие уроки пройдены
-                const completedCount = Math.round(module.lessons.length * moduleProgress / 100);
-                
-                return `
-                    <div class="timeline-module ${moduleStatus} ${isExpanded ? 'expanded' : ''}" id="timeline-module-${module.moduleID}">
-                        <div class="timeline-dot"></div>
-                        <div class="timeline-card" onclick="toggleModule(${module.moduleID})">
-                            <div class="timeline-card-header">
-                                <div class="module-info">
-                                    <div class="module-number-panel">
-                                        Модуль ${module.moduleNumber}
-                                    </div>
-                                    <div class="module-title-section">
-                                        <div class="module-name">${escapeHtml(module.moduleTitle)}</div>
-                                        <div class="module-meta">
-                                            <span class="difficulty-tag ${getDifficultyClass(module.difficultyLevel)}">
-                                                ${getDifficultyText(module.difficultyLevel)}
-                                            </span>
-                                        </div>
+        timeline.innerHTML = modules.map((module, index) => {
+            const moduleProgress = getModuleProgress(module.moduleID);
+            
+            let moduleStatus = 'locked';
+            if (moduleProgress === 100) moduleStatus = 'completed';
+            else if (moduleProgress > 0) moduleStatus = 'current';
+            else if (index === 0) moduleStatus = 'current';
+            
+            const isExpanded = (module.moduleID === expandedModuleId);
+            const completedCount = Math.round(module.lessons.length * moduleProgress / 100);
+            
+            return `
+                <div class="timeline-module ${moduleStatus} ${isExpanded ? 'expanded' : ''}" id="timeline-module-${module.moduleID}">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card" onclick="toggleModule(${module.moduleID})">
+                        <div class="timeline-card-header">
+                            <div class="module-info">
+                                <div class="module-number-panel">Модуль ${module.moduleNumber}</div>
+                                <div class="module-title-section">
+                                    <div class="module-name">${escapeHtml(module.moduleTitle)}</div>
+                                    <div class="module-meta">
+                                        <span class="difficulty-tag ${getDifficultyClass(module.difficultyLevel)}">${getDifficultyText(module.difficultyLevel)}</span>
                                     </div>
                                 </div>
-                                <div class="module-progress">
-                                    <span class="progress-percent">${moduleProgress}%</span>
-                                    <div class="progress-bar-small">
-                                        <div class="progress-fill-small" style="width: ${moduleProgress}%"></div>
-                                    </div>
-                                </div>
-                                <div class="expand-arrow">▼</div>
                             </div>
-                            <div class="timeline-lessons" onclick="event.stopPropagation()">
-                                ${module.lessons.map((lesson, lessonIndex) => {
-                                    // Определяем статус урока на основе прогресса модуля
-                                    let lessonStatus = 'locked';
-                                    if (lessonIndex < completedCount) {
-                                        lessonStatus = 'completed';
-                                    } else if (lessonIndex === completedCount && moduleProgress > 0 && moduleProgress < 100) {
-                                        lessonStatus = 'pending';
-                                    }
-                                    
-                                    const statusIcon = {
-                                        'completed': '✅',
-                                        'pending': '🕐',
-                                        'locked': '🔒'
-                                    }[lessonStatus];
-                                    
-                                    return `
-                                        <div class="lesson-row">
-                                            <div class="lesson-status-icon ${lessonStatus}">${statusIcon}</div>
-                                            <div class="lesson-content">
-                                                <div class="lesson-title-row">
-                                                    <span class="lesson-name">${escapeHtml(lesson.lessonTitle)}</span>
-                                                    <span class="lesson-order-badge">Урок ${lesson.lessonOrder}</span>
-                                                </div>
-                                                <div class="lesson-desc">${escapeHtml(lesson.lessonDescription || 'Нет описания')}</div>
-                                                <div class="tasks-list">
-                                                    <div class="task-pill">
-                                                        <span class="task-pill-icon">📝</span>
-                                                        <span class="task-pill-title">Тест: Проверка знаний</span>
-                                                        <span class="task-pill-score">100 XP</span>
-                                                    </div>
-                                                    <div class="task-pill">
-                                                        <span class="task-pill-icon">🎮</span>
-                                                        <span class="task-pill-title">Симулятор: Настройка принтера</span>
-                                                        <span class="task-pill-score">150 XP</span>
-                                                    </div>
-                                                </div>
+                            <div class="module-progress">
+                                <span class="progress-percent">${moduleProgress}%</span>
+                                <div class="progress-bar-small">
+                                    <div class="progress-fill-small" style="width: ${moduleProgress}%"></div>
+                                </div>
+                            </div>
+                            <div class="expand-arrow">▼</div>
+                        </div>
+                        <div class="timeline-lessons" onclick="event.stopPropagation()">
+                            ${module.lessons.map((lesson, lessonIndex) => {
+                                let lessonStatus = 'locked';
+                                if (lessonIndex < completedCount) {
+                                    lessonStatus = 'completed';
+                                } else if (lessonIndex === completedCount && moduleProgress > 0 && moduleProgress < 100) {
+                                    lessonStatus = 'pending';
+                                }
+                                
+                                const statusIcon = {
+                                    'completed': '✅',
+                                    'pending': '🕐',
+                                    'locked': '🔒'
+                                }[lessonStatus];
+                                
+                                const tasks = tasksMap[lesson.lessonID] || [];
+                                
+                                return `
+                                    <div class="lesson-row" onclick="window.location.href='/Home/Lesson/${lesson.lessonID}'" style="cursor: pointer;">
+                                        <div class="lesson-status-icon ${lessonStatus}">${statusIcon}</div>
+                                        <div class="lesson-content">
+                                            <div class="lesson-title-row">
+                                                <span class="lesson-name">${escapeHtml(lesson.lessonTitle)}</span>
+                                                <span class="lesson-order-badge">Урок ${lesson.lessonOrder}</span>
+                                            </div>
+                                            <div class="lesson-desc">${escapeHtml(lesson.lessonDescription || 'Нет описания')}</div>
+                                            <div class="tasks-list">
+                                                ${tasks.map(task => {
+                                                    let taskIcon = '📝';
+                                                    let taskTypeClass = '';
+                                                    
+                                                    if (task.typeName === 'Тест') {
+                                                        taskIcon = '📝';
+                                                        taskTypeClass = 'test';
+                                                    } else if (task.typeName === 'Симулятор') {
+                                                        taskIcon = '🎮';
+                                                        taskTypeClass = 'simulator';
+                                                    } else if (task.typeName === 'Квест') {
+                                                        taskIcon = '🗺️';
+                                                        taskTypeClass = 'quest';
+                                                    }
+                                                    
+                                                    return `
+                                                        <div class="task-pill ${taskTypeClass}" onclick="event.stopPropagation(); window.location.href='/Home/Lesson/${lesson.lessonID}'">
+                                                            <span class="task-pill-icon">${taskIcon}</span>
+                                                            <span class="task-pill-title">${escapeHtml(task.taskTitle)}</span>
+                                                            <span class="task-pill-score">${task.maxScore} XP</span>
+                                                        </div>
+                                                    `;
+                                                }).join('')}
+                                                ${tasks.length === 0 ? '<span class="no-tasks">Нет заданий</span>' : ''}
                                             </div>
                                         </div>
-                                    `;
-                                }).join('')}
-                                ${module.lessons.length === 0 ? '<div style="padding: 20px; text-align: center; color: #8A9AA5;">Уроки пока не добавлены</div>' : ''}
-                            </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                            ${module.lessons.length === 0 ? '<div style="padding: 20px; text-align: center; color: #8A9AA5;">Уроки пока не добавлены</div>' : ''}
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `;
+        }).join('');
 
-        } catch (error) {
-            console.error('Ошибка:', error);
-            timeline.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки курсов: ${error.message}</div>`;
-        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        timeline.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки курсов: ${error.message}</div>`;
     }
+}
 
     function escapeHtml(str) {
         if (!str) return '';

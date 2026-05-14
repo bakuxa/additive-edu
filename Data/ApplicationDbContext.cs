@@ -22,6 +22,9 @@ namespace AdditiveEdu.Data
 
         public DbSet<Module> Modules { get; set; }
         public DbSet<AdditiveEdu.Models.Task> Tasks { get; set; }
+         public DbSet<AdditiveEdu.Models.Type> Types { get; set; }
+        public DbSet<Question> Questions { get; set; }
+        public DbSet<Answer> Answers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

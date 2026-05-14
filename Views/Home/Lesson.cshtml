@@ -1,0 +1,280 @@
+@{
+    Layout = null;
+    var lessonId = ViewBag.LessonId;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Урок | Аддитивные технологии</title>
+    <link rel="stylesheet" href="/css/lesson.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2 class="menu-title">Меню</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <div class="nav-item" id="profileNav">
+                    <img src="/img/icon/profile-icon.png" alt="Профиль" class="nav-icon">
+                    <span>Профиль</span>
+                </div>
+                <div class="nav-item" id="coursesNav">
+                    <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
+                    <span>Мои курсы</span>
+                </div>
+                <div class="nav-item" id="achievementsNav">
+                    <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
+                    <span>Достижения</span>
+                </div>
+                <div class="nav-item" id="ratingNav">
+                    <img src="/img/icon/rating-icon.png" alt="Рейтинг" class="nav-icon">
+                    <span>Рейтинг</span>
+                </div>
+                <div class="nav-item" id="logoutBtn">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти" class="nav-icon">
+                    <span>Выйти</span>
+                </div>
+            </nav>
+            <div class="sidebar-footer">
+                <img src="/img/logo.png" alt="Логотип" class="footer-logo">
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="top-bar">
+                <h1 class="page-title" id="pageTitle">Загрузка...</h1>
+                <a href="/Home/Courses" class="back-link">← Назад к курсам</a>
+            </div>
+
+            <div id="lessonContent">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Загрузка урока...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const lessonId = @lessonId;
+        let allQuestions = [];
+        let userAnswers = {};
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
+            }
+            return user;
+        }
+
+        async function loadLesson() {
+            const user = loadUserData();
+            if (!user) return;
+
+            const container = document.getElementById('lessonContent');
+
+            try {
+                const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
+                if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
+                const lesson = await lessonResponse.json();
+                
+                const moduleTitle = lesson.module?.moduleTitle || 'Модуль';
+                const moduleNumber = lesson.module?.moduleNumber || '?';
+                
+                document.getElementById('pageTitle').textContent = lesson.lessonTitle;
+
+                const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
+                const tasks = await tasksResponse.json();
+                
+                let allQuestionsList = [];
+                
+                for (const task of tasks) {
+                    const questionsResponse = await fetch(`/api/lesson/task/${task.taskID}/questions`);
+                    const questions = await questionsResponse.json();
+                    allQuestionsList.push(...questions.map(q => ({ ...q, taskId: task.taskID, lessonId: lessonId })));
+                }
+                allQuestions = allQuestionsList;
+
+                container.innerHTML = `
+                    <div class="lesson-container">
+                        <div class="module-breadcrumb">
+                            Модуль ${moduleNumber}: ${moduleTitle}
+                        </div>
+                        <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                        ${lesson.theoryContent ? `
+                            <div class="theory-content">
+                                ${lesson.theoryContent}
+                            </div>
+                        ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
+                        <div class="tasks-section">
+                            <h2 class="tasks-title">📝 Вопросы теста</h2>
+                            <div id="questionsContainer"></div>
+                            <div class="finish-btn-container">
+                                <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                renderQuestions();
+
+            } catch (error) {
+                console.error('Ошибка:', error);
+                container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
+            }
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            
+            container.innerHTML = allQuestions.map((q, idx) => `
+                <div class="question-item" data-question-id="${q.questionID}" data-task-id="${q.taskId}">
+                    <div class="question-text">${idx + 1}. ${escapeHtml(q.questionText)}</div>
+                    <div class="answers-list">
+                        ${q.answers.map(answer => `
+                            <div class="answer-option" data-answer-id="${answer.answerID}" onclick="selectAnswer(this, ${q.questionID}, ${answer.answerID})">
+                                <div class="answer-radio"></div>
+                                <span class="answer-text">${escapeHtml(answer.answerText)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="result-message" style="display: none;"></div>
+                </div>
+            `).join('');
+        }
+
+        function selectAnswer(element, questionId, answerId) {
+            const questionDiv = element.closest('.question-item');
+            const allOptions = questionDiv.querySelectorAll('.answer-option');
+            allOptions.forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            userAnswers[questionId] = answerId;
+        }
+
+        async function finishTest() {
+            const user = loadUserData();
+            if (!user) return;
+            
+            const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
+            if (unansweredQuestions.length > 0) {
+                alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
+                return;
+            }
+            
+            const finishBtn = document.getElementById('finishTestBtn');
+            finishBtn.textContent = '⏳ Проверка...';
+            finishBtn.disabled = true;
+            
+            let totalScore = 0;
+            let maxScore = 0;
+            
+            for (const question of allQuestions) {
+                const selectedAnswerId = userAnswers[question.questionID];
+                const correctAnswer = question.answers.find(a => a.isCorrect);
+                const isCorrect = selectedAnswerId === correctAnswer?.answerID;
+                
+                if (isCorrect) totalScore += question.questionWeight;
+                maxScore += question.questionWeight;
+                
+                await fetch('/api/lesson/submit-answer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.userId,
+                        lessonId: lessonId,
+                        taskId: question.taskId,
+                        questionId: question.questionID,
+                        answerId: selectedAnswerId
+                    })
+                });
+                
+                highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
+            }
+            
+            document.querySelectorAll('.answer-option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
+            });
+            
+            finishBtn.textContent = '✅ Тест завершён';
+            finishBtn.disabled = true;
+            
+            alert(`Тест завершён! Результат: ${totalScore} из ${maxScore} XP (${Math.round(totalScore/maxScore*100)}%)`);
+        }
+
+        function highlightAnswers(question, selectedAnswerId, correctAnswerId) {
+            const questionDiv = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
+            if (!questionDiv) return;
+            
+            const correctAnswer = question.answers.find(a => a.answerID === correctAnswerId);
+            
+            questionDiv.querySelectorAll('.answer-option').forEach(opt => {
+                const answerId = parseInt(opt.dataset.answerId);
+                opt.style.pointerEvents = 'none';
+                if (answerId === correctAnswerId) opt.classList.add('correct-highlight');
+                if (answerId === selectedAnswerId && answerId !== correctAnswerId) opt.classList.add('wrong-highlight');
+            });
+            
+            const resultDiv = questionDiv.querySelector('.result-message');
+            resultDiv.style.display = 'block';
+            const isCorrect = selectedAnswerId === correctAnswerId;
+            resultDiv.className = `result-message ${isCorrect ? 'correct' : 'incorrect'}`;
+            
+            if (isCorrect) {
+                resultDiv.innerHTML = '✓ Правильно!';
+            } else {
+                resultDiv.innerHTML = `✗ Неправильно!<br><span style="font-size: 12px;">Правильный ответ: ${escapeHtml(correctAnswer?.answerText || '')}</span>`;
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        }
+
+        document.getElementById('profileNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Profile';
+        });
+
+        document.getElementById('coursesNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Courses';
+        });
+
+        document.getElementById('achievementsNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Achievements';
+        });
+
+        document.getElementById('ratingNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Rating';
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', logout);
+        document.getElementById('finishTestBtn')?.addEventListener('click', finishTest);
+
+        loadLesson();
+    </script>
+</body>
+</html>

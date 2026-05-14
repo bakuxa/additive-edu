@@ -33,4 +33,9 @@ public class HomeController : Controller
     {
         return View();
     }
+    public IActionResult Lesson(int id)
+    {
+        ViewBag.LessonId = id;
+        return View();
+    }
 }

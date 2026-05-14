@@ -1,117 +1,151 @@
-INSERT INTO "Role" (role_name) VALUES 
-    ('Студент'),
-    ('Преподаватель');
+-- 1. Таблица «Роль» (Role)
+CREATE TABLE "Role" (
+    RoleID SERIAL PRIMARY KEY,
+    role_name VARCHAR(20) NOT NULL UNIQUE
+);
 
-INSERT INTO "Group" (group_name) VALUES 
-    ('ЦИС-47'),
-    ('АДС-15');
+-- 2. Таблица «Группа» (Group)
+CREATE TABLE "Group" (
+    GroupID SERIAL PRIMARY KEY,
+    group_name VARCHAR(20) NOT NULL UNIQUE
+);
 
-INSERT INTO "User" (
-    email, password_hash, last_name, first_name, middle_name, 
-    role_id, registration_date, blocked, phone, photo_url, group_id
-) VALUES 
-    ('bakanova@student.ystu.ru', 'hash_bakanova123', 'Баканова', 'Юлия', 'Николаевна',
-     (SELECT RoleID FROM "Role" WHERE role_name = 'Студент'), 
-     '2025-09-01 10:00:00', FALSE, '+7(910)123-45-67', '/avatars/bakanova.jpg',
-     (SELECT GroupID FROM "Group" WHERE group_name = 'ЦИС-47')),
-    ('petrov@student.ystu.ru', 'hash_petrov123', 'Петров', 'Иван', 'Алексеевич',
-     (SELECT RoleID FROM "Role" WHERE role_name = 'Студент'), 
-     '2025-09-01 10:00:00', FALSE, '+7(910)234-56-78', '/avatars/petrov.jpg',
-     (SELECT GroupID FROM "Group" WHERE group_name = 'ЦИС-47')),
-    ('sidorova@student.ystu.ru', 'hash_sidorova123', 'Сидорова', 'Мария', 'Сергеевна',
-     (SELECT RoleID FROM "Role" WHERE role_name = 'Студент'), 
-     '2025-09-01 10:00:00', FALSE, '+7(910)345-67-89', '/avatars/sidorova.jpg',
-     (SELECT GroupID FROM "Group" WHERE group_name = 'АДС-15')),
-    ('gulyaev@ystu.ru', 'hash_gulyaev123', 'Гуляев', 'Андрей', 'Сергеевич',
-     (SELECT RoleID FROM "Role" WHERE role_name = 'Преподаватель'), 
-     '2024-08-15 09:00:00', FALSE, '+7(4852)12-34-56', '/avatars/gulyaev.jpg', NULL),
-    ('smirnova@ystu.ru', 'hash_smirnova123', 'Смирнова', 'Елена', 'Васильевна',
-     (SELECT RoleID FROM "Role" WHERE role_name = 'Преподаватель'), 
-     '2024-08-15 09:00:00', FALSE, '+7(4852)23-45-67', '/avatars/smirnova.jpg', NULL);
+-- 3. Таблица «Пользователь» (User)
+CREATE TABLE "User" (
+    UserID SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    middle_name VARCHAR(50),
+    role_id INTEGER NOT NULL REFERENCES "Role"(RoleID),
+    registration_date TIMESTAMP NOT NULL,
+    blocked BOOLEAN NOT NULL DEFAULT FALSE,
+    phone VARCHAR(20),
+    photo_url VARCHAR(400),
+    group_id INTEGER REFERENCES "Group"(GroupID)
+);
 
-INSERT INTO "Type" (type_name) VALUES 
-    ('Тест'),
-    ('Квест'),
-    ('Симулятор');
+-- 4. Таблица «Учебный модуль» (Module)
+CREATE TABLE "Module" (
+    ModuleID SERIAL PRIMARY KEY,
+    module_title VARCHAR(100) NOT NULL,
+    module_description TEXT,
+    module_number INTEGER NOT NULL,
+    difficulty_level INTEGER NOT NULL,
+    is_published BOOLEAN NOT NULL DEFAULT FALSE
+);
 
-INSERT INTO "Module" (module_title, module_description, module_number, difficulty_level, is_published) VALUES 
-    ('Введение в аддитивные технологии', 
-     'Основные понятия, история развития, классификация технологий 3D-печати', 
-     1, 1, TRUE),
-    ('FDM-печать', 
-     'Технология послойного наплавления: принцип работы, материалы, настройка параметров', 
-     2, 2, TRUE),
-    ('Фотополимерная печать (SLA/DLP)', 
-     'Стереолитография: принцип работы, смолы, области применения', 
-     3, 2, TRUE),
-    ('Лазерное спекание (SLS)', 
-     'Селективное лазерное спекание порошковых материалов', 
-     4, 3, TRUE);
+-- 5. Таблица «Урок» (Lesson)
+CREATE TABLE "Lesson" (
+    LessonID SERIAL PRIMARY KEY,
+    module_id INTEGER NOT NULL REFERENCES "Module"(ModuleID),
+    lesson_title VARCHAR(100) NOT NULL,
+    lesson_description VARCHAR(200),
+    lesson_order INTEGER NOT NULL,
+    theory_content TEXT
+);
 
-INSERT INTO "Lesson" (module_id, lesson_title, lesson_description, lesson_order, theory_content) VALUES 
-    ((SELECT ModuleID FROM "Module" WHERE module_title = 'FDM-печать'),
-     'Принцип работы FDM-принтера',
-     'Как работает экструдер, каретка, нагревательный стол',
-     1,
-     '<h3>Принцип работы FDM-принтера</h3><p>FDM — технология послойного наплавления. Пластиковая нить подается в экструдер, нагревается и выдавливается через сопло.</p>'),
-    ((SELECT ModuleID FROM "Module" WHERE module_title = 'FDM-печать'),
-     'Материалы для FDM-печати',
-     'Виды пластиков: PLA, ABS, PETG',
-     2,
-     '<h3>Материалы для FDM-печати</h3><p>PLA — биоразлагаемый пластик, простой в печати. ABS — прочный, требует подогрева стола.</p>'),
-    ((SELECT ModuleID FROM "Module" WHERE module_title = 'FDM-печать'),
-     'Настройка параметров печати',
-     'Температура, скорость, высота слоя',
-     3,
-     '<h3>Настройка параметров печати</h3><p>Температура сопла: PLA — 190–220°C, ABS — 220–250°C.</p>');
+-- 6. Таблица «Тип задания» (Type)
+CREATE TABLE "Type" (
+    TypeID SERIAL PRIMARY KEY,
+    type_name VARCHAR(20) NOT NULL UNIQUE
+);
 
-INSERT INTO "Task" (lesson_id, type_id, task_title, task_description, difficulty_level, max_score, is_active) VALUES 
-    ((SELECT LessonID FROM "Lesson" WHERE lesson_title = 'Принцип работы FDM-принтера'),
-     (SELECT TypeID FROM "Type" WHERE type_name = 'Тест'),
-     'Тест: Принцип работы FDM-принтера',
-     'Проверка знаний по устройству FDM-принтера',
-     2, 100, TRUE),
-    ((SELECT LessonID FROM "Lesson" WHERE lesson_title = 'Материалы для FDM-печати'),
-     (SELECT TypeID FROM "Type" WHERE type_name = 'Тест'),
-     'Тест: Материалы для FDM-печати',
-     'Проверка знаний о пластиках',
-     2, 100, TRUE);
+-- 7. Таблица «Задание» (Task)
+CREATE TABLE "Task" (
+    TaskID SERIAL PRIMARY KEY,
+    lesson_id INTEGER NOT NULL REFERENCES "Lesson"(LessonID),
+    type_id INTEGER NOT NULL REFERENCES "Type"(TypeID),
+    task_title VARCHAR(100) NOT NULL,
+    task_description TEXT,
+    difficulty_level INTEGER NOT NULL,
+    max_score INTEGER NOT NULL,
+    is_active BOOLEAN NOT NULL
+);
 
-INSERT INTO "Question" (task_id, question_text, question_level, question_order, question_weight) VALUES 
-    ((SELECT TaskID FROM "Task" WHERE task_title = 'Тест: Принцип работы FDM-принтера'),
-     'Что означает аббревиатура FDM?', 1, 1, 25),
-    ((SELECT TaskID FROM "Task" WHERE task_title = 'Тест: Принцип работы FDM-принтера'),
-     'Какой элемент FDM-принтера отвечает за расплавление пластика?', 1, 2, 25),
-    ((SELECT TaskID FROM "Task" WHERE task_title = 'Тест: Принцип работы FDM-принтера'),
-     'Для чего нужен нагревательный стол в FDM-принтере?', 1, 3, 25),
-    ((SELECT TaskID FROM "Task" WHERE task_title = 'Тест: Принцип работы FDM-принтера'),
-     'Какое программное обеспечение используется для подготовки G-code?', 2, 4, 25);
+-- 8. Таблица «Тестовый вопрос» (Question)
+CREATE TABLE "Question" (
+    QuestionID SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL REFERENCES "Task"(TaskID),
+    question_text TEXT NOT NULL,
+    question_level INTEGER NOT NULL,
+    question_order INTEGER NOT NULL,
+    question_weight INTEGER NOT NULL
+);
 
-INSERT INTO "Answer" (question_id, answer_text, is_correct) VALUES
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Что означает аббревиатура FDM?'), 'Fused Deposition Modeling', TRUE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Что означает аббревиатура FDM?'), 'Fast Digital Manufacturing', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Что означает аббревиатура FDM?'), 'Fiber Deposition Method', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Что означает аббревиатура FDM?'), 'Filament Direct Modeling', FALSE);
+-- 9. Таблица «Вариант ответа» (Answer)
+CREATE TABLE "Answer" (
+    AnswerID SERIAL PRIMARY KEY,
+    question_id INTEGER NOT NULL REFERENCES "Question"(QuestionID),
+    answer_text TEXT NOT NULL,
+    is_correct BOOLEAN NOT NULL DEFAULT FALSE
+);
 
-INSERT INTO "Answer" (question_id, answer_text, is_correct) VALUES
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какой элемент FDM-принтера отвечает за расплавление пластика?'), 'Экструдер (хотэнд)', TRUE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какой элемент FDM-принтера отвечает за расплавление пластика?'), 'Нагревательный стол', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какой элемент FDM-принтера отвечает за расплавление пластика?'), 'Радиатор охлаждения', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какой элемент FDM-принтера отвечает за расплавление пластика?'), 'Датчик filament', FALSE);
+-- 10. Таблица «Этап квеста» (QuestStage)
+CREATE TABLE "QuestStage" (
+    QuestStageID SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL REFERENCES "Task"(TaskID),
+    stage_title VARCHAR(100) NOT NULL,
+    stage_description TEXT,
+    stage_order INTEGER NOT NULL,
+    success_condition TEXT
+);
 
-INSERT INTO "Answer" (question_id, answer_text, is_correct) VALUES
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Для чего нужен нагревательный стол в FDM-принтере?'), 'Для улучшения адгезии и предотвращения деформации', TRUE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Для чего нужен нагревательный стол в FDM-принтере?'), 'Для быстрого охлаждения детали', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Для чего нужен нагревательный стол в FDM-принтере?'), 'Для подачи пластика в экструдер', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Для чего нужен нагревательный стол в FDM-принтере?'), 'Для автоматической калибровки сопла', FALSE);
+-- 11. Таблица «Сценарий симуляции» (Simulation)
+CREATE TABLE "Simulation" (
+    SimulationID SERIAL PRIMARY KEY,
+    task_id INTEGER NOT NULL UNIQUE REFERENCES "Task"(TaskID),
+    simulation_title VARCHAR(100) NOT NULL,
+    input_parameters TEXT,
+    expected_result TEXT,
+    evaluation_criteria TEXT
+);
 
-INSERT INTO "Answer" (question_id, answer_text, is_correct) VALUES
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какое программное обеспечение используется для подготовки G-code?'), 'Cura / PrusaSlicer', TRUE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какое программное обеспечение используется для подготовки G-code?'), 'AutoCAD', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какое программное обеспечение используется для подготовки G-code?'), 'Blender', FALSE),
-    ((SELECT QuestionID FROM "Question" WHERE question_text = 'Какое программное обеспечение используется для подготовки G-code?'), 'Photoshop', FALSE);
+-- 12. Таблица «Результат задания» (TaskResult)
+CREATE TABLE "TaskResult" (
+    ResultID SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES "User"(UserID),
+    task_id INTEGER NOT NULL REFERENCES "Task"(TaskID),
+    score INTEGER NOT NULL,
+    attempt_number INTEGER NOT NULL,
+    completion_status VARCHAR(20) NOT NULL,
+    completed_at TIMESTAMP
+);
 
-INSERT INTO "Achievement" (achievement_title, achievement_description, points_reward, condition_description) VALUES 
-    ('Первый слой', 'Завершить первый урок', 50, 'Завершить первый урок'),
-    ('Знаток FDM', 'Сдать тест по FDM-печати на 100%', 100, 'Правильно ответить на все вопросы'),
-    ('Мастер настройки', 'Достичь качества печати 90% в симуляторе', 150, 'Качество печати >= 90%');
+-- 13. Таблица «Прогресс по уроку» (LessonProgress)
+CREATE TABLE "LessonProgress" (
+    ProgressID SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES "User"(UserID),
+    lesson_id INTEGER NOT NULL REFERENCES "Lesson"(LessonID),
+    progress_percent INTEGER NOT NULL,
+    is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+    completion_status VARCHAR(20) NOT NULL
+);
+
+-- 14. Таблица «Достижение» (Achievement)
+CREATE TABLE "Achievement" (
+    AchievementID SERIAL PRIMARY KEY,
+    achievement_title VARCHAR(100) NOT NULL,
+    achievement_description TEXT,
+    points_reward INTEGER NOT NULL,
+    condition_description TEXT
+);
+
+-- 15. Таблица «Пользовательское достижение» (UserAchievement)
+CREATE TABLE "UserAchievement" (
+    UserAchievementID SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES "User"(UserID),
+    achievement_id INTEGER NOT NULL REFERENCES "Achievement"(AchievementID),
+    received_at TIMESTAMP NOT NULL
+);
+
+-- 16. Таблица «Рейтинг пользователя» (Rating)
+CREATE TABLE "Rating" (
+    RatingID SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL UNIQUE REFERENCES "User"(UserID),
+    total_score INTEGER NOT NULL DEFAULT 0,
+    current_level INTEGER NOT NULL DEFAULT 1,
+    position_in_rating INTEGER,
+    experience INTEGER NOT NULL DEFAULT 0
+);

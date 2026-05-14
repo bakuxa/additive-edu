@@ -114,6 +114,28 @@ namespace AdditiveEdu.Controllers
         
         return Ok(modulesProgress);
     }
+    // GET: api/courses/lesson-tasks/{lessonId}
+    [HttpGet("lesson-tasks/{lessonId}")]
+    public async Task<IActionResult> GetLessonTasks(int lessonId)
+    {
+        var tasks = await _context.Tasks
+            .Where(t => t.LessonID == lessonId && t.IsActive)
+            .Select(t => new
+            {
+                t.TaskID,
+                t.TaskTitle,
+                t.TaskDescription,
+                t.DifficultyLevel,
+                t.MaxScore,
+                TypeName = _context.Types
+                    .Where(typ => typ.TypeID == t.TypeID)
+                    .Select(typ => typ.TypeName)
+                    .FirstOrDefault()
+            })
+            .ToListAsync();
+
+        return Ok(tasks);
+}
     }
 
 }
