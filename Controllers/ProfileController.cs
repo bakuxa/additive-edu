@@ -126,14 +126,37 @@ namespace AdditiveEdu.Controllers
             int experienceToNextLevel = nextLevelExp - experience;
             if (experienceToNextLevel < 0) experienceToNextLevel = 0;
             
-            var totalLessons = await _context.Lessons.CountAsync();
             var completedLessons = await _context.LessonProgresses
                 .Where(lp => lp.UserID == userId && lp.IsCompleted == true)
-                .CountAsync();
+                .Select(lp => lp.LessonID)
+                .ToListAsync();
             
-            int courseProgress = totalLessons > 0 ? (int)((double)completedLessons / totalLessons * 100) : 0;
+            var allLessons = await _context.Lessons
+                .Include(l => l.Module)
+                .ToListAsync();
+        
+            var modulesProgress = allLessons
+                .GroupBy(l => new { l.ModuleID, l.Module.ModuleTitle, l.Module.ModuleNumber })
+                .Select(g => new
+                {
+                    ModuleId = g.Key.ModuleID,
+                    ModuleTitle = g.Key.ModuleTitle,
+                    ModuleNumber = g.Key.ModuleNumber,
+                    TotalLessons = g.Count(),
+                    CompletedLessons = g.Count(l => completedLessons.Contains(l.LessonID)),
+                    ProgressPercent = g.Count() > 0 
+                        ? (int)((double)g.Count(l => completedLessons.Contains(l.LessonID)) / g.Count() * 100)
+                        : 0
+                })
+                .ToList();
             
-            // ===== РАСКОММЕНТИРОВАНО ДЛЯ СРЕДНЕГО БАЛЛА =====
+            int totalLessonsAll = modulesProgress.Sum(m => m.TotalLessons);
+            int completedLessonsAll = modulesProgress.Sum(m => m.CompletedLessons);
+            
+            int courseProgress = totalLessonsAll > 0 
+            ? (int)Math.Round((double)completedLessonsAll / totalLessonsAll * 100, MidpointRounding.AwayFromZero)
+            : 0;
+            
             var taskResults = await _context.TaskResults
                 .Where(tr => tr.UserID == userId)
                 .ToListAsync();
@@ -150,16 +173,15 @@ namespace AdditiveEdu.Controllers
                 ExperienceToNextLevel = experienceToNextLevel
             });
         }
-        // DTO для данных модуля
+
         public class ModuleCompetenceDto
         {
             public string ModuleName { get; set; }
-            public double Score { get; set; }        // 0-100%
+            public double Score { get; set; }        
             public int CompletedTasks { get; set; }
             public int TotalTasks { get; set; }
         }
 
-        // API: /api/profile/radar/{userId}
         [HttpGet("radar/{userId}")]
         public async Task<IActionResult> GetUserRadarData(int userId)
         {
