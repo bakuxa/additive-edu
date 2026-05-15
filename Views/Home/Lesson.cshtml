@@ -129,6 +129,53 @@
             transform: translateY(-2px);
             opacity: 0.9;
         }
+        /* Баннер для пройденного теста */
+        .completed-banner {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #E8F8F8, #F0FCFC);
+            border-radius: 24px;
+            margin-top: 30px;
+            border: 1px solid #029FA4;
+        }
+
+        .completed-icon {
+            font-size: 64px;
+            margin-bottom: 15px;
+        }
+
+        .completed-text {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 24px;
+            color: #2ECC71;
+            margin-bottom: 10px;
+        }
+
+        .completed-score {
+            font-family: 'Poppins', sans-serif;
+            font-size: 16px;
+            color: #21383E;
+            margin-bottom: 25px;
+        }
+
+        .back-to-courses-btn {
+            background: linear-gradient(135deg, #029FA4, #8ED1D1);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .back-to-courses-btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -174,7 +221,7 @@
         <main class="main-content">
             <div class="top-bar">
                 <h1 class="page-title" id="pageTitle">Загрузка...</h1>
-                <a href="/Home/Courses" class="back-link">← Назад к курсам</a>
+                <a href="/Home/Courses" class="back-link">← Назад к обучению</a>
             </div>
 
             <div id="lessonContent">
@@ -191,7 +238,7 @@
         <div class="modal-container">
             <div class="modal-close" id="modalCloseBtn">×</div>
             <div class="modal-congrats">
-                <h2>🎉 Результаты теста 🎉</h2>
+                <h2>Результаты теста</h2>
             </div>
             <div class="modal-result" id="modalResultContent">
                 <div class="modal-score">0 / 0</div>
@@ -224,6 +271,11 @@
         const container = document.getElementById('lessonContent');
 
         try {
+            // Проверяем, пройден ли урок
+            const progressResponse = await fetch(`/api/lesson/is-completed/${lessonId}/${user.userId}`);
+            const progressData = await progressResponse.json();
+            const isLessonCompleted = progressData.isCompleted;
+            
             const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
             if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
             const lesson = await lessonResponse.json();
@@ -233,44 +285,90 @@
             
             document.getElementById('pageTitle').textContent = lesson.lessonTitle;
 
-            const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
-            tasks = await tasksResponse.json();
-            
-            let allQuestionsList = [];
-            
-            for (const task of tasks) {
-                const questionsResponse = await fetch(`/api/lesson/task/${task.taskID}/questions`);
-                const questions = await questionsResponse.json();
-                allQuestionsList.push(...questions.map(q => ({ ...q, taskId: task.taskID, lessonId: lessonId })));
-            }
-            allQuestions = allQuestionsList;
+            if (isLessonCompleted) {
+                // Если урок пройден - показываем только теорию, без теста
+                container.innerHTML = `
+                    <div class="lesson-container">
+                        <div class="module-breadcrumb">
+                            Модуль ${moduleNumber}: ${moduleTitle}
+                        </div>
+                        <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                        ${lesson.theoryContent ? `
+                            <div class="theory-content">
+                                ${lesson.theoryContent}
+                            </div>
+                        ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
+                        <div class="completed-banner">
+                            <div class="completed-icon">✅</div>
+                            <div class="completed-text">Вы уже прошли этот тест!</div>
+                            <div class="completed-score" id="completedScore">Загрузка...</div>
+                            <button class="back-to-courses-btn" onclick="window.location.href='/Home/Courses'">← Вернуться к обучению</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Загружаем результат теста
+                await loadCompletedTestResult(user.userId);
+                
+            } else {
+                // Если урок не пройден - показываем теорию + тест
+                const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
+                tasks = await tasksResponse.json();
+                
+                let allQuestionsList = [];
+                
+                for (const task of tasks) {
+                    const questionsResponse = await fetch(`/api/lesson/task/${task.taskID}/questions`);
+                    const questions = await questionsResponse.json();
+                    allQuestionsList.push(...questions.map(q => ({ ...q, taskId: task.taskID, lessonId: lessonId })));
+                }
+                allQuestions = allQuestionsList;
 
-            container.innerHTML = `
-                <div class="lesson-container">
-                    <div class="module-breadcrumb">
-                        Модуль ${moduleNumber}: ${moduleTitle}
-                    </div>
-                    <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
-                    ${lesson.theoryContent ? `
-                        <div class="theory-content">
-                            ${lesson.theoryContent}
+                container.innerHTML = `
+                    <div class="lesson-container">
+                        <div class="module-breadcrumb">
+                            Модуль ${moduleNumber}: ${moduleTitle}
                         </div>
-                    ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
-                    <div class="tasks-section">
-                        <h2 class="tasks-title">📝 Вопросы теста</h2>
-                        <div id="questionsContainer"></div>
-                        <div class="finish-btn-container">
-                            <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
+                        <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                        ${lesson.theoryContent ? `
+                            <div class="theory-content">
+                                ${lesson.theoryContent}
+                            </div>
+                        ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
+                        <div class="tasks-section">
+                            <h2 class="tasks-title">📝 Вопросы теста</h2>
+                            <div id="questionsContainer"></div>
+                            <div class="finish-btn-container">
+                                <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
-            
-            renderQuestions();
+                `;
+                
+                renderQuestions();
+            }
 
         } catch (error) {
             console.error('Ошибка:', error);
             container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
+        }
+    }
+
+    async function loadCompletedTestResult(userId) {
+        try {
+            const response = await fetch(`/api/lesson/${lessonId}/progress/${userId}`);
+            const result = await response.json();
+            
+            const scoreDiv = document.getElementById('completedScore');
+            if (scoreDiv) {
+                scoreDiv.innerHTML = `Ваш результат: ${result.totalScore} / ${result.maxScore} XP`;
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки результата:', error);
+            const scoreDiv = document.getElementById('completedScore');
+            if (scoreDiv) {
+                scoreDiv.innerHTML = `Тест пройден!`;
+            }
         }
     }
 
@@ -304,108 +402,101 @@
         userAnswers[questionId] = answerId;
     }
 
-async function finishTest() {
-    const user = loadUserData();
-    if (!user) return;
-    
-    const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
-    if (unansweredQuestions.length > 0) {
-        alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
-        return;
-    }
-    
-    const finishBtn = document.getElementById('finishTestBtn');
-    finishBtn.textContent = '⏳ Проверка...';
-    finishBtn.disabled = true;
-    
-    // Проверяем структуру ответов
-    const answers = allQuestions.map(q => {
-        const selectedId = userAnswers[q.questionID];
-        console.log(`Вопрос ${q.questionID}: выбран ответ ${selectedId}`);
-        return {
+    async function finishTest() {
+        const user = loadUserData();
+        if (!user) return;
+        
+        const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
+        if (unansweredQuestions.length > 0) {
+            alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
+            return;
+        }
+        
+        const finishBtn = document.getElementById('finishTestBtn');
+        finishBtn.textContent = '⏳ Проверка...';
+        finishBtn.disabled = true;
+        
+        const answers = allQuestions.map(q => ({
             questionId: q.questionID,
-            selectedAnswerId: selectedId
-        };
-    });
-    
-    console.log('Отправляем answers:', JSON.stringify(answers, null, 2));
-    
-    try {
-        const response = await fetch('/api/lesson/submit-test', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: user.userId,
-                lessonId: lessonId,
-                taskId: allQuestions[0]?.taskId || 1,
-                answers: answers
-            })
-        });
+            selectedAnswerId: userAnswers[q.questionID]
+        }));
         
-        const result = await response.json();
-        console.log('Результат от сервера:', result);
-        
-        if (result.success) {
-            // Подсвечиваем ответы
-            for (const question of allQuestions) {
-                const selectedAnswerId = userAnswers[question.questionID];
-                const correctAnswer = question.answers.find(a => a.isCorrect);
-                highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
-            }
-            
-            document.querySelectorAll('.answer-option').forEach(opt => {
-                opt.style.pointerEvents = 'none';
+        try {
+            const response = await fetch('/api/lesson/submit-test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: user.userId,
+                    lessonId: lessonId,
+                    taskId: allQuestions[0]?.taskId || 1,
+                    answers: answers
+                })
             });
             
-            window.finalTotalScore = result.totalScore;
-            window.finalMaxScore = result.maxScore;
-            window.earnedXp = result.xpGained;
-            window.userTotalXp = result.newTotalXp;
+            const result = await response.json();
+            console.log('Результат от сервера:', result);
             
-            const updatedUser = JSON.parse(localStorage.getItem('user'));
-            if (updatedUser) {
-                updatedUser.experience = result.newTotalXp;
-                updatedUser.level = result.newLevel;
-                localStorage.setItem('user', JSON.stringify(updatedUser));
+            if (result.success) {
+                // Подсвечиваем ответы
+                for (const question of allQuestions) {
+                    const selectedAnswerId = userAnswers[question.questionID];
+                    const correctAnswer = question.answers.find(a => a.isCorrect);
+                    highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
+                }
+                
+                document.querySelectorAll('.answer-option').forEach(opt => {
+                    opt.style.pointerEvents = 'none';
+                });
+                
+                window.finalTotalScore = result.totalScore;
+                window.finalMaxScore = result.maxScore;
+                window.earnedXp = result.xpGained;
+                window.userTotalXp = result.newTotalXp;
+                
+                const updatedUser = JSON.parse(localStorage.getItem('user'));
+                if (updatedUser) {
+                    updatedUser.experience = result.newTotalXp;
+                    updatedUser.level = result.newLevel;
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
+                
+                showResultModal();
+            } else {
+                alert(result.message || 'Ошибка при сохранении');
+                finishBtn.textContent = '✅ Завершить тест';
+                finishBtn.disabled = false;
             }
-            
-            showResultModal();
-        } else {
-            alert(result.message || 'Ошибка при сохранении');
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Произошла ошибка');
             finishBtn.textContent = '✅ Завершить тест';
             finishBtn.disabled = false;
         }
-    } catch (error) {
-        console.error('Ошибка:', error);
-        alert('Произошла ошибка');
-        finishBtn.textContent = '✅ Завершить тест';
-        finishBtn.disabled = false;
     }
-}
 
-function showResultModal() {
-    const totalScore = window.finalTotalScore || 0;
-    const maxScore = window.finalMaxScore || 0;
-    const earnedXp = window.earnedXp || 0;
-    const userTotalXp = window.userTotalXp || 0;
-    const percent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
-    
-    let message = '';
-    if (percent >= 80) message = '🏆 Отличный результат! Вы отлично усвоили материал!';
-    else if (percent >= 50) message = '📈 Хороший результат! Но есть к чему стремиться!';
-    else message = '📚 Попробуйте пройти урок ещё раз, чтобы лучше усвоить материал!';
-    
-    const modalContent = document.getElementById('modalResultContent');
-    modalContent.innerHTML = `
-        <div class="modal-score">${totalScore} / ${maxScore}</div>
-        <div class="modal-xp">⭐ Получено XP: ${earnedXp}</div>
-        <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Всего XP: ${userTotalXp}</div>
-        <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Процент выполнения: ${percent}%</div>
-        <div style="margin-top: 15px; font-size: 13px; color: #029FA4;">${message}</div>
-    `;
-    
-    document.getElementById('resultModal').classList.add('active');
-}
+    function showResultModal() {
+        const totalScore = window.finalTotalScore || 0;
+        const maxScore = window.finalMaxScore || 0;
+        const earnedXp = window.earnedXp || 0;
+        const userTotalXp = window.userTotalXp || 0;
+        const percent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+        
+        let message = '';
+        if (percent >= 80) message = 'Отличный результат! Вы отлично усвоили материал!';
+        else if (percent >= 50) message = 'Хороший результат! Но есть к чему стремиться!';
+        else message = 'Советуем еще раз почитать теорию, чтобы лучше усвоить материал!';
+        
+        const modalContent = document.getElementById('modalResultContent');
+        modalContent.innerHTML = `
+            <div class="modal-score">${totalScore} / ${maxScore}</div>
+            <div class="modal-xp">⭐ Получено XP: ${earnedXp}</div>
+            <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Всего XP: ${userTotalXp}</div>
+            <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Процент выполнения: ${percent}%</div>
+            <div style="margin-top: 15px; font-size: 13px; color: #029FA4;">${message}</div>
+        `;
+        
+        document.getElementById('resultModal').classList.add('active');
+    }
 
     function highlightAnswers(question, selectedAnswerId, correctAnswerId) {
         const questionDiv = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
