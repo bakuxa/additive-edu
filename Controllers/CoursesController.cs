@@ -135,7 +135,87 @@ namespace AdditiveEdu.Controllers
             .ToListAsync();
 
         return Ok(tasks);
-}
     }
+    // GET: api/courses/lesson-available/{lessonId}/{userId}
+        [HttpGet("lesson-available/{lessonId}/{userId}")]
+        public async Task<IActionResult> IsLessonAvailable(int lessonId, int userId)
+        {
+            // Получаем урок
+            var lesson = await _context.Lessons
+                .Include(l => l.Module)
+                .FirstOrDefaultAsync(l => l.LessonID == lessonId);
+            
+            if (lesson == null)
+                return NotFound(new { available = false, message = "Урок не найден" });
+            
+            // Получаем все уроки модуля по порядку
+            var moduleLessons = await _context.Lessons
+                .Where(l => l.ModuleID == lesson.ModuleID)
+                .OrderBy(l => l.LessonOrder)
+                .ToListAsync();
+            
+            // Находим индекс текущего урока
+            var currentIndex = moduleLessons.FindIndex(l => l.LessonID == lessonId);
+            
+            // Если это первый урок в модуле - проверяем доступность модуля
+            if (currentIndex == 0)
+            {
+                // Проверяем, пройден ли предыдущий модуль
+                var previousModule = await _context.Modules
+                    .Where(m => m.ModuleNumber == lesson.Module.ModuleNumber - 1)
+                    .FirstOrDefaultAsync();
+                
+                if (previousModule != null)
+                {
+                    var previousModuleLessons = await _context.Lessons
+                        .Where(l => l.ModuleID == previousModule.ModuleID)
+                        .ToListAsync();
+                    
+                    var completedPreviousModuleLessons = await _context.LessonProgresses
+                        .Where(lp => lp.UserID == userId && 
+                            previousModuleLessons.Select(l => l.LessonID).Contains(lp.LessonID) &&
+                            lp.IsCompleted == true)
+                        .CountAsync();
+                    
+                    // Если предыдущий модуль не пройден полностью - урок недоступен
+                    if (completedPreviousModuleLessons < previousModuleLessons.Count)
+                    {
+                        return Ok(new { available = false, reason = "Сначала завершите предыдущий модуль" });
+                    }
+                }
+                
+                return Ok(new { available = true });
+            }
+            
+            // Проверяем, пройден ли предыдущий урок
+            var previousLesson = moduleLessons[currentIndex - 1];
+            var isPreviousCompleted = await _context.LessonProgresses
+                .AnyAsync(lp => lp.UserID == userId && lp.LessonID == previousLesson.LessonID && lp.IsCompleted == true);
+            
+            if (!isPreviousCompleted)
+            {
+                return Ok(new { available = false, reason = "Сначала завершите предыдущий урок" });
+            }
+            
+            return Ok(new { available = true });
+        }
+        // GET: api/courses/user-lessons-progress/{userId}
+        [HttpGet("user-lessons-progress/{userId}")]
+        public async Task<IActionResult> GetUserLessonsProgress(int userId)
+        {
+            var lessonsProgress = await _context.LessonProgresses
+                .Where(lp => lp.UserID == userId)
+                .Select(lp => new
+                {
+                    lp.LessonID,
+                    lp.ProgressPercent,
+                    lp.IsCompleted
+                })
+                .ToListAsync();
+            
+            return Ok(lessonsProgress);
+        }
+    }
+    
 
 }
