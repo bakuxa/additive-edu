@@ -8,9 +8,128 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Урок | Аддитивные технологии</title>
-    <link rel="stylesheet" href="/css/lesson.css">
+     <link rel="stylesheet" href="/css/lesson.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* ========== МОДАЛЬНОЕ ОКНО ========== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+
+        .modal-container {
+            background: #FFFFFF;
+            border-radius: 32px;
+            max-width: 500px;
+            width: 90%;
+            padding: 30px;
+            position: relative;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+            border: 1px solid #029FA4;
+        }
+
+        .modal-overlay.active .modal-container {
+            transform: scale(1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 30px;
+            height: 30px;
+            background: #F0F0F0;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #E74C3C;
+            color: white;
+        }
+
+        .modal-congrats {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-congrats h2 {
+            font-family: 'Nunito', sans-serif;
+            font-size: 26px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #029FA4, #8ED1D1);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .modal-result {
+            text-align: center;
+            padding: 20px;
+            background: #F8F9FA;
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+
+        .modal-score {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 48px;
+            color: #029FA4;
+        }
+
+        .modal-xp {
+            font-family: 'Poppins', sans-serif;
+            font-size: 18px;
+            color: #FF9800;
+            margin-top: 10px;
+        }
+
+        .modal-button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #029FA4, #8ED1D1);
+            border: none;
+            border-radius: 40px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
     <div class="page-container">
@@ -67,214 +186,316 @@
         </main>
     </div>
 
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-container">
+            <div class="modal-close" id="modalCloseBtn">×</div>
+            <div class="modal-congrats">
+                <h2>🎉 Результаты теста 🎉</h2>
+            </div>
+            <div class="modal-result" id="modalResultContent">
+                <div class="modal-score">0 / 0</div>
+                <div class="modal-xp">⭐ Получено XP: 0</div>
+            </div>
+            <button class="modal-button" id="modalContinueBtn">Продолжить</button>
+        </div>
+    </div>
+
     <script>
-        const lessonId = @lessonId;
-        let allQuestions = [];
-        let userAnswers = {};
+    const lessonId = @lessonId;
+    let allQuestions = [];
+    let userAnswers = {};
+    let testCompleted = false;
+    let tasks = [];
 
-        function loadUserData() {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) {
-                window.location.href = '/Home/Login';
-                return null;
-            }
-            return user;
+    function loadUserData() {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+            window.location.href = '/Home/Login';
+            return null;
         }
+        return user;
+    }
 
-        async function loadLesson() {
-            const user = loadUserData();
-            if (!user) return;
+    async function loadLesson() {
+        const user = loadUserData();
+        if (!user) return;
 
-            const container = document.getElementById('lessonContent');
+        const container = document.getElementById('lessonContent');
 
-            try {
-                const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
-                if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
-                const lesson = await lessonResponse.json();
-                
-                const moduleTitle = lesson.module?.moduleTitle || 'Модуль';
-                const moduleNumber = lesson.module?.moduleNumber || '?';
-                
-                document.getElementById('pageTitle').textContent = lesson.lessonTitle;
-
-                const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
-                const tasks = await tasksResponse.json();
-                
-                let allQuestionsList = [];
-                
-                for (const task of tasks) {
-                    const questionsResponse = await fetch(`/api/lesson/task/${task.taskID}/questions`);
-                    const questions = await questionsResponse.json();
-                    allQuestionsList.push(...questions.map(q => ({ ...q, taskId: task.taskID, lessonId: lessonId })));
-                }
-                allQuestions = allQuestionsList;
-
-                container.innerHTML = `
-                    <div class="lesson-container">
-                        <div class="module-breadcrumb">
-                            Модуль ${moduleNumber}: ${moduleTitle}
-                        </div>
-                        <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
-                        ${lesson.theoryContent ? `
-                            <div class="theory-content">
-                                ${lesson.theoryContent}
-                            </div>
-                        ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
-                        <div class="tasks-section">
-                            <h2 class="tasks-title">📝 Вопросы теста</h2>
-                            <div id="questionsContainer"></div>
-                            <div class="finish-btn-container">
-                                <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                renderQuestions();
-
-            } catch (error) {
-                console.error('Ошибка:', error);
-                container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
-            }
-        }
-
-        function renderQuestions() {
-            const container = document.getElementById('questionsContainer');
+        try {
+            const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
+            if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
+            const lesson = await lessonResponse.json();
             
-            container.innerHTML = allQuestions.map((q, idx) => `
-                <div class="question-item" data-question-id="${q.questionID}" data-task-id="${q.taskId}">
-                    <div class="question-text">${idx + 1}. ${escapeHtml(q.questionText)}</div>
-                    <div class="answers-list">
-                        ${q.answers.map(answer => `
-                            <div class="answer-option" data-answer-id="${answer.answerID}" onclick="selectAnswer(this, ${q.questionID}, ${answer.answerID})">
-                                <div class="answer-radio"></div>
-                                <span class="answer-text">${escapeHtml(answer.answerText)}</span>
-                            </div>
-                        `).join('')}
+            const moduleTitle = lesson.module?.moduleTitle || 'Модуль';
+            const moduleNumber = lesson.module?.moduleNumber || '?';
+            
+            document.getElementById('pageTitle').textContent = lesson.lessonTitle;
+
+            const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
+            tasks = await tasksResponse.json();
+            
+            let allQuestionsList = [];
+            
+            for (const task of tasks) {
+                const questionsResponse = await fetch(`/api/lesson/task/${task.taskID}/questions`);
+                const questions = await questionsResponse.json();
+                allQuestionsList.push(...questions.map(q => ({ ...q, taskId: task.taskID, lessonId: lessonId })));
+            }
+            allQuestions = allQuestionsList;
+
+            container.innerHTML = `
+                <div class="lesson-container">
+                    <div class="module-breadcrumb">
+                        Модуль ${moduleNumber}: ${moduleTitle}
                     </div>
-                    <div class="result-message" style="display: none;"></div>
+                    <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                    ${lesson.theoryContent ? `
+                        <div class="theory-content">
+                            ${lesson.theoryContent}
+                        </div>
+                    ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
+                    <div class="tasks-section">
+                        <h2 class="tasks-title">📝 Вопросы теста</h2>
+                        <div id="questionsContainer"></div>
+                        <div class="finish-btn-container">
+                            <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
+                        </div>
+                    </div>
                 </div>
-            `).join('');
-        }
+            `;
+            
+            renderQuestions();
 
-        function selectAnswer(element, questionId, answerId) {
-            const questionDiv = element.closest('.question-item');
-            const allOptions = questionDiv.querySelectorAll('.answer-option');
-            allOptions.forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
-            userAnswers[questionId] = answerId;
+        } catch (error) {
+            console.error('Ошибка:', error);
+            container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
         }
+    }
 
-        async function finishTest() {
-            const user = loadUserData();
-            if (!user) return;
+    function renderQuestions() {
+        const container = document.getElementById('questionsContainer');
+        if (!container) return;
+        
+        container.innerHTML = allQuestions.map((q, idx) => `
+            <div class="question-item" data-question-id="${q.questionID}" data-task-id="${q.taskId}">
+                <div class="question-text">${idx + 1}. ${escapeHtml(q.questionText)}</div>
+                <div class="answers-list">
+                    ${q.answers.map(answer => `
+                        <div class="answer-option" data-answer-id="${answer.answerID}" onclick="selectAnswer(this, ${q.questionID}, ${answer.answerID})">
+                            <div class="answer-radio"></div>
+                            <span class="answer-text">${escapeHtml(answer.answerText)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="result-message" style="display: none;"></div>
+            </div>
+        `).join('');
+    }
+
+    function selectAnswer(element, questionId, answerId) {
+        if (testCompleted) return;
+        
+        const questionDiv = element.closest('.question-item');
+        const allOptions = questionDiv.querySelectorAll('.answer-option');
+        allOptions.forEach(opt => opt.classList.remove('selected'));
+        element.classList.add('selected');
+        userAnswers[questionId] = answerId;
+    }
+
+    async function finishTest() {
+        const user = loadUserData();
+        if (!user) return;
+        
+        const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
+        if (unansweredQuestions.length > 0) {
+            alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
+            return;
+        }
+        
+        const finishBtn = document.getElementById('finishTestBtn');
+        finishBtn.textContent = '⏳ Проверка...';
+        finishBtn.disabled = true;
+        
+        let totalScore = 0;
+        let maxScore = 0;
+        
+        for (const question of allQuestions) {
+            const selectedAnswerId = userAnswers[question.questionID];
+            const correctAnswer = question.answers.find(a => a.isCorrect);
+            const isCorrect = selectedAnswerId === correctAnswer?.answerID;
             
-            const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
-            if (unansweredQuestions.length > 0) {
-                alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
-                return;
-            }
+            if (isCorrect) totalScore += question.questionWeight;
+            maxScore += question.questionWeight;
             
-            const finishBtn = document.getElementById('finishTestBtn');
-            finishBtn.textContent = '⏳ Проверка...';
-            finishBtn.disabled = true;
+            highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
+        }
+        
+        testCompleted = true;
+        
+        document.querySelectorAll('.answer-option').forEach(opt => {
+            opt.style.pointerEvents = 'none';
+        });
+        
+        window.finalTotalScore = totalScore;
+        window.finalMaxScore = maxScore;
+        
+        // ===== СОХРАНЯЕМ РЕЗУЛЬТАТ В БД =====
+        await saveTestResult(user.userId, totalScore, maxScore);
+        // ===================================
+        
+        showResultModal();
+    }
+
+    async function saveTestResult(userId, totalScore, maxScore) {
+        try {
+            // Собираем детальные ответы
+            const answers = allQuestions.map(q => ({
+                questionId: q.questionID,
+                selectedAnswerId: userAnswers[q.questionID],
+                isCorrect: q.answers.find(a => a.answerID === userAnswers[q.questionID])?.isCorrect || false
+            }));
             
-            let totalScore = 0;
-            let maxScore = 0;
-            
-            for (const question of allQuestions) {
-                const selectedAnswerId = userAnswers[question.questionID];
-                const correctAnswer = question.answers.find(a => a.isCorrect);
-                const isCorrect = selectedAnswerId === correctAnswer?.answerID;
-                
-                if (isCorrect) totalScore += question.questionWeight;
-                maxScore += question.questionWeight;
-                
-                await fetch('/api/lesson/submit-answer', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        userId: user.userId,
-                        lessonId: lessonId,
-                        taskId: question.taskId,
-                        questionId: question.questionID,
-                        answerId: selectedAnswerId
-                    })
-                });
-                
-                highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
-            }
-            
-            document.querySelectorAll('.answer-option').forEach(opt => {
-                opt.style.pointerEvents = 'none';
+            const response = await fetch('/api/lesson/save-result', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: userId,
+                    lessonId: lessonId,
+                    taskId: allQuestions[0]?.taskId || 0,
+                    score: totalScore,
+                    maxScore: maxScore,
+                    answers: answers
+                })
             });
             
-            finishBtn.textContent = '✅ Тест завершён';
-            finishBtn.disabled = true;
+            const result = await response.json();
+            console.log('Результат сохранён:', result);
             
-            alert(`Тест завершён! Результат: ${totalScore} из ${maxScore} XP (${Math.round(totalScore/maxScore*100)}%)`);
-        }
-
-        function highlightAnswers(question, selectedAnswerId, correctAnswerId) {
-            const questionDiv = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
-            if (!questionDiv) return;
-            
-            const correctAnswer = question.answers.find(a => a.answerID === correctAnswerId);
-            
-            questionDiv.querySelectorAll('.answer-option').forEach(opt => {
-                const answerId = parseInt(opt.dataset.answerId);
-                opt.style.pointerEvents = 'none';
-                if (answerId === correctAnswerId) opt.classList.add('correct-highlight');
-                if (answerId === selectedAnswerId && answerId !== correctAnswerId) opt.classList.add('wrong-highlight');
-            });
-            
-            const resultDiv = questionDiv.querySelector('.result-message');
-            resultDiv.style.display = 'block';
-            const isCorrect = selectedAnswerId === correctAnswerId;
-            resultDiv.className = `result-message ${isCorrect ? 'correct' : 'incorrect'}`;
-            
-            if (isCorrect) {
-                resultDiv.innerHTML = '✓ Правильно!';
-            } else {
-                resultDiv.innerHTML = `✗ Неправильно!<br><span style="font-size: 12px;">Правильный ответ: ${escapeHtml(correctAnswer?.answerText || '')}</span>`;
+            if (result.success) {
+                // Обновляем данные пользователя в localStorage
+                const updatedUser = JSON.parse(localStorage.getItem('user'));
+                if (updatedUser) {
+                    updatedUser.experience = result.newTotalXp;
+                    updatedUser.level = result.newLevel;
+                    localStorage.setItem('user', JSON.stringify(updatedUser));
+                }
+                
+                // Сохраняем полученные XP для отображения в модальном окне
+                window.earnedXp = result.xpGained;
+                window.userTotalXp = result.newTotalXp;
             }
+        } catch (error) {
+            console.error('Ошибка сохранения результата:', error);
+            window.earnedXp = totalScore;
+            window.userTotalXp = null;
         }
+    }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
+    function showResultModal() {
+        const totalScore = window.finalTotalScore || 0;
+        const maxScore = window.finalMaxScore || 0;
+        const earnedXp = window.earnedXp || totalScore;
+        const userTotalXp = window.userTotalXp;
+        const percent = Math.round((totalScore / maxScore) * 100);
+        
+        let message = '';
+        if (percent >= 80) message = '🏆 Отличный результат! Вы отлично усвоили материал!';
+        else if (percent >= 50) message = '📈 Хороший результат! Но есть к чему стремиться!';
+        else message = '📚 Попробуйте пройти урок ещё раз, чтобы лучше усвоить материал!';
+        
+        const modalContent = document.getElementById('modalResultContent');
+        modalContent.innerHTML = `
+            <div class="modal-score">${totalScore} / ${maxScore}</div>
+            <div class="modal-xp">⭐ Получено XP: ${earnedXp}</div>
+            ${userTotalXp ? `<div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Всего XP: ${userTotalXp}</div>` : ''}
+            <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Процент выполнения: ${percent}%</div>
+            <div style="margin-top: 15px; font-size: 13px; color: #029FA4;">${message}</div>
+        `;
+        
+        document.getElementById('resultModal').classList.add('active');
+    }
+
+    function highlightAnswers(question, selectedAnswerId, correctAnswerId) {
+        const questionDiv = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
+        if (!questionDiv) return;
+        
+        const correctAnswer = question.answers.find(a => a.answerID === correctAnswerId);
+        
+        questionDiv.querySelectorAll('.answer-option').forEach(opt => {
+            const answerId = parseInt(opt.dataset.answerId);
+            opt.style.pointerEvents = 'none';
+            if (answerId === correctAnswerId) opt.classList.add('correct-highlight');
+            if (answerId === selectedAnswerId && answerId !== correctAnswerId) opt.classList.add('wrong-highlight');
+        });
+        
+        const resultDiv = questionDiv.querySelector('.result-message');
+        resultDiv.style.display = 'block';
+        const isCorrect = selectedAnswerId === correctAnswerId;
+        resultDiv.className = `result-message ${isCorrect ? 'correct' : 'incorrect'}`;
+        
+        if (isCorrect) {
+            resultDiv.innerHTML = '✓ Правильно!';
+        } else {
+            resultDiv.innerHTML = `✗ Неправильно!<br><span style="font-size: 12px;">Правильный ответ: ${escapeHtml(correctAnswer?.answerText || '')}</span>`;
         }
+    }
 
-        function logout() {
-            localStorage.removeItem('user');
-            window.location.href = '/Home/Index';
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function logout() {
+        localStorage.removeItem('user');
+        window.location.href = '/Home/Index';
+    }
+
+    // Навигация
+    document.getElementById('profileNav')?.addEventListener('click', () => {
+        window.location.href = '/Home/Profile';
+    });
+
+    document.getElementById('coursesNav')?.addEventListener('click', () => {
+        window.location.href = '/Home/Courses';
+    });
+
+    document.getElementById('achievementsNav')?.addEventListener('click', () => {
+        window.location.href = '/Home/Achievements';
+    });
+
+    document.getElementById('ratingNav')?.addEventListener('click', () => {
+        window.location.href = '/Home/Rating';
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+    // Делегирование для кнопки завершения теста
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'finishTestBtn') {
+            finishTest();
         }
+    });
 
-        document.getElementById('profileNav')?.addEventListener('click', () => {
-            window.location.href = '/Home/Profile';
-        });
+    // Кнопка "Продолжить" в модальном окне
+    document.getElementById('modalContinueBtn')?.addEventListener('click', function() {
+        document.getElementById('resultModal').classList.remove('active');
+        window.location.href = '/Home/Courses';
+    });
 
-        document.getElementById('coursesNav')?.addEventListener('click', () => {
-            window.location.href = '/Home/Courses';
-        });
+    // Закрытие модального окна по крестику
+    document.getElementById('modalCloseBtn')?.addEventListener('click', function() {
+        document.getElementById('resultModal').classList.remove('active');
+        window.location.href = '/Home/Courses';
+    });
 
-        document.getElementById('achievementsNav')?.addEventListener('click', () => {
-            window.location.href = '/Home/Achievements';
-        });
-
-        document.getElementById('ratingNav')?.addEventListener('click', () => {
-            window.location.href = '/Home/Rating';
-        });
-
-        document.getElementById('logoutBtn')?.addEventListener('click', logout);
-        document.getElementById('finishTestBtn')?.addEventListener('click', finishTest);
-
-        loadLesson();
-    </script>
+    loadLesson();
+</script>
 </body>
 </html>

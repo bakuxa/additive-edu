@@ -82,8 +82,7 @@
     </div>
 <script>
     let modulesData = [];
-    let completedLessonsIds = new Set(); // ID пройденных уроков
-    let completedModulesIds = new Set(); // ID полностью пройденных модулей
+    let completedLessonsIds = new Set();
     
     const ACTIVE_MODULE_KEY = 'lastActiveModule';
 
@@ -128,10 +127,8 @@
         }
     }
 
-    // Загрузка прогресса пользователя
     async function loadUserProgress(userId) {
         try {
-            // Загружаем ID пройденных уроков
             const lessonsRes = await fetch(`/api/courses/user-lessons-progress/${userId}`);
             if (lessonsRes.ok) {
                 const lessonsData = await lessonsRes.json();
@@ -147,40 +144,32 @@
         }
     }
 
-    // Проверка, полностью ли пройден модуль
     function isModuleFullyCompleted(module) {
         if (!module.lessons || module.lessons.length === 0) return false;
         return module.lessons.every(lesson => completedLessonsIds.has(lesson.lessonID));
     }
 
-    // Определение доступности урока
     function isLessonAvailable(module, lessonIndex, moduleIndex) {
         const lessons = module.lessons;
         
-        // Если урок уже пройден - он доступен (чтобы можно было открыть)
         if (completedLessonsIds.has(lessons[lessonIndex].lessonID)) {
             return true;
         }
         
-        // Первый урок первого модуля - всегда доступен
         if (moduleIndex === 0 && lessonIndex === 0) {
             return true;
         }
         
-        // Если это первый урок модуля (не первого)
         if (lessonIndex === 0 && moduleIndex > 0) {
-            // Проверяем, полностью ли пройден ПРЕДЫДУЩИЙ модуль
             const prevModule = modulesData[moduleIndex - 1];
             if (!prevModule) return false;
             return isModuleFullyCompleted(prevModule);
         }
         
-        // Для остальных уроков - проверяем, пройден ли ПРЕДЫДУЩИЙ урок в этом же модуле
         const prevLessonId = lessons[lessonIndex - 1]?.lessonID;
         return prevLessonId && completedLessonsIds.has(prevLessonId);
     }
 
-    // Получение статуса урока (иконка)
     function getLessonStatus(lesson, lessonIndex, module, moduleIndex) {
         const isCompleted = completedLessonsIds.has(lesson.lessonID);
         if (isCompleted) return 'completed';
@@ -200,7 +189,6 @@
         return icons[status];
     }
 
-    // Расчёт прогресса модуля
     function getModuleProgress(module) {
         if (!module.lessons.length) return 0;
         let completedCount = module.lessons.filter(lesson => 
@@ -228,7 +216,6 @@
                 return;
             }
 
-            // Загружаем задания для каждого урока
             const tasksMap = {};
             for (const module of modules) {
                 for (const lesson of module.lessons) {
@@ -247,7 +234,6 @@
                 }
             }
 
-            // Расчёт общего прогресса
             let totalLessons = 0;
             let totalCompletedLessons = completedLessonsIds.size;
             modules.forEach(module => {
@@ -333,7 +319,7 @@
                                                         }
                                                         
                                                         return `
-                                                            <div class="task-pill ${taskTypeClass}" onclick="event.stopPropagation(); ${isAvailable ? `window.location.href='/Home/Lesson/${lesson.lessonID}'` : ''}">
+                                                            <div class="task-pill ${taskTypeClass}" onclick="event.stopPropagation(); ${isAvailable ? `window.location.href='/Home/Lesson/${lesson.lessonID}'` : ''}" style="${!isAvailable ? 'opacity: 0.5; cursor: not-allowed;' : 'cursor: pointer;'}">
                                                                 <span class="task-pill-icon">${taskIcon}</span>
                                                                 <span class="task-pill-title">${escapeHtml(task.taskTitle)}</span>
                                                                 <span class="task-pill-score">${task.maxScore} XP</span>
@@ -348,8 +334,6 @@
                                     `;
                                 }).join('')}
                                 ${module.lessons.length === 0 ? '<div style="padding: 20px; text-align: center; color: #8A9AA5;">Уроки пока не добавлены</div>' : ''}
-                                ${!isModuleCompleted && moduleIndex > 0 && !isModuleFullyCompleted(modules[moduleIndex - 1]) && moduleProgress === 0 ? 
-                                    '<div style="padding: 15px 22px; text-align: center; color: #8A9AA5; font-size: 13px; background: #F8F9FA;">🔒 Пройдите все уроки предыдущего модуля, чтобы открыть этот</div>' : ''}
                             </div>
                         </div>
                     </div>
