@@ -304,118 +304,108 @@
         userAnswers[questionId] = answerId;
     }
 
-    async function finishTest() {
-        const user = loadUserData();
-        if (!user) return;
-        
-        const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
-        if (unansweredQuestions.length > 0) {
-            alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
-            return;
-        }
-        
-        const finishBtn = document.getElementById('finishTestBtn');
-        finishBtn.textContent = '⏳ Проверка...';
-        finishBtn.disabled = true;
-        
-        let totalScore = 0;
-        let maxScore = 0;
-        
-        for (const question of allQuestions) {
-            const selectedAnswerId = userAnswers[question.questionID];
-            const correctAnswer = question.answers.find(a => a.isCorrect);
-            const isCorrect = selectedAnswerId === correctAnswer?.answerID;
-            
-            if (isCorrect) totalScore += question.questionWeight;
-            maxScore += question.questionWeight;
-            
-            highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
-        }
-        
-        testCompleted = true;
-        
-        document.querySelectorAll('.answer-option').forEach(opt => {
-            opt.style.pointerEvents = 'none';
+async function finishTest() {
+    const user = loadUserData();
+    if (!user) return;
+    
+    const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
+    if (unansweredQuestions.length > 0) {
+        alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
+        return;
+    }
+    
+    const finishBtn = document.getElementById('finishTestBtn');
+    finishBtn.textContent = '⏳ Проверка...';
+    finishBtn.disabled = true;
+    
+    // Проверяем структуру ответов
+    const answers = allQuestions.map(q => {
+        const selectedId = userAnswers[q.questionID];
+        console.log(`Вопрос ${q.questionID}: выбран ответ ${selectedId}`);
+        return {
+            questionId: q.questionID,
+            selectedAnswerId: selectedId
+        };
+    });
+    
+    console.log('Отправляем answers:', JSON.stringify(answers, null, 2));
+    
+    try {
+        const response = await fetch('/api/lesson/submit-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: user.userId,
+                lessonId: lessonId,
+                taskId: allQuestions[0]?.taskId || 1,
+                answers: answers
+            })
         });
         
-        window.finalTotalScore = totalScore;
-        window.finalMaxScore = maxScore;
+        const result = await response.json();
+        console.log('Результат от сервера:', result);
         
-        // ===== СОХРАНЯЕМ РЕЗУЛЬТАТ В БД =====
-        await saveTestResult(user.userId, totalScore, maxScore);
-        // ===================================
-        
-        showResultModal();
-    }
-
-    async function saveTestResult(userId, totalScore, maxScore) {
-        try {
-            // Собираем детальные ответы
-            const answers = allQuestions.map(q => ({
-                questionId: q.questionID,
-                selectedAnswerId: userAnswers[q.questionID],
-                isCorrect: q.answers.find(a => a.answerID === userAnswers[q.questionID])?.isCorrect || false
-            }));
+        if (result.success) {
+            // Подсвечиваем ответы
+            for (const question of allQuestions) {
+                const selectedAnswerId = userAnswers[question.questionID];
+                const correctAnswer = question.answers.find(a => a.isCorrect);
+                highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
+            }
             
-            const response = await fetch('/api/lesson/save-result', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: userId,
-                    lessonId: lessonId,
-                    taskId: allQuestions[0]?.taskId || 0,
-                    score: totalScore,
-                    maxScore: maxScore,
-                    answers: answers
-                })
+            document.querySelectorAll('.answer-option').forEach(opt => {
+                opt.style.pointerEvents = 'none';
             });
             
-            const result = await response.json();
-            console.log('Результат сохранён:', result);
+            window.finalTotalScore = result.totalScore;
+            window.finalMaxScore = result.maxScore;
+            window.earnedXp = result.xpGained;
+            window.userTotalXp = result.newTotalXp;
             
-            if (result.success) {
-                // Обновляем данные пользователя в localStorage
-                const updatedUser = JSON.parse(localStorage.getItem('user'));
-                if (updatedUser) {
-                    updatedUser.experience = result.newTotalXp;
-                    updatedUser.level = result.newLevel;
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
-                }
-                
-                // Сохраняем полученные XP для отображения в модальном окне
-                window.earnedXp = result.xpGained;
-                window.userTotalXp = result.newTotalXp;
+            const updatedUser = JSON.parse(localStorage.getItem('user'));
+            if (updatedUser) {
+                updatedUser.experience = result.newTotalXp;
+                updatedUser.level = result.newLevel;
+                localStorage.setItem('user', JSON.stringify(updatedUser));
             }
-        } catch (error) {
-            console.error('Ошибка сохранения результата:', error);
-            window.earnedXp = totalScore;
-            window.userTotalXp = null;
+            
+            showResultModal();
+        } else {
+            alert(result.message || 'Ошибка при сохранении');
+            finishBtn.textContent = '✅ Завершить тест';
+            finishBtn.disabled = false;
         }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Произошла ошибка');
+        finishBtn.textContent = '✅ Завершить тест';
+        finishBtn.disabled = false;
     }
+}
 
-    function showResultModal() {
-        const totalScore = window.finalTotalScore || 0;
-        const maxScore = window.finalMaxScore || 0;
-        const earnedXp = window.earnedXp || totalScore;
-        const userTotalXp = window.userTotalXp;
-        const percent = Math.round((totalScore / maxScore) * 100);
-        
-        let message = '';
-        if (percent >= 80) message = '🏆 Отличный результат! Вы отлично усвоили материал!';
-        else if (percent >= 50) message = '📈 Хороший результат! Но есть к чему стремиться!';
-        else message = '📚 Попробуйте пройти урок ещё раз, чтобы лучше усвоить материал!';
-        
-        const modalContent = document.getElementById('modalResultContent');
-        modalContent.innerHTML = `
-            <div class="modal-score">${totalScore} / ${maxScore}</div>
-            <div class="modal-xp">⭐ Получено XP: ${earnedXp}</div>
-            ${userTotalXp ? `<div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Всего XP: ${userTotalXp}</div>` : ''}
-            <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Процент выполнения: ${percent}%</div>
-            <div style="margin-top: 15px; font-size: 13px; color: #029FA4;">${message}</div>
-        `;
-        
-        document.getElementById('resultModal').classList.add('active');
-    }
+function showResultModal() {
+    const totalScore = window.finalTotalScore || 0;
+    const maxScore = window.finalMaxScore || 0;
+    const earnedXp = window.earnedXp || 0;
+    const userTotalXp = window.userTotalXp || 0;
+    const percent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+    
+    let message = '';
+    if (percent >= 80) message = '🏆 Отличный результат! Вы отлично усвоили материал!';
+    else if (percent >= 50) message = '📈 Хороший результат! Но есть к чему стремиться!';
+    else message = '📚 Попробуйте пройти урок ещё раз, чтобы лучше усвоить материал!';
+    
+    const modalContent = document.getElementById('modalResultContent');
+    modalContent.innerHTML = `
+        <div class="modal-score">${totalScore} / ${maxScore}</div>
+        <div class="modal-xp">⭐ Получено XP: ${earnedXp}</div>
+        <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Всего XP: ${userTotalXp}</div>
+        <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Процент выполнения: ${percent}%</div>
+        <div style="margin-top: 15px; font-size: 13px; color: #029FA4;">${message}</div>
+    `;
+    
+    document.getElementById('resultModal').classList.add('active');
+}
 
     function highlightAnswers(question, selectedAnswerId, correctAnswerId) {
         const questionDiv = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);

@@ -92,180 +92,177 @@ namespace AdditiveEdu.Controllers
 
             return Ok(questions);
         }
-
-        [HttpPost("submit-answer")]
-        public async Task<IActionResult> SubmitAnswer([FromBody] SubmitAnswerDto submitDto)
+[HttpPost("submit-test")]
+public async Task<IActionResult> SubmitTest([FromBody] SubmitTestDto testDto)
+{
+    try
+    {
+        Console.WriteLine("=== SUBMIT TEST ===");
+        Console.WriteLine($"UserId: {testDto.UserId}, TaskId: {testDto.TaskId}");
+        Console.WriteLine($"Answers count: {testDto.Answers?.Count ?? 0}");
+        
+        // Выводим каждый ответ для отладки
+        foreach (var answer in testDto.Answers)
         {
-            try
-            {
-                var question = await _context.Questions
-                    .Include(q => q.Answers)
-                    .FirstOrDefaultAsync(q => q.QuestionID == submitDto.QuestionId);
-                
-                if (question == null)
-                    return BadRequest(new { success = false, message = "Вопрос не найден" });
-
-                var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
-                bool isCorrect = correctAnswer?.AnswerID == submitDto.AnswerId;
-
-                return Ok(new
-                {
-                    success = true,
-                    isCorrect = isCorrect,
-                    earnedXp = isCorrect ? question.QuestionWeight : 0,
-                    message = isCorrect ? $"Правильный ответ! +{question.QuestionWeight} XP" : "Неправильный ответ"
-                });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { success = false, message = ex.Message });
-            }
+            Console.WriteLine($"Answer: QuestionId={answer.QuestionId}, SelectedAnswerId={answer.SelectedAnswerId}");
         }
-        [HttpPost("save-result")]
-        public async Task<IActionResult> SaveTestResult([FromBody] SaveResultDto resultDto)
+        
+        int totalScore = 0;
+        int maxScore = 0;
+        
+        foreach (var answer in testDto.Answers)
         {
-            try
+            var question = await _context.Questions
+                .Include(q => q.Answers)
+                .FirstOrDefaultAsync(q => q.QuestionID == answer.QuestionId);
+            
+            if (question == null)
             {
-                Console.WriteLine($"=== SaveTestResult called ===");
-                Console.WriteLine($"UserId: {resultDto.UserId}, Score: {resultDto.Score}");
-                
-                var existingResult = await _context.TaskResults
-                    .FirstOrDefaultAsync(tr => tr.UserID == resultDto.UserId && tr.TaskID == resultDto.TaskId);
-                
-                if (existingResult != null)
+                Console.WriteLine($"Question {answer.QuestionId} not found!");
+                continue;
+            }
+            
+            Console.WriteLine($"Question {question.QuestionID}: weight={question.QuestionWeight}");
+            maxScore += question.QuestionWeight;
+            
+            var correctAnswer = question.Answers.FirstOrDefault(a => a.IsCorrect);
+            if (correctAnswer != null)
+            {
+                Console.WriteLine($"Correct answer: {correctAnswer.AnswerID}, User answer: {answer.SelectedAnswerId}");
+                if (correctAnswer.AnswerID == answer.SelectedAnswerId)
                 {
-                    return Ok(new { success = true, alreadySaved = true });
+                    totalScore += question.QuestionWeight;
+                    Console.WriteLine($"Correct! +{question.QuestionWeight}");
                 }
-                
-                var taskResult = new TaskResult
-                {
-                    UserID = resultDto.UserId,
-                    TaskID = resultDto.TaskId,
-                    Score = resultDto.Score,
-                    AttemptNumber = 1,
-                    CompletionStatus = "completed",
-                    CompletedAt = DateTime.Now
-                };
-                _context.TaskResults.Add(taskResult);
-                
-                UpdateLessonProgress(resultDto.UserId, resultDto.LessonId);
-                UpdateUserExperience(resultDto.UserId, resultDto.Score);
-                
-                // ОДИН РАЗ СОХРАНЯЕМ ВСЕ ИЗМЕНЕНИЯ
-                await _context.SaveChangesAsync();
-                
-                var rating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserID == resultDto.UserId);
-                Console.WriteLine($"Saved. New XP: {rating?.Experience}, Level: {rating?.CurrentLevel}");
-                
-                return Ok(new
-                {
-                    success = true,
-                    xpGained = resultDto.Score,
-                    newTotalXp = rating?.Experience ?? resultDto.Score,
-                    newLevel = rating?.CurrentLevel ?? 1
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"ERROR: {ex.Message}");
-                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
-
-        private void UpdateLessonProgress(int userId, int lessonId)
+        
+        Console.WriteLine($"TotalScore: {totalScore}, MaxScore: {maxScore}");
+        
+        // Проверяем, не пройден ли уже тест
+        var existingResult = await _context.TaskResults
+            .FirstOrDefaultAsync(tr => tr.UserID == testDto.UserId && tr.TaskID == testDto.TaskId);
+        
+        if (existingResult == null)
         {
-            var lessonTasks = _context.Tasks
-                .Where(t => t.LessonID == lessonId && t.IsActive)
-                .Select(t => t.TaskID)
-                .ToList();
-            
-            var completedTasks = _context.TaskResults
-                .Where(tr => tr.UserID == userId && lessonTasks.Contains(tr.TaskID))
-                .Select(tr => tr.TaskID)
-                .ToList();
-            
-            int progressPercent = lessonTasks.Count > 0 
-                ? (int)((double)completedTasks.Count / lessonTasks.Count * 100) 
-                : 0;
-            bool isLessonCompleted = progressPercent == 100;
-            
-            var lessonProgress = _context.LessonProgresses
-                .FirstOrDefault(lp => lp.UserID == userId && lp.LessonID == lessonId);
-            
-            if (lessonProgress == null)
+            var taskResult = new TaskResult
             {
-                lessonProgress = new LessonProgress
-                {
-                    UserID = userId,
-                    LessonID = lessonId,
-                    ProgressPercent = progressPercent,
-                    IsCompleted = isLessonCompleted,
-                    CompletionStatus = isLessonCompleted ? "completed" : "in_progress"
-                };
-                _context.LessonProgresses.Add(lessonProgress);
-            }
-            else if (lessonProgress.ProgressPercent < progressPercent)
-            {
-                lessonProgress.ProgressPercent = progressPercent;
-                lessonProgress.IsCompleted = isLessonCompleted;
-                lessonProgress.CompletionStatus = isLessonCompleted ? "completed" : "in_progress";
-            }
+                UserID = testDto.UserId,
+                TaskID = testDto.TaskId,
+                Score = totalScore,
+                AttemptNumber = 1,
+                CompletionStatus = "completed",
+                CompletedAt = DateTime.UtcNow
+            };
+            _context.TaskResults.Add(taskResult);
             
-            // НЕ вызываем SaveChanges здесь
-        }
-
-        private void UpdateUserExperience(int userId, int xpGain)
-        {
-            var rating = _context.Ratings.FirstOrDefault(r => r.UserID == userId);
-            
+            // Обновляем опыт
+            var rating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserID == testDto.UserId);
             if (rating == null)
             {
                 rating = new Rating
                 {
-                    UserID = userId,
-                    TotalScore = xpGain,
+                    UserID = testDto.UserId,
+                    TotalScore = totalScore,
                     CurrentLevel = 1,
-                    Experience = xpGain,
+                    Experience = totalScore,
                     PositionInRating = 0
                 };
                 _context.Ratings.Add(rating);
             }
             else
             {
-                rating.Experience += xpGain;
-                rating.TotalScore += xpGain;
+                rating.Experience += totalScore;
+                rating.TotalScore += totalScore;
                 rating.CurrentLevel = (rating.Experience / 100) + 1;
             }
             
-            // НЕ вызываем SaveChanges здесь
+            // Обновляем прогресс урока
+            var lessonProgress = await _context.LessonProgresses
+                .FirstOrDefaultAsync(lp => lp.UserID == testDto.UserId && lp.LessonID == testDto.LessonId);
+            
+            if (lessonProgress == null)
+            {
+                lessonProgress = new LessonProgress
+                {
+                    UserID = testDto.UserId,
+                    LessonID = testDto.LessonId,
+                    ProgressPercent = maxScore > 0 ? (totalScore * 100 / maxScore) : 0,
+                    IsCompleted = totalScore == maxScore,
+                    CompletionStatus = totalScore == maxScore ? "completed" : "in_progress"
+                };
+                _context.LessonProgresses.Add(lessonProgress);
+            }
+            else
+            {
+                lessonProgress.ProgressPercent = maxScore > 0 ? (totalScore * 100 / maxScore) : 0;
+                lessonProgress.IsCompleted = totalScore == maxScore;
+                lessonProgress.CompletionStatus = totalScore == maxScore ? "completed" : "in_progress";
+            }
+            
+            await _context.SaveChangesAsync();
+            Console.WriteLine("Saved to database!");
         }
-                
+        
+        var updatedRating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserID == testDto.UserId);
+        
+        return Ok(new
+        {
+            success = true,
+            totalScore = totalScore,
+            maxScore = maxScore,
+            xpGained = totalScore,
+            newTotalXp = updatedRating?.Experience ?? 0,
+            newLevel = updatedRating?.CurrentLevel ?? 1
+        });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"ERROR: {ex.Message}");
+        return StatusCode(500, new { success = false, message = ex.Message });
+    }
+}
+        [HttpGet("{lessonId}/progress/{userId}")]
+        public async Task<IActionResult> GetLessonProgress(int lessonId, int userId)
+        {
+            var lessonProgress = await _context.LessonProgresses
+                .FirstOrDefaultAsync(lp => lp.UserID == userId && lp.LessonID == lessonId);
+            
+            var allTasks = await _context.Tasks
+                .Where(t => t.LessonID == lessonId && t.IsActive)
+                .ToListAsync();
+            
+            var completedTasks = await _context.TaskResults
+                .Where(tr => tr.UserID == userId && allTasks.Select(t => t.TaskID).Contains(tr.TaskID))
+                .ToListAsync();
+            
+            int totalScore = completedTasks.Sum(tr => tr.Score);
+            int maxScore = allTasks.Sum(t => t.MaxScore);
+            
+            return Ok(new
+            {
+                isCompleted = lessonProgress?.IsCompleted ?? false,
+                progressPercent = lessonProgress?.ProgressPercent ?? 0,
+                totalScore = totalScore,
+                maxScore = maxScore,
+                completedTasksCount = completedTasks.Count,
+                totalTasksCount = allTasks.Count
+            });
+        }
 
         // DTO классы
-        public class SubmitAnswerDto
+        public class SubmitTestDto
         {
             public int UserId { get; set; }
             public int LessonId { get; set; }
             public int TaskId { get; set; }
-            public int QuestionId { get; set; }
-            public int AnswerId { get; set; }
+            public List<AnswerItemDto> Answers { get; set; } = new();
         }
 
-        public class SaveResultDto
-        {
-            public int UserId { get; set; }
-            public int LessonId { get; set; }
-            public int TaskId { get; set; }
-            public int Score { get; set; }
-            public int MaxScore { get; set; }
-            public List<AnswerDetailDto> Answers { get; set; } = new();
-        }
-
-        public class AnswerDetailDto
+        public class AnswerItemDto
         {
             public int QuestionId { get; set; }
             public int SelectedAnswerId { get; set; }
-            public bool IsCorrect { get; set; }
         }
     }
 }
