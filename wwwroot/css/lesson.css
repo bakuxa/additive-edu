@@ -490,3 +490,432 @@ body {
     transform: translateY(-2px);
     opacity: 0.9;
 }
+
+/* Стили для квеста */
+.quest-container {
+    background: #FFFFFF;
+    border-radius: 24px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+.quest-header {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #029FA4;
+}
+
+.quest-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: #21383E;
+    margin-bottom: 10px;
+}
+
+.quest-description {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #5A6E7A;
+}
+
+.quest-progress {
+    background: #F8F9FA;
+    border-radius: 16px;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.progress-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.progress-stats span {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #21383E;
+}
+
+.progress-stats strong {
+    color: #029FA4;
+    font-size: 18px;
+}
+
+.progress-bar-container {
+    flex: 1;
+    min-width: 200px;
+}
+
+.progress-bar-bg {
+    background: #E8EEEE;
+    border-radius: 20px;
+    height: 10px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    background: linear-gradient(135deg, #029FA4, #8ED1D1);
+    height: 100%;
+    border-radius: 20px;
+    transition: width 0.3s ease;
+}
+
+.quest-stage {
+    background: #F8F9FA;
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.stage-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.stage-number {
+    background: #029FA4;
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.stage-points {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #FF9800;
+    font-weight: 600;
+}
+
+.stage-question {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 18px;
+    color: #21383E;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+/* Одиночный и множественный выбор */
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.quest-option {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 18px;
+    background: white;
+    border: 1.5px solid #E8EEEE;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.quest-option:hover {
+    border-color: #029FA4;
+    background: #F0FCFC;
+}
+
+.quest-option.selected {
+    border-color: #029FA4;
+    background: rgba(2, 159, 164, 0.1);
+}
+
+.quest-option.correct-highlight {
+    border-color: #2ECC71;
+    background: rgba(46, 204, 113, 0.1);
+}
+
+.quest-option.wrong-highlight {
+    border-color: #E74C3C;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+.option-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #8A9AA5;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quest-option.selected .option-radio {
+    border-color: #029FA4;
+}
+
+.quest-option.selected .option-radio::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #029FA4;
+    border-radius: 50%;
+}
+
+.option-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #8A9AA5;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quest-option.selected .option-checkbox {
+    border-color: #029FA4;
+    background: #029FA4;
+}
+
+.quest-option.selected .option-checkbox::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+}
+
+.option-text {
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #21383E;
+}
+
+/* Ввод текста */
+.text-input-field {
+    width: 100%;
+    padding: 14px 18px;
+    border: 1.5px solid #E8EEEE;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    margin-bottom: 20px;
+}
+
+.text-input-field:focus {
+    outline: none;
+    border-color: #029FA4;
+    box-shadow: 0 0 0 3px rgba(2, 159, 164, 0.2);
+}
+
+/* Порядок действий */
+.sequence-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.sequence-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px 18px;
+    background: white;
+    border: 1.5px solid #E8EEEE;
+    border-radius: 12px;
+    cursor: move;
+    transition: all 0.2s ease;
+}
+
+.sequence-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.sequence-drag-icon {
+    cursor: grab;
+    color: #8A9AA5;
+    font-size: 18px;
+}
+
+.sequence-item:hover {
+    border-color: #029FA4;
+    background: #F0FCFC;
+}
+
+.sequence-number {
+    width: 28px;
+    height: 28px;
+    background: #F0F0F0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    color: #21383E;
+}
+
+.sequence-text {
+    flex: 1;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #21383E;
+}
+
+/* Подсказка */
+.quest-hint {
+    margin: 20px 0;
+    padding: 12px 18px;
+    background: #FFF8E1;
+    border-left: 4px solid #FFC107;
+    border-radius: 12px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #856404;
+    display: none;
+}
+
+.quest-hint.active {
+    display: block;
+}
+
+.hint-btn {
+    background: none;
+    border: none;
+    color: #029FA4;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    padding: 0;
+    margin-bottom: 10px;
+    text-decoration: underline;
+}
+
+/* Кнопки */
+.quest-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 25px;
+}
+
+.quest-btn {
+    padding: 12px 28px;
+    border-radius: 40px;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.quest-btn-primary {
+    background: linear-gradient(135deg, #029FA4, #8ED1D1);
+    color: white;
+}
+
+.quest-btn-primary:hover {
+    transform: translateY(-2px);
+    opacity: 0.9;
+}
+
+.quest-btn-secondary {
+    background: #F8F9FA;
+    border: 1.5px solid #029FA4;
+    color: #029FA4;
+}
+
+.quest-btn-secondary:hover {
+    background: #F0FCFC;
+}
+
+.quest-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Результат этапа */
+.stage-feedback {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 12px;
+    display: none;
+}
+
+.stage-feedback.correct {
+    display: block;
+    background: rgba(46, 204, 113, 0.1);
+    border: 1px solid #2ECC71;
+    color: #2ECC71;
+}
+
+.stage-feedback.wrong {
+    display: block;
+    background: rgba(231, 76, 60, 0.1);
+    border: 1px solid #E74C3C;
+    color: #E74C3C;
+}
+
+/* Завершение квеста */
+.quest-completed {
+    text-align: center;
+    padding: 40px;
+    background: linear-gradient(135deg, #E8F8F8, #F0FCFC);
+    border-radius: 24px;
+    border: 1px solid #029FA4;
+}
+
+.quest-completed-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.quest-completed-title {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 800;
+    font-size: 28px;
+    color: #2ECC71;
+    margin-bottom: 10px;
+}
+
+.quest-completed-score {
+    font-family: 'Poppins', sans-serif;
+    font-size: 18px;
+    color: #21383E;
+    margin-bottom: 25px;
+}
+/* Подсветка правильных ответов */
+.correct-highlight {
+    border-color: #2ECC71 !important;
+    background-color: rgba(46, 204, 113, 0.15) !important;
+}
+
+/* Подсветка неправильных ответов */
+.wrong-highlight {
+    border-color: #E74C3C !important;
+    background-color: rgba(231, 76, 60, 0.15) !important;
+}
+
+/* Для sequence элементов */
+.sequence-item.correct-highlight {
+    border-color: #2ECC71 !important;
+    background-color: rgba(46, 204, 113, 0.15) !important;
+}
+
+.sequence-item.wrong-highlight {
+    border-color: #E74C3C !important;
+    background-color: rgba(231, 76, 60, 0.15) !important;
+}

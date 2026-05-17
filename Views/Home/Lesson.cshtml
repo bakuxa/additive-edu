@@ -471,239 +471,646 @@
 
     <script>
     const lessonId = @lessonId;
-let allQuestions = [];
-let userAnswers = {};
-let tasks = [];
-let currentTaskId = null;
-let matchData = null;
-let userMatches = {};
+        let allQuestions = [];
+        let userAnswers = {};
+        let tasks = [];
+        let currentTaskId = null;
+        let matchData = null;
+        let userMatches = {};
+         
+        let questStages = [];
+        let currentQuestStageIndex = 0;
+        let completedQuestStageIds = [];
+        let questStageScores = {};
+        let questTotalMaxScore = 0;
+        let questUserAnswer = null;
+        let questSelectedOptions = [];
+        let questSequenceOrder = [];
+        let questIsChecking = false;
 
-function loadUserData() {
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user) {
-        window.location.href = '/Home/Login';
-        return null;
-    }
-    return user;
-}
 
-async function loadLesson() {
-    const user = loadUserData();
-    if (!user) return;
-
-    const container = document.getElementById('lessonContent');
-
-    try {
-        const progressResponse = await fetch(`/api/lesson/is-completed/${lessonId}/${user.userId}`);
-        const progressData = await progressResponse.json();
-        const isLessonCompleted = progressData.isCompleted;
-        
-        const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
-        if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
-        const lesson = await lessonResponse.json();
-        
-        const moduleTitle = lesson.module?.moduleTitle || 'Модуль';
-        const moduleNumber = lesson.module?.moduleNumber || '?';
-        
-        document.getElementById('pageTitle').textContent = lesson.lessonTitle;
-
-        if (isLessonCompleted) {
-            renderCompletedLesson(lesson, moduleNumber, moduleTitle);
-        } else {
-            const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
-            tasks = await tasksResponse.json();
-            
-            const completedTasks = await getCompletedTasks(user.userId, tasks.map(t => t.taskID));
-            
-            let nextTaskIndex = -1;
-            for (let i = 0; i < tasks.length; i++) {
-                if (!completedTasks.has(tasks[i].taskID)) {
-                    nextTaskIndex = i;
-                    break;
-                }
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
             }
+            return user;
+        }
+   
+    // ========== ФУНКЦИИ ДЛЯ КВЕСТА ==========
+    
+    function renderQuestLesson(lesson, moduleNumber, moduleTitle) {
+        const container = document.getElementById('lessonContent');
+        const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+        
+        container.innerHTML = `
+            <div class="lesson-container">
+                <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+                <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                <div class="theory-content">${lesson.theoryContent || ''}</div>
+                <div class="tasks-section">
+                    <div class="task-header">
+                        <span class="task-counter">Задание ${currentIdx + 1} из ${tasks.length}</span>
+                        <span class="task-title">${escapeHtml(tasks[currentIdx]?.taskTitle || 'Квест')}</span>
+                    </div>
+                    <div id="questContainer"></div>
+                    <div class="finish-btn-container" id="questFinishBtnContainer" style="display: none;">
+                        <button class="finish-test-btn" id="finishQuestBtn">📚 Продолжить</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async function loadQuestTask(taskId) {
+        try {
+            console.log('Загрузка квеста, taskId:', taskId);
             
-            if (nextTaskIndex === -1) {
-                await markLessonAsCompleted(user.userId, lessonId);
-                renderCompletedLesson(lesson, moduleNumber, moduleTitle);
+            const user = loadUserData();
+            
+            const stagesResponse = await fetch(`/api/lesson/task/${taskId}/quest-stages`);
+            const stages = await stagesResponse.json();
+            console.log('Полученные этапы:', stages);
+            
+            if (!stages || stages.length === 0) {
+                console.error('Нет этапов для квеста');
+                document.getElementById('questContainer').innerHTML = '<div class="error-message">⚠️ Нет этапов для этого квеста</div>';
                 return;
             }
             
-            currentTaskId = tasks[nextTaskIndex].taskID;
-            const currentTask = tasks[nextTaskIndex];
-            
-            if (currentTask.typeName === 'Сопоставление') {
-                renderMatchLesson(lesson, moduleNumber, moduleTitle);
-                await loadMatchTask(currentTaskId);
-            } else {
-                await renderTestLesson(lesson, moduleNumber, moduleTitle);
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка:', error);
-        container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
-    }
-}
-
-async function getCompletedTasks(userId, taskIds) {
-    const completed = new Set();
-    try {
-        for (const taskId of taskIds) {
-            const response = await fetch(`/api/lesson/task/${taskId}/is-completed/${userId}`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.isCompleted) completed.add(taskId);
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка проверки заданий:', error);
-    }
-    return completed;
-}
-
-async function markLessonAsCompleted(userId, lessonId) {
-    try {
-        await fetch('/api/lesson/mark-completed', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: userId, lessonId: lessonId })
-        });
-    } catch (error) {
-        console.error('Ошибка:', error);
-    }
-}
-
-function renderCompletedLesson(lesson, moduleNumber, moduleTitle) {
-    const container = document.getElementById('lessonContent');
-    container.innerHTML = `
-        <div class="lesson-container">
-            <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
-            <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
-            <div class="theory-content">${lesson.theoryContent || 'Теоретический материал отсутствует'}</div>
-            <div class="completed-banner">
-                <div class="completed-icon">✅</div>
-                <div class="completed-text">Урок пройден!</div>
-                <button class="back-to-courses-btn" onclick="window.location.href='/Home/Courses'">← Вернуться к курсам</button>
-            </div>
-        </div>
-    `;
-}
-
-async function renderTestLesson(lesson, moduleNumber, moduleTitle) {
-    const container = document.getElementById('lessonContent');
-    const questionsResponse = await fetch(`/api/lesson/task/${currentTaskId}/questions`);
-    const questions = await questionsResponse.json();
-    allQuestions = questions.map(q => ({ ...q, taskId: currentTaskId }));
-    userAnswers = {};
-
-    const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
-    
-    container.innerHTML = `
-        <div class="lesson-container">
-            <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
-            <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
-            <div class="theory-content">${lesson.theoryContent || 'Теоретический материал отсутствует'}</div>
-            <div class="tasks-section">
-                <div class="task-header">
-                    <span class="task-counter">Задание ${currentIdx + 1} из ${tasks.length}</span>
-                    <span class="task-title">${escapeHtml(tasks[currentIdx]?.taskTitle || 'Тест')}</span>
-                </div>
-                <div id="questionsContainer"></div>
-                <div class="finish-btn-container">
-                    <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
-                </div>
-            </div>
-        </div>
-    `;
-    renderQuestions();
-    document.getElementById('finishTestBtn').addEventListener('click', finishTest);
-}
-
-function renderQuestions() {
-    const container = document.getElementById('questionsContainer');
-    if (!container) return;
-    container.innerHTML = allQuestions.map((q, idx) => `
-        <div class="question-item" data-question-id="${q.questionID}">
-            <div class="question-text">${idx + 1}. ${escapeHtml(q.questionText)}</div>
-            <div class="answers-list">
-                ${q.answers.map(answer => `
-                    <div class="answer-option" data-answer-id="${answer.answerID}" onclick="selectAnswer(this, ${q.questionID}, ${answer.answerID})">
-                        <div class="answer-radio"></div>
-                        <span class="answer-text">${escapeHtml(answer.answerText)}</span>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="result-message" style="display: none;"></div>
-        </div>
-    `).join('');
-}
-
-function selectAnswer(element, questionId, answerId) {
-    const questionDiv = element.closest('.question-item');
-    questionDiv.querySelectorAll('.answer-option').forEach(opt => opt.classList.remove('selected'));
-    element.classList.add('selected');
-    userAnswers[questionId] = answerId;
-}
-
-async function finishTest() {
-    const user = loadUserData();
-    if (!user) return;
-    
-    const unanswered = allQuestions.filter(q => !userAnswers[q.questionID]);
-    if (unanswered.length > 0) {
-        alert(`Ответьте на все вопросы! Осталось ${unanswered.length}`);
-        return;
-    }
-    
-    const finishBtn = document.getElementById('finishTestBtn');
-    finishBtn.disabled = true;
-    finishBtn.textContent = '⏳ Проверка...';
-    
-    const answers = allQuestions.map(q => ({
-        questionId: q.questionID,
-        selectedAnswerId: userAnswers[q.questionID]
-    }));
-    
-    try {
-        const response = await fetch('/api/lesson/submit-test', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                userId: user.userId,
-                lessonId: lessonId,
-                taskId: currentTaskId,
-                answers: answers
-            })
-        });
-        const result = await response.json();
-        
-        if (result.success) {
-            allQuestions.forEach(question => {
-                const correct = question.answers.find(a => a.isCorrect);
-                const selected = userAnswers[question.questionID];
-                const div = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
-                if (div) {
-                    div.querySelectorAll('.answer-option').forEach(opt => {
-                        opt.style.pointerEvents = 'none';
-                        const aid = parseInt(opt.dataset.answerId);
-                        if (aid === correct?.answerID) opt.classList.add('correct-highlight');
-                        if (aid === selected && aid !== correct?.answerID) opt.classList.add('wrong-highlight');
-                    });
-                    const msgDiv = div.querySelector('.result-message');
-                    msgDiv.style.display = 'block';
-                    if (selected === correct?.answerID) {
-                        msgDiv.innerHTML = '✓ Правильно!';
-                        msgDiv.className = 'result-message correct';
-                    } else {
-                        msgDiv.innerHTML = `✗ Неправильно!<br><span style="font-size:12px;">Правильный ответ: ${escapeHtml(correct?.answerText)}</span>`;
-                        msgDiv.className = 'result-message incorrect';
+            questStages = stages.map(stage => {
+                let stageData = stage.stageData;
+                if (!stageData && stage.stageDescription) {
+                    try {
+                        stageData = JSON.parse(stage.stageDescription);
+                    } catch(e) {
+                        console.error('Ошибка парсинга stageDescription:', e);
+                        stageData = null;
                     }
+                }
+                return {
+                    questStageID: stage.questStageID,
+                    stageTitle: stage.stageTitle,
+                    stageOrder: stage.stageOrder,
+                    stageData: stageData
+                };
+            });
+            
+            console.log('Обработанные этапы:', questStages);
+            
+            questTotalMaxScore = 0;
+            questStages.forEach(stage => {
+                if (stage.stageData && stage.stageData.points) {
+                    questTotalMaxScore += stage.stageData.points;
                 }
             });
             
-            finishBtn.textContent = '📚 Продолжить';
-            finishBtn.disabled = false;
+            const progressResponse = await fetch(`/api/lesson/quest/progress/${taskId}/${user.userId}`);
+            const progress = await progressResponse.json();
+            console.log('Прогресс:', progress);
             
+            if (progress.isCompleted) {
+                renderQuestCompleted(progress.totalScore);
+                return;
+            }
+            
+            completedQuestStageIds = progress.completedStages || [];
+            questStageScores = progress.stageScores || {};
+            currentQuestStageIndex = (progress.currentStage || 1) - 1;
+            
+            renderCurrentQuestStage();
+            
+        } catch (error) {
+            console.error('Ошибка загрузки квеста:', error);
+            document.getElementById('questContainer').innerHTML = `<div class="error-message">⚠️ Ошибка загрузки квеста: ${error.message}</div>`;
+        }
+    }
+
+    function renderCurrentQuestStage() {
+        console.log('renderCurrentQuestStage, index:', currentQuestStageIndex);
+        console.log('Всего этапов:', questStages.length);
+        console.log('Пройденные этапы:', completedQuestStageIds);
+        
+        // Защита от зацикливания
+        if (currentQuestStageIndex >= questStages.length) {
+            console.log('Все этапы пройдены, завершаем квест');
+            saveQuestProgressAndComplete();
+            return;
+        }
+        
+        const stage = questStages[currentQuestStageIndex];
+        
+        // Если этот этап уже пройден - пропускаем его
+        if (stage && completedQuestStageIds.includes(stage.questStageID)) {
+            console.log('Этап уже пройден, переходим к следующему');
+            currentQuestStageIndex++;
+            renderCurrentQuestStage();
+            return;
+        }
+        
+        const stageData = stage.stageData;
+        
+        if (!stageData) {
+            console.error('Нет stageData для этапа:', stage);
+            document.getElementById('questContainer').innerHTML = `<div class="error-message">⚠️ Ошибка: данные этапа отсутствуют</div>`;
+            return;
+        }
+        
+        const totalStages = questStages.length;
+        const completedCount = completedQuestStageIds.length;
+        const earnedPoints = Object.values(questStageScores).reduce((a, b) => (a || 0) + (b || 0), 0);
+        const progressPercent = (completedCount / totalStages) * 100;
+        
+        let questionHtml = renderQuestQuestionByType(stageData);
+        
+        const container = document.getElementById('questContainer');
+        container.innerHTML = `
+            <div class="quest-progress">
+                <div class="progress-stats">
+                    <span>📊 Этапы: <strong>${completedCount}/${totalStages}</strong></span>
+                    <span>⭐ Очки: <strong>${earnedPoints}/${questTotalMaxScore}</strong></span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: ${progressPercent}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="quest-stage">
+                <div class="stage-header">
+                    <span class="stage-number">Этап ${currentQuestStageIndex + 1} из ${totalStages}</span>
+                    <span class="stage-points">🏆 ${stageData.points || 0} XP</span>
+                </div>
+                <div class="stage-question">${escapeHtml(stageData.question || '')}</div>
+                ${questionHtml}
+                ${stageData.hint ? `
+                    <button class="hint-btn" onclick="showQuestHint()">💡 Показать подсказку</button>
+                    <div class="quest-hint" id="questHintBox">${escapeHtml(stageData.hint)}</div>
+                ` : ''}
+                <div class="stage-feedback" id="questStageFeedback"></div>
+                <div class="quest-buttons">
+                    <button class="quest-btn quest-btn-secondary" id="checkQuestBtn">✅ Проверить</button>
+                </div>
+            </div>
+        `;
+        
+        if (stageData.type === 'sequence') {
+            setTimeout(() => initQuestSequenceDragAndDrop(stageData), 100);
+        }
+        
+        questUserAnswer = null;
+        questSelectedOptions = [];
+        
+        document.getElementById('checkQuestBtn').onclick = () => checkQuestAnswer();
+    }
+
+    function renderQuestQuestionByType(stageData) {
+        const type = stageData.type;
+        
+        if (!type) {
+            return '<div class="error-message">Неизвестный тип вопроса</div>';
+        }
+        
+        switch (type) {
+            case 'single_choice':
+                if (!stageData.options) return '<div>Ошибка: нет вариантов ответа</div>';
+                return `
+                    <div class="options-list" id="questOptionsList">
+                        ${stageData.options.map((opt, idx) => `
+                            <div class="quest-option" data-value="${idx}" onclick="selectQuestSingleOption(${idx})">
+                                <div class="option-radio"></div>
+                                <span class="option-text">${escapeHtml(opt)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            case 'true_false':
+                return `
+                    <div class="options-list" id="questOptionsList">
+                        <div class="quest-option" data-value="true" onclick="selectQuestSingleOption('true')">
+                            <div class="option-radio"></div>
+                            <span class="option-text">✅ Верно</span>
+                        </div>
+                        <div class="quest-option" data-value="false" onclick="selectQuestSingleOption('false')">
+                            <div class="option-radio"></div>
+                            <span class="option-text">❌ Неверно</span>
+                        </div>
+                    </div>
+                `;
+            case 'text_input':
+                return `<input type="text" class="text-input-field" id="questTextAnswer" placeholder="Введите ваш ответ...">`;
+            case 'multiple_choice':
+                if (!stageData.options) return '<div>Ошибка: нет вариантов ответа</div>';
+                return `
+                    <div class="options-list" id="questOptionsList">
+                        ${stageData.options.map((opt, idx) => `
+                            <div class="quest-option" data-value="${idx}" onclick="toggleQuestMultipleOption(${idx})">
+                                <div class="option-checkbox"></div>
+                                <span class="option-text">${escapeHtml(opt)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            case 'sequence':
+                if (!stageData.items) return '<div>Ошибка: нет элементов для сортировки</div>';
+                questSequenceOrder = [...stageData.items];
+                return `
+                    <div class="sequence-items" id="questSequenceItems">
+                        ${questSequenceOrder.map((item, idx) => `
+                            <div class="sequence-item" draggable="true" data-index="${idx}">
+                                <span class="sequence-drag-icon">⋮⋮</span>
+                                <span class="sequence-number">${idx + 1}</span>
+                                <span class="sequence-text">${escapeHtml(item)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            case 'fill_blank':
+                const questionWithBlank = (stageData.question || '').replace(/___/g, '<input type="text" class="text-input-field" id="questTextAnswer" style="width: 200px; display: inline-block; margin: 0 10px;" placeholder="...">');
+                return `<div>${questionWithBlank}</div>`;
+            default:
+                return `<div>Неизвестный тип вопроса: ${type}</div>`;
+        }
+    }
+
+    window.selectQuestSingleOption = function(value) {
+        questUserAnswer = value;
+        document.querySelectorAll('#questOptionsList .quest-option').forEach(opt => {
+            opt.classList.remove('selected');
+            if (opt.dataset.value == value) {
+                opt.classList.add('selected');
+            }
+        });
+    };
+
+    window.toggleQuestMultipleOption = function(idx) {
+        if (questSelectedOptions.includes(idx)) {
+            questSelectedOptions = questSelectedOptions.filter(i => i !== idx);
+        } else {
+            questSelectedOptions.push(idx);
+        }
+        document.querySelectorAll('#questOptionsList .quest-option').forEach((opt, i) => {
+            if (questSelectedOptions.includes(i)) {
+                opt.classList.add('selected');
+            } else {
+                opt.classList.remove('selected');
+            }
+        });
+    };
+
+    window.showQuestHint = function() {
+        const hintBox = document.getElementById('questHintBox');
+        if (hintBox) hintBox.classList.toggle('active');
+    };
+
+    function initQuestSequenceDragAndDrop(stageData) {
+        const container = document.getElementById('questSequenceItems');
+        if (!container) return;
+        
+        let draggedItem = null;
+        const items = container.querySelectorAll('.sequence-item');
+        
+        items.forEach(item => {
+            item.setAttribute('draggable', 'true');
+            item.addEventListener('dragstart', (e) => {
+                draggedItem = item;
+                item.classList.add('dragging');
+            });
+            item.addEventListener('dragend', (e) => {
+                item.classList.remove('dragging');
+            });
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggedItem && draggedItem !== item) {
+                    if (draggedItem.compareDocumentPosition(item) & 4) {
+                        item.parentNode.insertBefore(draggedItem, item.nextSibling);
+                    } else {
+                        item.parentNode.insertBefore(draggedItem, item);
+                    }
+                    updateQuestSequenceNumbers();
+                }
+            });
+        });
+    }
+
+    function updateQuestSequenceNumbers() {
+        const items = document.querySelectorAll('.sequence-item');
+        items.forEach((item, idx) => {
+            const numberSpan = item.querySelector('.sequence-number');
+            if (numberSpan) numberSpan.textContent = idx + 1;
+            item.setAttribute('data-index', idx);
+        });
+    }
+
+    async function checkQuestAnswer() {
+        console.log('=== checkQuestAnswer вызван ===');
+        
+        if (questIsChecking) return;
+        questIsChecking = true;
+        
+        const stage = questStages[currentQuestStageIndex];
+        const stageData = stage.stageData;
+        
+        if (!stageData) {
+            alert('Ошибка: нет данных этапа');
+            questIsChecking = false;
+            return;
+        }
+        
+        let requestBody = {
+            stageId: stage.questStageID,
+            taskId: currentTaskId,
+            userId: loadUserData().userId
+        };
+        
+        let userResponse = null;
+        
+        switch (stageData.type) {
+            case 'single_choice':
+                if (questUserAnswer === null) {
+                    alert('Выберите ответ!');
+                    questIsChecking = false;
+                    return;
+                }
+                requestBody.answer = { value: parseInt(questUserAnswer) };
+                userResponse = questUserAnswer;
+                break;
+            case 'true_false':
+                if (questUserAnswer === null) {
+                    alert('Выберите ответ!');
+                    questIsChecking = false;
+                    return;
+                }
+                requestBody.answer = questUserAnswer;
+                userResponse = questUserAnswer;
+                break;
+            case 'text_input':
+            case 'fill_blank':
+                const textAnswer = document.getElementById('questTextAnswer')?.value;
+                if (!textAnswer) {
+                    alert('Введите ответ!');
+                    questIsChecking = false;
+                    return;
+                }
+                requestBody.textAnswer = textAnswer;
+                userResponse = textAnswer;
+                break;
+            case 'multiple_choice':
+                if (questSelectedOptions.length === 0) {
+                    alert('Выберите хотя бы один вариант!');
+                    questIsChecking = false;
+                    return;
+                }
+                requestBody.selectedIndices = questSelectedOptions;
+                userResponse = questSelectedOptions;
+                break;
+            case 'sequence':
+                const items = document.querySelectorAll('#questSequenceItems .sequence-item');
+                const orderIndices = [];
+                items.forEach(item => {
+                    const text = item.querySelector('.sequence-text')?.textContent;
+                    const originalIndex = stageData.items.findIndex(original => original === text);
+                    orderIndices.push(originalIndex);
+                });
+                requestBody.orderIndices = orderIndices;
+                userResponse = orderIndices;
+                break;
+        }
+        
+        try {
+            const response = await fetch('/api/lesson/quest/check-stage', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody)
+            });
+            
+            const result = await response.json();
+            
+            const feedbackDiv = document.getElementById('questStageFeedback');
+            const checkBtn = document.getElementById('checkQuestBtn');
+            
+            highlightQuestAnswers(stageData, result, userResponse);
+            
+            if (!completedQuestStageIds.includes(stage.questStageID)) {
+                completedQuestStageIds.push(stage.questStageID);
+            }
+            
+            if (result.isCorrect) {
+                feedbackDiv.className = 'stage-feedback correct';
+                feedbackDiv.innerHTML = `✅ ${result.explanation || 'Правильно!'} +${result.earnedPoints} XP`;
+                questStageScores[stage.questStageID] = result.earnedPoints;
+            } else {
+                feedbackDiv.className = 'stage-feedback wrong';
+                questStageScores[stage.questStageID] = 0;
+                
+                let correctAnswerText = '';
+                if (stageData.type === 'single_choice') {
+                    correctAnswerText = stageData.options[stageData.correctAnswer];
+                } else if (stageData.type === 'true_false') {
+                    correctAnswerText = stageData.correctAnswer ? 'Верно' : 'Неверно';
+                } else if (stageData.type === 'multiple_choice') {
+                    correctAnswerText = stageData.correctAnswers.map(i => stageData.options[i]).join(', ');
+                } else if (stageData.type === 'text_input' || stageData.type === 'fill_blank') {
+                    correctAnswerText = stageData.correctAnswer;
+                } else if (stageData.type === 'sequence') {
+                    correctAnswerText = stageData.items.map((item, i) => `${i + 1}. ${item}`).join(' → ');
+                }
+                feedbackDiv.innerHTML = `❌ ${result.explanation || 'Неправильно!'}<br><span style="font-size: 12px;">Правильный ответ: ${correctAnswerText}</span>`;
+            }
+            
+            checkBtn.textContent = '➡️ Следующий этап';
+            checkBtn.onclick = goToNextQuestStage;
+            disableQuestOptions(stageData.type);
+            
+        } catch (error) {
+            console.error('Ошибка:', error);
+            alert('Ошибка при проверке ответа: ' + error.message);
+        } finally {
+            questIsChecking = false;
+        }
+    }
+
+    function highlightQuestAnswers(stageData, result, userResponse) {
+        const type = stageData.type;
+        
+        if (type === 'single_choice') {
+            const correctIndex = stageData.correctAnswer;
+            const userIndex = userResponse;
+            const options = document.querySelectorAll('#questOptionsList .quest-option');
+            
+            options.forEach((opt, idx) => {
+                opt.style.pointerEvents = 'none';
+                opt.classList.remove('correct-highlight', 'wrong-highlight');
+                if (idx === correctIndex) opt.classList.add('correct-highlight');
+                if (idx === userIndex && idx !== correctIndex) opt.classList.add('wrong-highlight');
+            });
+        } else if (type === 'true_false') {
+            const correctValue = stageData.correctAnswer ? 'true' : 'false';
+            const userValue = userResponse;
+            const options = document.querySelectorAll('#questOptionsList .quest-option');
+            
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                opt.classList.remove('correct-highlight', 'wrong-highlight');
+                const value = opt.dataset.value;
+                if (value === correctValue) opt.classList.add('correct-highlight');
+                if (value === userValue && userValue !== correctValue) opt.classList.add('wrong-highlight');
+            });
+        } else if (type === 'multiple_choice') {
+            const correctAnswers = stageData.correctAnswers;
+            const userAnswers = userResponse || [];
+            const options = document.querySelectorAll('#questOptionsList .quest-option');
+            
+            options.forEach((opt, idx) => {
+                opt.style.pointerEvents = 'none';
+                opt.classList.remove('correct-highlight', 'wrong-highlight');
+                const isCorrect = correctAnswers.includes(idx);
+                const isUserSelected = userAnswers.includes(idx);
+                if (isCorrect) opt.classList.add('correct-highlight');
+                if (isUserSelected && !isCorrect) opt.classList.add('wrong-highlight');
+            });
+        } else if (type === 'text_input' || type === 'fill_blank') {
+            const input = document.getElementById('questTextAnswer');
+            if (input) {
+                input.disabled = true;
+                input.classList.remove('correct-highlight', 'wrong-highlight');
+                if (result.isCorrect) input.classList.add('correct-highlight');
+                else input.classList.add('wrong-highlight');
+            }
+        } else if (type === 'sequence') {
+            const correctOrder = stageData.correctOrder;
+            const items = document.querySelectorAll('#questSequenceItems .sequence-item');
+            
+            items.forEach((item, idx) => {
+                item.classList.remove('correct-highlight', 'wrong-highlight');
+                const text = item.querySelector('.sequence-text')?.textContent;
+                const originalIndex = stageData.items.findIndex(original => original === text);
+                const shouldBeAtPosition = correctOrder.findIndex(pos => pos === originalIndex);
+                if (shouldBeAtPosition === idx) item.classList.add('correct-highlight');
+                else item.classList.add('wrong-highlight');
+            });
+        }
+    }
+
+    function disableQuestOptions(type) {
+        if (type === 'single_choice' || type === 'true_false' || type === 'multiple_choice') {
+            const options = document.querySelectorAll('#questOptionsList .quest-option');
+            options.forEach(opt => {
+                opt.style.pointerEvents = 'none';
+                opt.style.cursor = 'default';
+            });
+        } else if (type === 'text_input' || type === 'fill_blank') {
+            const input = document.getElementById('questTextAnswer');
+            if (input) {
+                input.disabled = true;
+                input.style.pointerEvents = 'none';
+            }
+        } else if (type === 'sequence') {
+            const items = document.querySelectorAll('#questSequenceItems .sequence-item');
+            items.forEach(item => {
+                item.setAttribute('draggable', 'false');
+                item.style.cursor = 'default';
+                item.style.pointerEvents = 'none';
+            });
+        }
+    }
+
+    function goToNextQuestStage() {
+        console.log('Переход к следующему этапу без перезагрузки');
+        
+        // Увеличиваем индекс
+        currentQuestStageIndex++;
+        
+        // Проверяем, не закончились ли этапы
+        if (currentQuestStageIndex >= questStages.length) {
+            console.log('Все этапы пройдены, завершаем квест');
+            saveQuestProgressAndComplete();
+            return;
+        }
+        
+        // Сохраняем прогресс и загружаем следующий этап
+        saveCurrentProgressAndLoadNext();
+    }
+    
+    async function saveCurrentProgressAndLoadNext() {
+        const user = loadUserData();
+        if (!user) return;
+        
+        const stageScoresList = questStages.map(s => questStageScores[s.questStageID] || 0);
+        
+        console.log('Сохранение прогресса для этапа', currentQuestStageIndex);
+        
+        try {
+            await fetch('/api/lesson/quest/save-progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    taskId: currentTaskId,
+                    userId: user.userId,
+                    lessonId: lessonId,
+                    completedStages: completedQuestStageIds,
+                    currentStage: currentQuestStageIndex + 1,
+                    stageScores: stageScoresList
+                })
+            });
+            
+            // После сохранения загружаем следующий этап (без перезагрузки)
+            renderCurrentQuestStage();
+            
+        } catch (error) {
+            console.error('Ошибка сохранения:', error);
+            // Даже при ошибке загружаем следующий этап
+            renderCurrentQuestStage();
+        }
+    }
+
+    async function saveQuestProgressAndComplete() {
+    const user = loadUserData();
+    if (!user) return;
+    
+    const totalScore = Object.values(questStageScores).reduce((a, b) => (a || 0) + (b || 0), 0);
+    const stageScoresList = questStages.map(s => questStageScores[s.questStageID] || 0);
+    
+    console.log('ЗАВЕРШЕНИЕ КВЕСТА, всего XP:', totalScore);
+    
+    try {
+        const response = await fetch('/api/lesson/quest/save-progress', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                taskId: currentTaskId,
+                userId: user.userId,
+                lessonId: lessonId,
+                completedStages: completedQuestStageIds,
+                currentStage: questStages.length + 1,
+                stageScores: stageScoresList
+            })
+        });
+        
+        const result = await response.json();
+        console.log('Результат сохранения:', result);
+        
+        // Обновляем пользователя в localStorage с новым опытом
+        const u = JSON.parse(localStorage.getItem('user'));
+        if (u) {
+            u.experience = (u.experience || 0) + totalScore;
+            u.level = Math.floor(u.experience / 100) + 1;
+            localStorage.setItem('user', JSON.stringify(u));
+            console.log('Обновлен пользователь:', u);
+        }
+        
+        // Показываем модалку с результатами
+        showResultModal(totalScore, questTotalMaxScore, totalScore);
+        
+        // Показываем кнопку "Продолжить"
+        const finishContainer = document.getElementById('questFinishBtnContainer');
+        if (finishContainer) {
+            finishContainer.style.display = 'block';
+            const finishBtn = document.getElementById('finishQuestBtn');
             const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
             const isLast = (currentIdx === tasks.length - 1);
             
@@ -714,228 +1121,481 @@ async function finishTest() {
                     window.location.reload();
                 }
             };
+        }
+        
+        // Показываем сообщение о завершении квеста
+        renderQuestCompleted(totalScore);
+        
+    } catch (error) {
+        console.error('Ошибка завершения квеста:', error);
+    }
+}
+
+    function renderQuestCompleted(totalScore) {
+        const container = document.getElementById('questContainer');
+        if (container) {
+            container.innerHTML = `
+                <div class="quest-completed">
+                    <div class="quest-completed-icon">🏆</div>
+                    <div class="quest-completed-title">Квест пройден!</div>
+                    <div class="quest-completed-score">Вы получили ${totalScore} из ${questTotalMaxScore} XP</div>
+                </div>
+            `;
+        }
+    }
+
+        async function loadLesson() {
+            const user = loadUserData();
+            if (!user) return;
+
+            const container = document.getElementById('lessonContent');
+
+            try {
+                const progressResponse = await fetch(`/api/lesson/is-completed/${lessonId}/${user.userId}`);
+                const progressData = await progressResponse.json();
+                const isLessonCompleted = progressData.isCompleted;
+                
+                const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
+                if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
+                const lesson = await lessonResponse.json();
+                
+                const moduleTitle = lesson.module?.moduleTitle || 'Модуль';
+                const moduleNumber = lesson.module?.moduleNumber || '?';
+                
+                document.getElementById('pageTitle').textContent = lesson.lessonTitle;
+
+                if (isLessonCompleted) {
+                    renderCompletedLesson(lesson, moduleNumber, moduleTitle);
+                } else {
+                    const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
+                    tasks = await tasksResponse.json();
+                    
+                    const completedTasks = await getCompletedTasks(user.userId, tasks.map(t => t.taskID));
+                    
+                    let nextTaskIndex = -1;
+                    for (let i = 0; i < tasks.length; i++) {
+                        if (!completedTasks.has(tasks[i].taskID)) {
+                            nextTaskIndex = i;
+                            break;
+                        }
+                    }
+                    
+                    if (nextTaskIndex === -1) {
+                        await markLessonAsCompleted(user.userId, lessonId);
+                        renderCompletedLesson(lesson, moduleNumber, moduleTitle);
+                        return;
+                    }
+                    
+                    currentTaskId = tasks[nextTaskIndex].taskID;
+                    const currentTask = tasks[nextTaskIndex];
+                    
+                    if (currentTask.typeName === 'Сопоставление') {
+                        renderMatchLesson(lesson, moduleNumber, moduleTitle);
+                        await loadMatchTask(currentTaskId);
+                    } else if (currentTask.typeName === 'Квест') {
+                        renderQuestLesson(lesson, moduleNumber, moduleTitle);
+                        await loadQuestTask(currentTaskId);
+                    } else {
+                        await renderTestLesson(lesson, moduleNumber, moduleTitle);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
+            }
+        }
+
+        async function getCompletedTasks(userId, taskIds) {
+            const completed = new Set();
+            try {
+                for (const taskId of taskIds) {
+                    const response = await fetch(`/api/lesson/task/${taskId}/is-completed/${userId}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.isCompleted) completed.add(taskId);
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка проверки заданий:', error);
+            }
+            return completed;
+        }
+
+        async function markLessonAsCompleted(userId, lessonId) {
+            try {
+                await fetch('/api/lesson/mark-completed', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId, lessonId: lessonId })
+                });
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+
+        function renderCompletedLesson(lesson, moduleNumber, moduleTitle) {
+            const container = document.getElementById('lessonContent');
+            container.innerHTML = `
+                <div class="lesson-container">
+                    <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+                    <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                    <div class="theory-content">${lesson.theoryContent || 'Теоретический материал отсутствует'}</div>
+                    <div class="completed-banner">
+                        <div class="completed-icon">✅</div>
+                        <div class="completed-text">Урок пройден!</div>
+                        <button class="back-to-courses-btn" onclick="window.location.href='/Home/Courses'">← Вернуться к курсам</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function renderTestLesson(lesson, moduleNumber, moduleTitle) {
+            const container = document.getElementById('lessonContent');
+            const questionsResponse = await fetch(`/api/lesson/task/${currentTaskId}/questions`);
+            const questions = await questionsResponse.json();
+            allQuestions = questions.map(q => ({ ...q, taskId: currentTaskId }));
+            userAnswers = {};
+
+            const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
             
-            showResultModal(result.totalScore, result.maxScore, result.xpGained);
+            container.innerHTML = `
+                <div class="lesson-container">
+                    <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+                    <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                    <div class="theory-content">${lesson.theoryContent || 'Теоретический материал отсутствует'}</div>
+                    <div class="tasks-section">
+                        <div class="task-header">
+                            <span class="task-counter">Задание ${currentIdx + 1} из ${tasks.length}</span>
+                            <span class="task-title">${escapeHtml(tasks[currentIdx]?.taskTitle || 'Тест')}</span>
+                        </div>
+                        <div id="questionsContainer"></div>
+                        <div class="finish-btn-container">
+                            <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            renderQuestions();
+            document.getElementById('finishTestBtn').addEventListener('click', finishTest);
+        }
+
+        function renderQuestions() {
+            const container = document.getElementById('questionsContainer');
+            if (!container) return;
+            container.innerHTML = allQuestions.map((q, idx) => `
+                <div class="question-item" data-question-id="${q.questionID}">
+                    <div class="question-text">${idx + 1}. ${escapeHtml(q.questionText)}</div>
+                    <div class="answers-list">
+                        ${q.answers.map(answer => `
+                            <div class="answer-option" data-answer-id="${answer.answerID}" onclick="selectAnswer(this, ${q.questionID}, ${answer.answerID})">
+                                <div class="answer-radio"></div>
+                                <span class="answer-text">${escapeHtml(answer.answerText)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="result-message" style="display: none;"></div>
+                </div>
+            `).join('');
+        }
+
+        function selectAnswer(element, questionId, answerId) {
+            const questionDiv = element.closest('.question-item');
+            questionDiv.querySelectorAll('.answer-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+            userAnswers[questionId] = answerId;
+        }
+
+        async function finishTest() {
+            const user = loadUserData();
+            if (!user) return;
+            
+            const unanswered = allQuestions.filter(q => !userAnswers[q.questionID]);
+            if (unanswered.length > 0) {
+                alert(`Ответьте на все вопросы! Осталось ${unanswered.length}`);
+                return;
+            }
+            
+            const finishBtn = document.getElementById('finishTestBtn');
+            finishBtn.disabled = true;
+            finishBtn.textContent = '⏳ Проверка...';
+            
+            const answers = allQuestions.map(q => ({
+                questionId: q.questionID,
+                selectedAnswerId: userAnswers[q.questionID]
+            }));
+            
+            try {
+                const response = await fetch('/api/lesson/submit-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: user.userId,
+                        lessonId: lessonId,
+                        taskId: currentTaskId,
+                        answers: answers
+                    })
+                });
+                const result = await response.json();
+                
+                if (result.success) {
+                    allQuestions.forEach(question => {
+                        const correct = question.answers.find(a => a.isCorrect);
+                        const selected = userAnswers[question.questionID];
+                        const div = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
+                        if (div) {
+                            div.querySelectorAll('.answer-option').forEach(opt => {
+                                opt.style.pointerEvents = 'none';
+                                const aid = parseInt(opt.dataset.answerId);
+                                if (aid === correct?.answerID) opt.classList.add('correct-highlight');
+                                if (aid === selected && aid !== correct?.answerID) opt.classList.add('wrong-highlight');
+                            });
+                            const msgDiv = div.querySelector('.result-message');
+                            msgDiv.style.display = 'block';
+                            if (selected === correct?.answerID) {
+                                msgDiv.innerHTML = '✓ Правильно!';
+                                msgDiv.className = 'result-message correct';
+                            } else {
+                                msgDiv.innerHTML = `✗ Неправильно!<br><span style="font-size:12px;">Правильный ответ: ${escapeHtml(correct?.answerText)}</span>`;
+                                msgDiv.className = 'result-message incorrect';
+                            }
+                        }
+                    });
+                    
+                    finishBtn.textContent = '📚 Продолжить';
+                    finishBtn.disabled = false;
+                    
+                    const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+                    const isLast = (currentIdx === tasks.length - 1);
+                    
+                    finishBtn.onclick = () => {
+                        if (isLast) {
+                            window.location.href = '/Home/Courses';
+                        } else {
+                            window.location.reload();
+                        }
+                    };
+                    
+                    showResultModal(result.totalScore, result.maxScore, result.xpGained);
+                    
+                    const u = JSON.parse(localStorage.getItem('user'));
+                    if (u) {
+                        u.experience = result.newTotalXp;
+                        u.level = result.newLevel;
+                        localStorage.setItem('user', JSON.stringify(u));
+                    }
+                } else {
+                    finishBtn.disabled = false;
+                    finishBtn.textContent = '✅ Завершить тест';
+                    alert('Ошибка при сохранении результатов');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Ошибка: ' + error.message);
+                finishBtn.disabled = false;
+                finishBtn.textContent = '✅ Завершить тест';
+            }
+        }
+
+        function showResultModal(score, maxScore, xp) {
+            const modal = document.getElementById('resultModal');
+            document.querySelector('#modalResultContent .modal-score').innerHTML = `${score} / ${maxScore}`;
+            document.querySelector('#modalResultContent .modal-xp').innerHTML = `⭐ Получено XP: ${xp}`;
+            modal.classList.add('active');
+        }
+
+        function renderMatchLesson(lesson, moduleNumber, moduleTitle) {
+            const container = document.getElementById('lessonContent');
+            const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+            
+            container.innerHTML = `
+                <div class="lesson-container">
+                    <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+                    <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                    <div class="theory-content">${lesson.theoryContent || ''}</div>
+                    <div class="tasks-section">
+                        <div class="task-header">
+                            <span class="task-counter">Задание ${currentIdx + 1} из ${tasks.length}</span>
+                            <span class="task-title">${escapeHtml(tasks[currentIdx]?.taskTitle || 'Сопоставление')}</span>
+                        </div>
+                        <div id="matchContainer"></div>
+                        <div class="finish-btn-container">
+                            <button class="finish-test-btn" id="checkMatchBtn">✅ Проверить</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('checkMatchBtn').addEventListener('click', checkMatchAnswers);
+        }
+
+        async function loadMatchTask(taskId) {
+            const response = await fetch(`/api/lesson/task/${taskId}/match-data`);
+            matchData = await response.json();
+            for (let i = 0; i < matchData.leftItems.length; i++) userMatches[i] = null;
+            renderMatchInterface();
+        }
+
+        function renderMatchInterface() {
+            const container = document.getElementById('matchContainer');
+            if (!container) return;
+            
+            const rightNumbered = matchData.rightItems.map((item, idx) => ({ number: idx + 1, text: item }));
+            
+            container.innerHTML = `
+                <div class="match-container">
+                    <div class="match-column">
+                        <h3>Термин</h3>
+                        ${matchData.leftItems.map((item, idx) => `
+                            <div class="match-left-item">
+                                <div class="match-left-text">${escapeHtml(item)}</div>
+                                <div class="custom-select-match" data-left-idx="${idx}">
+                                    <div class="custom-select-match-trigger" onclick="toggleMatchSelect(${idx})">
+                                        <span id="match-selected-${idx}">Выберите</span>
+                                        <div class="custom-select-match-arrow"></div>
+                                    </div>
+                                    <div class="custom-select-match-dropdown" id="match-dropdown-${idx}">
+                                        <div class="custom-select-match-option" data-value="" onclick="selectMatchOption(${idx}, '', '— Выберите —')">— Выберите —</div>
+                                        ${rightNumbered.map(opt => `
+                                            <div class="custom-select-match-option" data-value="${opt.number}" onclick="selectMatchOption(${idx}, ${opt.number}, '${opt.number}')">
+                                                ${opt.number}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="match-column">
+                        <h3>Определение</h3>
+                        ${rightNumbered.map(item => `
+                            <div class="match-right-item">
+                                <div class="match-right-text"><span class="match-right-number">${item.number}</span> ${escapeHtml(item.text)}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        window.toggleMatchSelect = function(leftIdx) {
+            document.querySelectorAll('.custom-select-match').forEach(select => {
+                if (parseInt(select.dataset.leftIdx) !== leftIdx) {
+                    select.classList.remove('open');
+                }
+            });
+            const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
+            selectDiv.classList.toggle('open');
+        };
+
+        window.selectMatchOption = function(leftIdx, value, displayText) {
+            userMatches[leftIdx] = value ? parseInt(value) : null;
+            const triggerSpan = document.getElementById(`match-selected-${leftIdx}`);
+            triggerSpan.textContent = displayText;
+            const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
+            selectDiv.classList.remove('open');
+            selectDiv.classList.remove('correct', 'wrong');
+        };
+
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-select-match')) {
+                document.querySelectorAll('.custom-select-match').forEach(select => {
+                    select.classList.remove('open');
+                });
+            }
+        });
+
+        async function checkMatchAnswers() {
+            const allSelected = Object.values(userMatches).every(v => v !== null && v !== '');
+            if (!allSelected) { alert('Выберите соответствия для всех терминов!'); return; }
+            
+            let correct = 0;
+            for (const m of matchData.correctMatches) {
+                if (userMatches[m.left] === m.right + 1) correct++;
+            }
+            const score = Math.round((correct / matchData.leftItems.length) * 100);
+            
+            const user = loadUserData();
+            
+            try {
+                await fetch('/api/lesson/submit-match-result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: user.userId, lessonId: lessonId, taskId: currentTaskId, score: score })
+                });
+            } catch (error) {
+                console.error('Ошибка сохранения:', error);
+            }
+            
+            for (const m of matchData.correctMatches) {
+                const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${m.left}"]`);
+                if (selectDiv) {
+                    const isCorrect = (userMatches[m.left] === m.right + 1);
+                    if (isCorrect) {
+                        selectDiv.classList.add('correct');
+                    } else {
+                        selectDiv.classList.add('wrong');
+                    }
+                    const trigger = selectDiv.querySelector('.custom-select-match-trigger');
+                    trigger.style.pointerEvents = 'none';
+                }
+            }
+            
+            const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+            const isLast = (currentIdx === tasks.length - 1);
+            
+            const checkBtn = document.getElementById('checkMatchBtn');
+            if (checkBtn) checkBtn.remove();
+            
+            const container = document.getElementById('matchContainer');
+            container.innerHTML += `
+                <div class="match-result">
+                    <div class="match-score">${score} / 100</div>
+                    <button class="finish-test-btn" id="continueBtn">Продолжить обучение</button>
+                </div>
+            `;
+            
+            const continueBtn = document.getElementById('continueBtn');
+            continueBtn.onclick = function() {
+                if (isLast) {
+                    window.location.href = '/Home/Courses';
+                } else {
+                    window.location.reload();
+                }
+            };
+            
+            showResultModal(score, 100, score);
             
             const u = JSON.parse(localStorage.getItem('user'));
             if (u) {
-                u.experience = result.newTotalXp;
-                u.level = result.newLevel;
+                u.experience = (u.experience || 0) + score;
+                u.level = Math.floor(u.experience / 100) + 1;
                 localStorage.setItem('user', JSON.stringify(u));
             }
-        } else {
-            finishBtn.disabled = false;
-            finishBtn.textContent = '✅ Завершить тест';
-            alert('Ошибка при сохранении результатов');
         }
-    } catch (error) {
-        console.error('Ошибка:', error);
-        alert('Ошибка: ' + error.message);
-        finishBtn.disabled = false;
-        finishBtn.textContent = '✅ Завершить тест';
-    }
-}
 
-function showResultModal(score, maxScore, xp) {
-    const modal = document.getElementById('resultModal');
-    document.querySelector('#modalResultContent .modal-score').innerHTML = `${score} / ${maxScore}`;
-    document.querySelector('#modalResultContent .modal-xp').innerHTML = `⭐ Получено XP: ${xp}`;
-    modal.classList.add('active');
-}
-
-function renderMatchLesson(lesson, moduleNumber, moduleTitle) {
-    const container = document.getElementById('lessonContent');
-    const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
-    
-    container.innerHTML = `
-        <div class="lesson-container">
-            <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
-            <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
-            <div class="theory-content">${lesson.theoryContent || ''}</div>
-            <div class="tasks-section">
-                <div class="task-header">
-                    <span class="task-counter">Задание ${currentIdx + 1} из ${tasks.length}</span>
-                    <span class="task-title">${escapeHtml(tasks[currentIdx]?.taskTitle || 'Сопоставление')}</span>
-                </div>
-                <div id="matchContainer"></div>
-                <div class="finish-btn-container">
-                    <button class="finish-test-btn" id="checkMatchBtn">✅ Проверить</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.getElementById('checkMatchBtn').addEventListener('click', checkMatchAnswers);
-}
-
-async function loadMatchTask(taskId) {
-    const response = await fetch(`/api/lesson/task/${taskId}/match-data`);
-    matchData = await response.json();
-    for (let i = 0; i < matchData.leftItems.length; i++) userMatches[i] = null;
-    renderMatchInterface();
-}
-
-function renderMatchInterface() {
-    const container = document.getElementById('matchContainer');
-    if (!container) return;
-    
-    const rightNumbered = matchData.rightItems.map((item, idx) => ({ number: idx + 1, text: item }));
-    
-    container.innerHTML = `
-        <div class="match-container">
-            <div class="match-column">
-                <h3>Термин</h3>
-                ${matchData.leftItems.map((item, idx) => `
-                    <div class="match-left-item">
-                        <div class="match-left-text">${escapeHtml(item)}</div>
-                        <div class="custom-select-match" data-left-idx="${idx}">
-                            <div class="custom-select-match-trigger" onclick="toggleMatchSelect(${idx})">
-                                <span id="match-selected-${idx}">Выберите</span>
-                                <div class="custom-select-match-arrow"></div>
-                            </div>
-                            <div class="custom-select-match-dropdown" id="match-dropdown-${idx}">
-                                <div class="custom-select-match-option" data-value="" onclick="selectMatchOption(${idx}, '', '— Выберите —')">— Выберите —</div>
-                                ${rightNumbered.map(opt => `
-                                    <div class="custom-select-match-option" data-value="${opt.number}" onclick="selectMatchOption(${idx}, ${opt.number}, '${opt.number}')">
-                                        ${opt.number}
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="match-column">
-                <h3>Определение</h3>
-                ${rightNumbered.map(item => `
-                    <div class="match-right-item">
-                        <div class="match-right-text"><span class="match-right-number">${item.number}</span> ${escapeHtml(item.text)}</div>
-                    </div>
-                `).join('')}
-            </div>
-        </div>
-    `;
-}
-
-window.toggleMatchSelect = function(leftIdx) {
-    document.querySelectorAll('.custom-select-match').forEach(select => {
-        if (parseInt(select.dataset.leftIdx) !== leftIdx) {
-            select.classList.remove('open');
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
-    });
-    const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
-    selectDiv.classList.toggle('open');
-};
 
-window.selectMatchOption = function(leftIdx, value, displayText) {
-    userMatches[leftIdx] = value ? parseInt(value) : null;
-    const triggerSpan = document.getElementById(`match-selected-${leftIdx}`);
-    triggerSpan.textContent = displayText;
-    const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
-    selectDiv.classList.remove('open');
-    selectDiv.classList.remove('correct', 'wrong');
-};
-
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.custom-select-match')) {
-        document.querySelectorAll('.custom-select-match').forEach(select => {
-            select.classList.remove('open');
+        // Модалка
+        document.getElementById('modalContinueBtn')?.addEventListener('click', () => {
+            document.getElementById('resultModal').classList.remove('active');
         });
-    }
-});
-
-async function checkMatchAnswers() {
-    const allSelected = Object.values(userMatches).every(v => v !== null && v !== '');
-    if (!allSelected) { alert('Выберите соответствия для всех терминов!'); return; }
-    
-    let correct = 0;
-    for (const m of matchData.correctMatches) {
-        if (userMatches[m.left] === m.right + 1) correct++;
-    }
-    const score = Math.round((correct / matchData.leftItems.length) * 100);
-    
-    const user = loadUserData();
-    
-    try {
-        await fetch('/api/lesson/submit-match-result', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: user.userId, lessonId: lessonId, taskId: currentTaskId, score: score })
+        document.getElementById('modalCloseBtn')?.addEventListener('click', () => {
+            document.getElementById('resultModal').classList.remove('active');
         });
-    } catch (error) {
-        console.error('Ошибка сохранения:', error);
-    }
-    
-    for (const m of matchData.correctMatches) {
-        const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${m.left}"]`);
-        if (selectDiv) {
-            const isCorrect = (userMatches[m.left] === m.right + 1);
-            if (isCorrect) {
-                selectDiv.classList.add('correct');
-            } else {
-                selectDiv.classList.add('wrong');
-            }
-            const trigger = selectDiv.querySelector('.custom-select-match-trigger');
-            trigger.style.pointerEvents = 'none';
-        }
-    }
-    
-    const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
-    const isLast = (currentIdx === tasks.length - 1);
-    
-    const checkBtn = document.getElementById('checkMatchBtn');
-    if (checkBtn) checkBtn.remove();
-    
-    const container = document.getElementById('matchContainer');
-    container.innerHTML += `
-        <div class="match-result">
-            <div class="match-score">${score} / 100</div>
-            <button class="finish-test-btn" id="continueBtn">Продолжить обучение</button>
-        </div>
-    `;
-    
-    const continueBtn = document.getElementById('continueBtn');
-    continueBtn.onclick = function() {
-        if (isLast) {
-            window.location.href = '/Home/Courses';
-        } else {
-            window.location.reload();
-        }
-    };
-    
-    showResultModal(score, 100, score);
-    
-    const u = JSON.parse(localStorage.getItem('user'));
-    if (u) {
-        u.experience = (u.experience || 0) + score;
-        u.level = Math.floor(u.experience / 100) + 1;
-        localStorage.setItem('user', JSON.stringify(u));
-    }
-}
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
+        // Навигация
+        document.getElementById('profileNav')?.addEventListener('click', () => window.location.href = '/Home/Profile');
+        document.getElementById('coursesNav')?.addEventListener('click', () => window.location.href = '/Home/Courses');
+        document.getElementById('achievementsNav')?.addEventListener('click', () => window.location.href = '/Home/Achievements');
+        document.getElementById('ratingNav')?.addEventListener('click', () => window.location.href = '/Home/Rating');
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
 
-// Модалка
-document.getElementById('modalContinueBtn')?.addEventListener('click', () => {
-    document.getElementById('resultModal').classList.remove('active');
-});
-document.getElementById('modalCloseBtn')?.addEventListener('click', () => {
-    document.getElementById('resultModal').classList.remove('active');
-});
-
-// Навигация
-document.getElementById('profileNav')?.addEventListener('click', () => window.location.href = '/Home/Profile');
-document.getElementById('coursesNav')?.addEventListener('click', () => window.location.href = '/Home/Courses');
-document.getElementById('achievementsNav')?.addEventListener('click', () => window.location.href = '/Home/Achievements');
-document.getElementById('ratingNav')?.addEventListener('click', () => window.location.href = '/Home/Rating');
-document.getElementById('logoutBtn')?.addEventListener('click', () => {
-    localStorage.removeItem('user');
-    window.location.href = '/Home/Index';
-});
-
-loadLesson();
+        loadLesson();
     </script>
 </body>
 </html>

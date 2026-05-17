@@ -75,6 +75,7 @@ Models/
  LoginDto.cs
  Module.cs
  Question.cs
+ QuestStage.cs
  Rating.cs
  RegisterDto.cs
  Role.cs

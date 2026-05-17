@@ -4,6 +4,7 @@ using AdditiveEdu.Data;
 using AdditiveEdu.Models;
 using Task = AdditiveEdu.Models.Task;
 using Type = AdditiveEdu.Models.Type;
+using System.Text.Json;
 
 namespace AdditiveEdu.Controllers
 {
@@ -535,6 +536,421 @@ namespace AdditiveEdu.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { success = true });
         }
+        // GET: api/lesson/task/{taskId}/quest-stages
+// GET: api/lesson/task/{taskId}/quest-stages
+[HttpGet("task/{taskId}/quest-stages")]
+public async Task<IActionResult> GetQuestStages(int taskId)
+{
+    var stagesFromDb = await _context.QuestStages
+        .Where(qs => qs.TaskID == taskId)
+        .OrderBy(qs => qs.StageOrder)
+        .Select(qs => new
+        {
+            qs.QuestStageID,
+            qs.StageTitle,
+            qs.StageDescription,
+            qs.StageOrder
+        })
+        .ToListAsync();
+
+    if (stagesFromDb == null || stagesFromDb.Count == 0)
+        return NotFound(new { message = "Этапы квеста не найдены" });
+
+    var stages = stagesFromDb.Select(qs => new
+    {
+        qs.QuestStageID,
+        qs.StageTitle,
+        qs.StageOrder,
+        StageData = JsonSerializer.Deserialize<object>(qs.StageDescription ?? "{}")
+    }).ToList();
+
+    return Ok(stages);
+}
+
+// GET: api/lesson/quest/progress/{taskId}/{userId}
+[HttpGet("quest/progress/{taskId}/{userId}")]
+public async Task<IActionResult> GetQuestProgress(int taskId, int userId)
+{
+    var taskResult = await _context.TaskResults
+        .FirstOrDefaultAsync(tr => tr.TaskID == taskId && tr.UserID == userId);
+    
+    if (taskResult == null)
+    {
+        return Ok(new { 
+            isStarted = false,
+            completedStages = new List<int>(),
+            currentStage = 1,
+            totalScore = 0
+        });
+    }
+    
+    if (!string.IsNullOrEmpty(taskResult.CompletionStatus) && taskResult.CompletionStatus.StartsWith("{"))
+    {
+        try
+        {
+            var progress = JsonSerializer.Deserialize<QuestProgressDto>(taskResult.CompletionStatus);
+            return Ok(new
+            {
+                isStarted = true,
+                isCompleted = false,
+                completedStages = progress?.CompletedStages ?? new List<int>(),
+                currentStage = progress?.CurrentStage ?? 1,
+                totalScore = taskResult.Score
+            });
+        }
+        catch
+        {
+            return Ok(new { 
+                isStarted = true,
+                completedStages = new List<int>(),
+                currentStage = 1,
+                totalScore = taskResult.Score
+            });
+        }
+    }
+    
+    if (taskResult.CompletionStatus == "completed")
+    {
+        // Получаем количество этапов отдельным запросом
+        var allStagesCount = await _context.QuestStages
+            .Where(qs => qs.TaskID == taskId)
+            .CountAsync();
+        
+        return Ok(new
+        {
+            isStarted = true,
+            isCompleted = true,
+            completedStages = Enumerable.Range(1, allStagesCount).ToList(),
+            currentStage = allStagesCount + 1,
+            totalScore = taskResult.Score
+        });
+    }
+    
+    return Ok(new { 
+        isStarted = true,
+        completedStages = new List<int>(),
+        currentStage = 1,
+        totalScore = taskResult.Score
+    });
+}
+// POST: api/lesson/quest/check-stage
+[HttpPost("quest/check-stage")]
+public async Task<IActionResult> CheckQuestStage([FromBody] CheckQuestStageDto dto)
+{
+    try
+    {
+        var stage = await _context.QuestStages
+            .FirstOrDefaultAsync(qs => qs.QuestStageID == dto.StageId);
+        
+        if (stage == null)
+            return NotFound(new { success = false, message = "Этап не найден" });
+        
+        // Ручной парсинг JSON из StageDescription
+        using var doc = JsonDocument.Parse(stage.StageDescription);
+        var root = doc.RootElement;
+        
+        string type = root.GetProperty("type").GetString();
+        int points = root.GetProperty("points").GetInt32();
+        
+        bool isCorrect = false;
+        int earnedPoints = 0;
+        object correctAnswerObj = null;
+        
+        switch (type)
+        {
+            case "single_choice":
+                // Получаем правильный ответ
+                int correctAnswer = root.GetProperty("correctAnswer").GetInt32();
+                correctAnswerObj = root.GetProperty("options")[correctAnswer].GetString();
+                
+                // Получаем ответ пользователя
+                int selectedIndex = -1;
+                if (dto.Answer != null)
+                {
+                    if (dto.Answer is JsonElement jsonElem)
+                    {
+                        if (jsonElem.ValueKind == JsonValueKind.Object)
+                        {
+                            // Если пришло как { value: 0 }
+                            if (jsonElem.TryGetProperty("value", out var valueProp))
+                                selectedIndex = valueProp.GetInt32();
+                        }
+                        else if (jsonElem.ValueKind == JsonValueKind.Number)
+                            selectedIndex = jsonElem.GetInt32();
+                        else if (jsonElem.ValueKind == JsonValueKind.String)
+                            selectedIndex = int.Parse(jsonElem.GetString());
+                    }
+                    else if (dto.Answer is int intVal)
+                        selectedIndex = intVal;
+                    else if (dto.Answer is string strVal)
+                        selectedIndex = int.Parse(strVal);
+                }
+                
+                isCorrect = (selectedIndex == correctAnswer);
+                Console.WriteLine($"Single choice: selected={selectedIndex}, correct={correctAnswer}, isCorrect={isCorrect}");
+                break;
+                
+            case "true_false":
+                bool correctValue = root.GetProperty("correctAnswer").GetBoolean();
+                correctAnswerObj = correctValue ? "Верно" : "Неверно";
+                
+                bool userValue = false;
+                if (dto.Answer != null)
+                {
+                    if (dto.Answer is JsonElement jsonElem)
+                    {
+                        if (jsonElem.ValueKind == JsonValueKind.True || jsonElem.ValueKind == JsonValueKind.False)
+                            userValue = jsonElem.GetBoolean();
+                        else if (jsonElem.ValueKind == JsonValueKind.String)
+                            userValue = bool.Parse(jsonElem.GetString());
+                    }
+                    else if (dto.Answer is bool bVal)
+                        userValue = bVal;
+                }
+                
+                isCorrect = (userValue == correctValue);
+                break;
+                
+            case "text_input":
+            case "fill_blank":
+                string correctStr = root.GetProperty("correctAnswer").GetString();
+                correctAnswerObj = correctStr;
+                
+                if (!string.IsNullOrEmpty(dto.TextAnswer))
+                {
+                    isCorrect = dto.TextAnswer.Trim().Equals(correctStr, StringComparison.OrdinalIgnoreCase);
+                    
+                    // Проверка на альтернативные ответы
+                    if (!isCorrect && root.TryGetProperty("alternatives", out var altArray))
+                    {
+                        foreach (var alt in altArray.EnumerateArray())
+                        {
+                            if (dto.TextAnswer.Trim().Equals(alt.GetString(), StringComparison.OrdinalIgnoreCase))
+                            {
+                                isCorrect = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                break;
+                
+            case "multiple_choice":
+                var correctAnswers = new HashSet<int>();
+                using (var arrEnum = root.GetProperty("correctAnswers").EnumerateArray())
+                {
+                    foreach (var item in arrEnum)
+                        correctAnswers.Add(item.GetInt32());
+                }
+                correctAnswerObj = string.Join(", ", correctAnswers.Select(i => root.GetProperty("options")[i].GetString()));
+                
+                if (dto.SelectedIndices != null)
+                {
+                    var selectedSet = new HashSet<int>(dto.SelectedIndices);
+                    isCorrect = selectedSet.SetEquals(correctAnswers);
+                }
+                break;
+                
+            case "sequence":
+                var correctOrder = new List<int>();
+                using (var orderEnum = root.GetProperty("correctOrder").EnumerateArray())
+                {
+                    foreach (var item in orderEnum)
+                        correctOrder.Add(item.GetInt32());
+                }
+                correctAnswerObj = string.Join(" → ", correctOrder.Select(i => root.GetProperty("items")[i].GetString()));
+                
+                if (dto.OrderIndices != null)
+                {
+                    isCorrect = dto.OrderIndices.SequenceEqual(correctOrder);
+                }
+                break;
+        }
+        
+        if (isCorrect)
+        {
+            earnedPoints = points;
+        }
+        
+        return Ok(new
+        {
+            success = true,
+            isCorrect = isCorrect,
+            earnedPoints = earnedPoints,
+            correctAnswer = correctAnswerObj,
+            explanation = isCorrect ? "Правильно!" : "Неправильно",
+            pointsPossible = points
+        });
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error: {ex.Message}");
+        return StatusCode(500, new { success = false, message = ex.Message });
+    }
+}
+// POST: api/lesson/quest/save-progress
+[HttpPost("quest/save-progress")]
+public async Task<IActionResult> SaveQuestProgress([FromBody] SaveQuestProgressDto dto)
+{
+    try
+    {
+        var allStages = await _context.QuestStages
+            .Where(qs => qs.TaskID == dto.TaskId)
+            .OrderBy(qs => qs.StageOrder)
+            .ToListAsync();
+        
+        var existingResult = await _context.TaskResults
+            .FirstOrDefaultAsync(tr => tr.TaskID == dto.TaskId && tr.UserID == dto.UserId);
+        
+        if (existingResult != null && existingResult.CompletionStatus == "completed")
+        {
+            return Ok(new { success = true, alreadyCompleted = true });
+        }
+        
+        var progressJson = JsonSerializer.Serialize(new
+        {
+            completedStages = dto.CompletedStages,
+            currentStage = dto.CurrentStage,
+            stageScores = dto.StageScores
+        });
+        
+        int totalScore = dto.StageScores?.Sum() ?? 0;
+        bool isCompleted = dto.CompletedStages.Count == allStages.Count;
+        
+        if (existingResult == null)
+        {
+            existingResult = new TaskResult
+            {
+                UserID = dto.UserId,
+                TaskID = dto.TaskId,
+                Score = totalScore,
+                AttemptNumber = 1,
+                CompletionStatus = isCompleted ? "completed" : progressJson,
+                CompletedAt = isCompleted ? DateTime.UtcNow : null
+            };
+            _context.TaskResults.Add(existingResult);
+        }
+        else
+        {
+            existingResult.Score = totalScore;
+            existingResult.CompletionStatus = isCompleted ? "completed" : progressJson;
+            if (isCompleted)
+                existingResult.CompletedAt = DateTime.UtcNow;
+        }
+        
+        // ВСЕГДА обновляем рейтинг при завершении квеста
+        if (isCompleted)
+        {
+            var rating = await _context.Ratings.FirstOrDefaultAsync(r => r.UserID == dto.UserId);
+            if (rating == null)
+            {
+                rating = new Rating
+                {
+                    UserID = dto.UserId,
+                    TotalScore = totalScore,
+                    CurrentLevel = 1,
+                    Experience = totalScore,
+                    PositionInRating = 0
+                };
+                _context.Ratings.Add(rating);
+            }
+            else
+            {
+                rating.Experience += totalScore;
+                rating.TotalScore += totalScore;
+                rating.CurrentLevel = (rating.Experience / 100) + 1;
+            }
+            
+            // Обновляем также прогресс урока
+            var lessonProgress = await _context.LessonProgresses
+                .FirstOrDefaultAsync(lp => lp.UserID == dto.UserId && lp.LessonID == dto.LessonId);
+            
+            if (lessonProgress != null && !lessonProgress.IsCompleted)
+            {
+                var allTasksInLesson = await _context.Tasks
+                    .Where(t => t.LessonID == dto.LessonId && t.IsActive)
+                    .Select(t => t.TaskID)
+                    .ToListAsync();
+                
+                var completedTaskIds = await _context.TaskResults
+                    .Where(tr => tr.UserID == dto.UserId && allTasksInLesson.Contains(tr.TaskID))
+                    .Select(tr => tr.TaskID)
+                    .ToListAsync();
+                
+                bool allTasksCompleted = allTasksInLesson.Count > 0 && 
+                                         allTasksInLesson.All(taskId => completedTaskIds.Contains(taskId));
+                
+                int progressPercent = allTasksInLesson.Count > 0 
+                    ? (completedTaskIds.Count * 100 / allTasksInLesson.Count) 
+                    : 0;
+                
+                lessonProgress.ProgressPercent = progressPercent;
+                lessonProgress.IsCompleted = allTasksCompleted;
+                lessonProgress.CompletionStatus = allTasksCompleted ? "completed" : "in_progress";
+            }
+        }
+        
+        await _context.SaveChangesAsync();
+        
+        // Возвращаем totalScore, чтобы фронтенд мог обновить отображение
+        return Ok(new
+        {
+            success = true,
+            totalScore = totalScore,
+            isCompleted = isCompleted,
+            xpGained = isCompleted ? totalScore : 0
+        });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { success = false, message = ex.Message });
+    }
+}
+
+// DTO классы для квеста (добавьте в конец файла LessonController.cs, внутри namespace, перед последней скобкой)
+public class QuestProgressDto
+{
+    public List<int> CompletedStages { get; set; } = new();
+    public int CurrentStage { get; set; } = 1;
+    public Dictionary<int, int> StageScores { get; set; } = new();
+}
+
+public class CheckQuestStageDto
+{
+    public int StageId { get; set; }
+    public int TaskId { get; set; }
+    public int UserId { get; set; }
+    public object? Answer { get; set; }
+    public string? TextAnswer { get; set; }
+    public List<int>? SelectedIndices { get; set; }
+    public List<int>? OrderIndices { get; set; }
+}
+
+public class SaveQuestProgressDto
+{
+    public int TaskId { get; set; }
+    public int UserId { get; set; }
+    public int LessonId { get; set; }
+    public List<int> CompletedStages { get; set; } = new();
+    public int CurrentStage { get; set; }
+    public List<int>? StageScores { get; set; }
+}
+
+public class QuestStageData
+{
+    public string Type { get; set; } = "";
+    public string Question { get; set; } = "";
+    public List<string>? Options { get; set; }
+    public object? CorrectAnswer { get; set; }
+    public List<int>? CorrectAnswers { get; set; }
+    public List<int>? CorrectOrder { get; set; }
+    public List<string>? Items { get; set; }
+    public List<string>? Alternatives { get; set; }
+    public int Points { get; set; }
+    public int Tolerance { get; set; }
+    public string? Hint { get; set; }
+    public string? Explanation { get; set; }
+}
 
         public class MarkCompletedDto
         {
