@@ -8,7 +8,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Урок | Аддитивные технологии</title>
-     <link rel="stylesheet" href="/css/lesson.css">
+    <link rel="stylesheet" href="/css/lesson.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -129,6 +129,7 @@
             transform: translateY(-2px);
             opacity: 0.9;
         }
+
         /* Баннер для пройденного теста */
         .completed-banner {
             text-align: center;
@@ -152,13 +153,6 @@
             margin-bottom: 10px;
         }
 
-        .completed-score {
-            font-family: 'Poppins', sans-serif;
-            font-size: 16px;
-            color: #21383E;
-            margin-bottom: 25px;
-        }
-
         .back-to-courses-btn {
             background: linear-gradient(135deg, #029FA4, #8ED1D1);
             color: white;
@@ -176,17 +170,245 @@
             transform: translateY(-2px);
             opacity: 0.9;
         }
+
+        /* Стили для сопоставления */
+        .match-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        .match-column {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .match-column h3 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #21383E;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #029FA4;
+        }
+
+        .match-left-item {
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid #E8EEEE;
+            transition: all 0.2s ease;
+        }
+
+        .match-left-item:hover {
+            border-color: #029FA4;
+            background: #F0FCFC;
+        }
+
+        .match-left-text {
+            flex: 1;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            color: #21383E;
+            font-weight: 500;
+        }
+
+        /* ========== КАСТОМНЫЙ ВЫПАДАЮЩИЙ СПИСОК ========== */
+        .custom-select-match {
+            position: relative;
+            width: 130px;
+        }
+
+        .custom-select-match-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1.5px solid #029FA4;
+            background: white;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: #21383E;
+            transition: all 0.3s ease;
+            gap: 8px;
+        }
+
+        .custom-select-match-trigger:hover {
+            border-color: #8ED1D1;
+            background: #F5FCFC;
+        }
+
+        .custom-select-match-trigger span {
+            flex: 1;
+        }
+
+        .custom-select-match-arrow {
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid #029FA4;
+            transition: transform 0.3s ease;
+        }
+
+        .custom-select-match.open .custom-select-match-arrow {
+            transform: rotate(180deg);
+        }
+
+        .custom-select-match-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #029FA4;
+            margin-top: 8px;
+            overflow: hidden;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-8px);
+            transition: all 0.25s ease;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .custom-select-match.open .custom-select-match-dropdown {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .custom-select-match-option {
+            padding: 10px 12px;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-size: 13px;
+            color: #21383E;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .custom-select-match-option:last-child {
+            border-bottom: none;
+        }
+
+        .custom-select-match-option:hover {
+            background: linear-gradient(135deg, #029FA4, #8ED1D1);
+            color: white;
+        }
+
+        /* Правильная/неправильная подсветка */
+        .custom-select-match.correct .custom-select-match-trigger {
+            border-color: #2ECC71;
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+
+        .custom-select-match.wrong .custom-select-match-trigger {
+            border-color: #E74C3C;
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+
+        .match-right-item {
+            background: #F8F9FA;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border: 1px solid #E8EEEE;
+        }
+
+        .match-right-text {
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            color: #21383E;
+        }
+
+        .match-right-number {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: #029FA4;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-size: 14px;
+            font-weight: 700;
+            margin-right: 12px;
+        }
+
+        .match-result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #E8F8F8;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .match-score {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 28px;
+            color: #029FA4;
+            margin-bottom: 10px;
+        }
+
+        .finish-test-btn {
+            background: linear-gradient(135deg, #029FA4, #8ED1D1);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .finish-test-btn:hover {
+            transform: translateY(-2px);
+            opacity: 0.9;
+        }
+        .task-header {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #029FA4;
+        }
+
+        .task-counter {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 16px;
+            color: #029FA4;
+            background: rgba(2, 159, 164, 0.1);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .task-title {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            color: #21383E;
+        }
     </style>
 </head>
 <body>
     <div class="page-container">
-        <div class="vector-bg vector-1">
-            <img src="/img/vector-bg-1.png" alt="фон">
-        </div>
-        <div class="vector-bg vector-2">
-            <img src="/img/vector-bg-2.png" alt="фон">
-        </div>
-
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h2 class="menu-title">Меню</h2>
@@ -223,7 +445,6 @@
                 <h1 class="page-title" id="pageTitle">Загрузка...</h1>
                 <a href="/Home/Courses" class="back-link">← Назад к обучению</a>
             </div>
-
             <div id="lessonContent">
                 <div class="loading-spinner">
                     <div class="spinner"></div>
@@ -250,333 +471,471 @@
 
     <script>
     const lessonId = @lessonId;
-    let allQuestions = [];
-    let userAnswers = {};
-    let testCompleted = false;
-    let tasks = [];
+let allQuestions = [];
+let userAnswers = {};
+let tasks = [];
+let currentTaskId = null;
+let matchData = null;
+let userMatches = {};
 
-    function loadUserData() {
-        const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) {
-            window.location.href = '/Home/Login';
-            return null;
-        }
-        return user;
+function loadUserData() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user) {
+        window.location.href = '/Home/Login';
+        return null;
     }
+    return user;
+}
 
-    async function loadLesson() {
-        const user = loadUserData();
-        if (!user) return;
+async function loadLesson() {
+    const user = loadUserData();
+    if (!user) return;
 
-        const container = document.getElementById('lessonContent');
+    const container = document.getElementById('lessonContent');
 
-        try {
-            // Проверяем, пройден ли урок
-            const progressResponse = await fetch(`/api/lesson/is-completed/${lessonId}/${user.userId}`);
-            const progressData = await progressResponse.json();
-            const isLessonCompleted = progressData.isCompleted;
+    try {
+        const progressResponse = await fetch(`/api/lesson/is-completed/${lessonId}/${user.userId}`);
+        const progressData = await progressResponse.json();
+        const isLessonCompleted = progressData.isCompleted;
+        
+        const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
+        if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
+        const lesson = await lessonResponse.json();
+        
+        const moduleTitle = lesson.module?.moduleTitle || 'Модуль';
+        const moduleNumber = lesson.module?.moduleNumber || '?';
+        
+        document.getElementById('pageTitle').textContent = lesson.lessonTitle;
+
+        if (isLessonCompleted) {
+            renderCompletedLesson(lesson, moduleNumber, moduleTitle);
+        } else {
+            const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
+            tasks = await tasksResponse.json();
             
-            const lessonResponse = await fetch(`/api/lesson/${lessonId}`);
-            if (!lessonResponse.ok) throw new Error('Ошибка загрузки урока');
-            const lesson = await lessonResponse.json();
+            const completedTasks = await getCompletedTasks(user.userId, tasks.map(t => t.taskID));
             
-            const moduleTitle = lesson.module?.moduleTitle || 'Модуль';
-            const moduleNumber = lesson.module?.moduleNumber || '?';
-            
-            document.getElementById('pageTitle').textContent = lesson.lessonTitle;
-
-            if (isLessonCompleted) {
-                // Если урок пройден - показываем только теорию, без теста
-                container.innerHTML = `
-                    <div class="lesson-container">
-                        <div class="module-breadcrumb">
-                            Модуль ${moduleNumber}: ${moduleTitle}
-                        </div>
-                        <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
-                        ${lesson.theoryContent ? `
-                            <div class="theory-content">
-                                ${lesson.theoryContent}
-                            </div>
-                        ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
-                        <div class="completed-banner">
-                            <div class="completed-icon">✅</div>
-                            <div class="completed-text">Вы уже прошли этот тест!</div>
-                            <div class="completed-score" id="completedScore">Загрузка...</div>
-                            <button class="back-to-courses-btn" onclick="window.location.href='/Home/Courses'">← Вернуться к обучению</button>
-                        </div>
-                    </div>
-                `;
-                
-                // Загружаем результат теста
-                await loadCompletedTestResult(user.userId);
-                
-            } else {
-                // Если урок не пройден - показываем теорию + тест
-                const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
-                tasks = await tasksResponse.json();
-                
-                let allQuestionsList = [];
-                
-                for (const task of tasks) {
-                    const questionsResponse = await fetch(`/api/lesson/task/${task.taskID}/questions`);
-                    const questions = await questionsResponse.json();
-                    allQuestionsList.push(...questions.map(q => ({ ...q, taskId: task.taskID, lessonId: lessonId })));
+            let nextTaskIndex = -1;
+            for (let i = 0; i < tasks.length; i++) {
+                if (!completedTasks.has(tasks[i].taskID)) {
+                    nextTaskIndex = i;
+                    break;
                 }
-                allQuestions = allQuestionsList;
-
-                container.innerHTML = `
-                    <div class="lesson-container">
-                        <div class="module-breadcrumb">
-                            Модуль ${moduleNumber}: ${moduleTitle}
-                        </div>
-                        <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
-                        ${lesson.theoryContent ? `
-                            <div class="theory-content">
-                                ${lesson.theoryContent}
-                            </div>
-                        ` : '<div class="theory-content">Теоретический материал отсутствует</div>'}
-                        <div class="tasks-section">
-                            <h2 class="tasks-title">📝 Вопросы теста</h2>
-                            <div id="questionsContainer"></div>
-                            <div class="finish-btn-container">
-                                <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                renderQuestions();
             }
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
-        }
-    }
-
-    async function loadCompletedTestResult(userId) {
-        try {
-            const response = await fetch(`/api/lesson/${lessonId}/progress/${userId}`);
-            const result = await response.json();
             
-            const scoreDiv = document.getElementById('completedScore');
-            if (scoreDiv) {
-                scoreDiv.innerHTML = `Ваш результат: ${result.totalScore} / ${result.maxScore} XP`;
+            if (nextTaskIndex === -1) {
+                await markLessonAsCompleted(user.userId, lessonId);
+                renderCompletedLesson(lesson, moduleNumber, moduleTitle);
+                return;
             }
-        } catch (error) {
-            console.error('Ошибка загрузки результата:', error);
-            const scoreDiv = document.getElementById('completedScore');
-            if (scoreDiv) {
-                scoreDiv.innerHTML = `Тест пройден!`;
+            
+            currentTaskId = tasks[nextTaskIndex].taskID;
+            const currentTask = tasks[nextTaskIndex];
+            
+            if (currentTask.typeName === 'Сопоставление') {
+                renderMatchLesson(lesson, moduleNumber, moduleTitle);
+                await loadMatchTask(currentTaskId);
+            } else {
+                await renderTestLesson(lesson, moduleNumber, moduleTitle);
             }
         }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        container.innerHTML = `<div class="error-message">⚠️ Ошибка загрузки урока: ${error.message}</div>`;
     }
+}
 
-    function renderQuestions() {
-        const container = document.getElementById('questionsContainer');
-        if (!container) return;
-        
-        container.innerHTML = allQuestions.map((q, idx) => `
-            <div class="question-item" data-question-id="${q.questionID}" data-task-id="${q.taskId}">
-                <div class="question-text">${idx + 1}. ${escapeHtml(q.questionText)}</div>
-                <div class="answers-list">
-                    ${q.answers.map(answer => `
-                        <div class="answer-option" data-answer-id="${answer.answerID}" onclick="selectAnswer(this, ${q.questionID}, ${answer.answerID})">
-                            <div class="answer-radio"></div>
-                            <span class="answer-text">${escapeHtml(answer.answerText)}</span>
-                        </div>
-                    `).join('')}
-                </div>
-                <div class="result-message" style="display: none;"></div>
+async function getCompletedTasks(userId, taskIds) {
+    const completed = new Set();
+    try {
+        for (const taskId of taskIds) {
+            const response = await fetch(`/api/lesson/task/${taskId}/is-completed/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data.isCompleted) completed.add(taskId);
+            }
+        }
+    } catch (error) {
+        console.error('Ошибка проверки заданий:', error);
+    }
+    return completed;
+}
+
+async function markLessonAsCompleted(userId, lessonId) {
+    try {
+        await fetch('/api/lesson/mark-completed', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId, lessonId: lessonId })
+        });
+    } catch (error) {
+        console.error('Ошибка:', error);
+    }
+}
+
+function renderCompletedLesson(lesson, moduleNumber, moduleTitle) {
+    const container = document.getElementById('lessonContent');
+    container.innerHTML = `
+        <div class="lesson-container">
+            <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+            <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+            <div class="theory-content">${lesson.theoryContent || 'Теоретический материал отсутствует'}</div>
+            <div class="completed-banner">
+                <div class="completed-icon">✅</div>
+                <div class="completed-text">Урок пройден!</div>
+                <button class="back-to-courses-btn" onclick="window.location.href='/Home/Courses'">← Вернуться к курсам</button>
             </div>
-        `).join('');
-    }
+        </div>
+    `;
+}
 
-    function selectAnswer(element, questionId, answerId) {
-        if (testCompleted) return;
-        
-        const questionDiv = element.closest('.question-item');
-        const allOptions = questionDiv.querySelectorAll('.answer-option');
-        allOptions.forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-        userAnswers[questionId] = answerId;
-    }
+async function renderTestLesson(lesson, moduleNumber, moduleTitle) {
+    const container = document.getElementById('lessonContent');
+    const questionsResponse = await fetch(`/api/lesson/task/${currentTaskId}/questions`);
+    const questions = await questionsResponse.json();
+    allQuestions = questions.map(q => ({ ...q, taskId: currentTaskId }));
+    userAnswers = {};
 
-    async function finishTest() {
-        const user = loadUserData();
-        if (!user) return;
+    const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+    
+    container.innerHTML = `
+        <div class="lesson-container">
+            <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+            <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+            <div class="theory-content">${lesson.theoryContent || 'Теоретический материал отсутствует'}</div>
+            <div class="tasks-section">
+                <div class="task-header">
+                    <span class="task-counter">Задание ${currentIdx + 1} из ${tasks.length}</span>
+                    <span class="task-title">${escapeHtml(tasks[currentIdx]?.taskTitle || 'Тест')}</span>
+                </div>
+                <div id="questionsContainer"></div>
+                <div class="finish-btn-container">
+                    <button class="finish-test-btn" id="finishTestBtn">✅ Завершить тест</button>
+                </div>
+            </div>
+        </div>
+    `;
+    renderQuestions();
+    document.getElementById('finishTestBtn').addEventListener('click', finishTest);
+}
+
+function renderQuestions() {
+    const container = document.getElementById('questionsContainer');
+    if (!container) return;
+    container.innerHTML = allQuestions.map((q, idx) => `
+        <div class="question-item" data-question-id="${q.questionID}">
+            <div class="question-text">${idx + 1}. ${escapeHtml(q.questionText)}</div>
+            <div class="answers-list">
+                ${q.answers.map(answer => `
+                    <div class="answer-option" data-answer-id="${answer.answerID}" onclick="selectAnswer(this, ${q.questionID}, ${answer.answerID})">
+                        <div class="answer-radio"></div>
+                        <span class="answer-text">${escapeHtml(answer.answerText)}</span>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="result-message" style="display: none;"></div>
+        </div>
+    `).join('');
+}
+
+function selectAnswer(element, questionId, answerId) {
+    const questionDiv = element.closest('.question-item');
+    questionDiv.querySelectorAll('.answer-option').forEach(opt => opt.classList.remove('selected'));
+    element.classList.add('selected');
+    userAnswers[questionId] = answerId;
+}
+
+async function finishTest() {
+    const user = loadUserData();
+    if (!user) return;
+    
+    const unanswered = allQuestions.filter(q => !userAnswers[q.questionID]);
+    if (unanswered.length > 0) {
+        alert(`Ответьте на все вопросы! Осталось ${unanswered.length}`);
+        return;
+    }
+    
+    const finishBtn = document.getElementById('finishTestBtn');
+    finishBtn.disabled = true;
+    finishBtn.textContent = '⏳ Проверка...';
+    
+    const answers = allQuestions.map(q => ({
+        questionId: q.questionID,
+        selectedAnswerId: userAnswers[q.questionID]
+    }));
+    
+    try {
+        const response = await fetch('/api/lesson/submit-test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                userId: user.userId,
+                lessonId: lessonId,
+                taskId: currentTaskId,
+                answers: answers
+            })
+        });
+        const result = await response.json();
         
-        const unansweredQuestions = allQuestions.filter(q => !userAnswers[q.questionID]);
-        if (unansweredQuestions.length > 0) {
-            alert(`Пожалуйста, ответьте на все вопросы (осталось ${unansweredQuestions.length})!`);
-            return;
-        }
-        
-        const finishBtn = document.getElementById('finishTestBtn');
-        finishBtn.textContent = '⏳ Проверка...';
-        finishBtn.disabled = true;
-        
-        const answers = allQuestions.map(q => ({
-            questionId: q.questionID,
-            selectedAnswerId: userAnswers[q.questionID]
-        }));
-        
-        try {
-            const response = await fetch('/api/lesson/submit-test', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    userId: user.userId,
-                    lessonId: lessonId,
-                    taskId: allQuestions[0]?.taskId || 1,
-                    answers: answers
-                })
+        if (result.success) {
+            allQuestions.forEach(question => {
+                const correct = question.answers.find(a => a.isCorrect);
+                const selected = userAnswers[question.questionID];
+                const div = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
+                if (div) {
+                    div.querySelectorAll('.answer-option').forEach(opt => {
+                        opt.style.pointerEvents = 'none';
+                        const aid = parseInt(opt.dataset.answerId);
+                        if (aid === correct?.answerID) opt.classList.add('correct-highlight');
+                        if (aid === selected && aid !== correct?.answerID) opt.classList.add('wrong-highlight');
+                    });
+                    const msgDiv = div.querySelector('.result-message');
+                    msgDiv.style.display = 'block';
+                    if (selected === correct?.answerID) {
+                        msgDiv.innerHTML = '✓ Правильно!';
+                        msgDiv.className = 'result-message correct';
+                    } else {
+                        msgDiv.innerHTML = `✗ Неправильно!<br><span style="font-size:12px;">Правильный ответ: ${escapeHtml(correct?.answerText)}</span>`;
+                        msgDiv.className = 'result-message incorrect';
+                    }
+                }
             });
             
-            const result = await response.json();
-            console.log('Результат от сервера:', result);
-            
-            if (result.success) {
-                // Подсвечиваем ответы
-                for (const question of allQuestions) {
-                    const selectedAnswerId = userAnswers[question.questionID];
-                    const correctAnswer = question.answers.find(a => a.isCorrect);
-                    highlightAnswers(question, selectedAnswerId, correctAnswer?.answerID);
-                }
-                
-                document.querySelectorAll('.answer-option').forEach(opt => {
-                    opt.style.pointerEvents = 'none';
-                });
-                
-                window.finalTotalScore = result.totalScore;
-                window.finalMaxScore = result.maxScore;
-                window.earnedXp = result.xpGained;
-                window.userTotalXp = result.newTotalXp;
-                
-                const updatedUser = JSON.parse(localStorage.getItem('user'));
-                if (updatedUser) {
-                    updatedUser.experience = result.newTotalXp;
-                    updatedUser.level = result.newLevel;
-                    localStorage.setItem('user', JSON.stringify(updatedUser));
-                }
-                
-                showResultModal();
-            } else {
-                alert(result.message || 'Ошибка при сохранении');
-                finishBtn.textContent = '✅ Завершить тест';
-                finishBtn.disabled = false;
-            }
-        } catch (error) {
-            console.error('Ошибка:', error);
-            alert('Произошла ошибка');
-            finishBtn.textContent = '✅ Завершить тест';
+            finishBtn.textContent = '📚 Продолжить';
             finishBtn.disabled = false;
-        }
-    }
-
-    function showResultModal() {
-        const totalScore = window.finalTotalScore || 0;
-        const maxScore = window.finalMaxScore || 0;
-        const earnedXp = window.earnedXp || 0;
-        const userTotalXp = window.userTotalXp || 0;
-        const percent = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
-        
-        let message = '';
-        if (percent >= 80) message = 'Отличный результат! Вы отлично усвоили материал!';
-        else if (percent >= 50) message = 'Хороший результат! Но есть к чему стремиться!';
-        else message = 'Советуем еще раз почитать теорию, чтобы лучше усвоить материал!';
-        
-        const modalContent = document.getElementById('modalResultContent');
-        modalContent.innerHTML = `
-            <div class="modal-score">${totalScore} / ${maxScore}</div>
-            <div class="modal-xp">⭐ Получено XP: ${earnedXp}</div>
-            <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Всего XP: ${userTotalXp}</div>
-            <div style="margin-top: 10px; font-size: 14px; color: #5A6E7A;">Процент выполнения: ${percent}%</div>
-            <div style="margin-top: 15px; font-size: 13px; color: #029FA4;">${message}</div>
-        `;
-        
-        document.getElementById('resultModal').classList.add('active');
-    }
-
-    function highlightAnswers(question, selectedAnswerId, correctAnswerId) {
-        const questionDiv = document.querySelector(`.question-item[data-question-id="${question.questionID}"]`);
-        if (!questionDiv) return;
-        
-        const correctAnswer = question.answers.find(a => a.answerID === correctAnswerId);
-        
-        questionDiv.querySelectorAll('.answer-option').forEach(opt => {
-            const answerId = parseInt(opt.dataset.answerId);
-            opt.style.pointerEvents = 'none';
-            if (answerId === correctAnswerId) opt.classList.add('correct-highlight');
-            if (answerId === selectedAnswerId && answerId !== correctAnswerId) opt.classList.add('wrong-highlight');
-        });
-        
-        const resultDiv = questionDiv.querySelector('.result-message');
-        resultDiv.style.display = 'block';
-        const isCorrect = selectedAnswerId === correctAnswerId;
-        resultDiv.className = `result-message ${isCorrect ? 'correct' : 'incorrect'}`;
-        
-        if (isCorrect) {
-            resultDiv.innerHTML = '✓ Правильно!';
+            
+            const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+            const isLast = (currentIdx === tasks.length - 1);
+            
+            finishBtn.onclick = () => {
+                if (isLast) {
+                    window.location.href = '/Home/Courses';
+                } else {
+                    window.location.reload();
+                }
+            };
+            
+            showResultModal(result.totalScore, result.maxScore, result.xpGained);
+            
+            const u = JSON.parse(localStorage.getItem('user'));
+            if (u) {
+                u.experience = result.newTotalXp;
+                u.level = result.newLevel;
+                localStorage.setItem('user', JSON.stringify(u));
+            }
         } else {
-            resultDiv.innerHTML = `✗ Неправильно!<br><span style="font-size: 12px;">Правильный ответ: ${escapeHtml(correctAnswer?.answerText || '')}</span>`;
+            finishBtn.disabled = false;
+            finishBtn.textContent = '✅ Завершить тест';
+            alert('Ошибка при сохранении результатов');
+        }
+    } catch (error) {
+        console.error('Ошибка:', error);
+        alert('Ошибка: ' + error.message);
+        finishBtn.disabled = false;
+        finishBtn.textContent = '✅ Завершить тест';
+    }
+}
+
+function showResultModal(score, maxScore, xp) {
+    const modal = document.getElementById('resultModal');
+    document.querySelector('#modalResultContent .modal-score').innerHTML = `${score} / ${maxScore}`;
+    document.querySelector('#modalResultContent .modal-xp').innerHTML = `⭐ Получено XP: ${xp}`;
+    modal.classList.add('active');
+}
+
+function renderMatchLesson(lesson, moduleNumber, moduleTitle) {
+    const container = document.getElementById('lessonContent');
+    const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+    
+    container.innerHTML = `
+        <div class="lesson-container">
+            <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+            <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+            <div class="theory-content">${lesson.theoryContent || ''}</div>
+            <div class="tasks-section">
+                <div class="task-header">
+                    <span class="task-counter">Задание ${currentIdx + 1} из ${tasks.length}</span>
+                    <span class="task-title">${escapeHtml(tasks[currentIdx]?.taskTitle || 'Сопоставление')}</span>
+                </div>
+                <div id="matchContainer"></div>
+                <div class="finish-btn-container">
+                    <button class="finish-test-btn" id="checkMatchBtn">✅ Проверить</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('checkMatchBtn').addEventListener('click', checkMatchAnswers);
+}
+
+async function loadMatchTask(taskId) {
+    const response = await fetch(`/api/lesson/task/${taskId}/match-data`);
+    matchData = await response.json();
+    for (let i = 0; i < matchData.leftItems.length; i++) userMatches[i] = null;
+    renderMatchInterface();
+}
+
+function renderMatchInterface() {
+    const container = document.getElementById('matchContainer');
+    if (!container) return;
+    
+    const rightNumbered = matchData.rightItems.map((item, idx) => ({ number: idx + 1, text: item }));
+    
+    container.innerHTML = `
+        <div class="match-container">
+            <div class="match-column">
+                <h3>Термин</h3>
+                ${matchData.leftItems.map((item, idx) => `
+                    <div class="match-left-item">
+                        <div class="match-left-text">${escapeHtml(item)}</div>
+                        <div class="custom-select-match" data-left-idx="${idx}">
+                            <div class="custom-select-match-trigger" onclick="toggleMatchSelect(${idx})">
+                                <span id="match-selected-${idx}">Выберите</span>
+                                <div class="custom-select-match-arrow"></div>
+                            </div>
+                            <div class="custom-select-match-dropdown" id="match-dropdown-${idx}">
+                                <div class="custom-select-match-option" data-value="" onclick="selectMatchOption(${idx}, '', '— Выберите —')">— Выберите —</div>
+                                ${rightNumbered.map(opt => `
+                                    <div class="custom-select-match-option" data-value="${opt.number}" onclick="selectMatchOption(${idx}, ${opt.number}, '${opt.number}')">
+                                        ${opt.number}
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="match-column">
+                <h3>Определение</h3>
+                ${rightNumbered.map(item => `
+                    <div class="match-right-item">
+                        <div class="match-right-text"><span class="match-right-number">${item.number}</span> ${escapeHtml(item.text)}</div>
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+}
+
+window.toggleMatchSelect = function(leftIdx) {
+    document.querySelectorAll('.custom-select-match').forEach(select => {
+        if (parseInt(select.dataset.leftIdx) !== leftIdx) {
+            select.classList.remove('open');
+        }
+    });
+    const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
+    selectDiv.classList.toggle('open');
+};
+
+window.selectMatchOption = function(leftIdx, value, displayText) {
+    userMatches[leftIdx] = value ? parseInt(value) : null;
+    const triggerSpan = document.getElementById(`match-selected-${leftIdx}`);
+    triggerSpan.textContent = displayText;
+    const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
+    selectDiv.classList.remove('open');
+    selectDiv.classList.remove('correct', 'wrong');
+};
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.custom-select-match')) {
+        document.querySelectorAll('.custom-select-match').forEach(select => {
+            select.classList.remove('open');
+        });
+    }
+});
+
+async function checkMatchAnswers() {
+    const allSelected = Object.values(userMatches).every(v => v !== null && v !== '');
+    if (!allSelected) { alert('Выберите соответствия для всех терминов!'); return; }
+    
+    let correct = 0;
+    for (const m of matchData.correctMatches) {
+        if (userMatches[m.left] === m.right + 1) correct++;
+    }
+    const score = Math.round((correct / matchData.leftItems.length) * 100);
+    
+    const user = loadUserData();
+    
+    try {
+        await fetch('/api/lesson/submit-match-result', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.userId, lessonId: lessonId, taskId: currentTaskId, score: score })
+        });
+    } catch (error) {
+        console.error('Ошибка сохранения:', error);
+    }
+    
+    for (const m of matchData.correctMatches) {
+        const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${m.left}"]`);
+        if (selectDiv) {
+            const isCorrect = (userMatches[m.left] === m.right + 1);
+            if (isCorrect) {
+                selectDiv.classList.add('correct');
+            } else {
+                selectDiv.classList.add('wrong');
+            }
+            const trigger = selectDiv.querySelector('.custom-select-match-trigger');
+            trigger.style.pointerEvents = 'none';
         }
     }
-
-    function escapeHtml(str) {
-        if (!str) return '';
-        return str
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    function logout() {
-        localStorage.removeItem('user');
-        window.location.href = '/Home/Index';
-    }
-
-    // Навигация
-    document.getElementById('profileNav')?.addEventListener('click', () => {
-        window.location.href = '/Home/Profile';
-    });
-
-    document.getElementById('coursesNav')?.addEventListener('click', () => {
-        window.location.href = '/Home/Courses';
-    });
-
-    document.getElementById('achievementsNav')?.addEventListener('click', () => {
-        window.location.href = '/Home/Achievements';
-    });
-
-    document.getElementById('ratingNav')?.addEventListener('click', () => {
-        window.location.href = '/Home/Rating';
-    });
-
-    document.getElementById('logoutBtn')?.addEventListener('click', logout);
-
-    // Делегирование для кнопки завершения теста
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'finishTestBtn') {
-            finishTest();
+    
+    const currentIdx = tasks.findIndex(t => t.taskID === currentTaskId);
+    const isLast = (currentIdx === tasks.length - 1);
+    
+    const checkBtn = document.getElementById('checkMatchBtn');
+    if (checkBtn) checkBtn.remove();
+    
+    const container = document.getElementById('matchContainer');
+    container.innerHTML += `
+        <div class="match-result">
+            <div class="match-score">${score} / 100</div>
+            <button class="finish-test-btn" id="continueBtn">Продолжить обучение</button>
+        </div>
+    `;
+    
+    const continueBtn = document.getElementById('continueBtn');
+    continueBtn.onclick = function() {
+        if (isLast) {
+            window.location.href = '/Home/Courses';
+        } else {
+            window.location.reload();
         }
-    });
+    };
+    
+    showResultModal(score, 100, score);
+    
+    const u = JSON.parse(localStorage.getItem('user'));
+    if (u) {
+        u.experience = (u.experience || 0) + score;
+        u.level = Math.floor(u.experience / 100) + 1;
+        localStorage.setItem('user', JSON.stringify(u));
+    }
+}
 
-    // Кнопка "Продолжить" в модальном окне
-    document.getElementById('modalContinueBtn')?.addEventListener('click', function() {
-        document.getElementById('resultModal').classList.remove('active');
-        window.location.href = '/Home/Courses';
-    });
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
-    // Закрытие модального окна по крестику
-    document.getElementById('modalCloseBtn')?.addEventListener('click', function() {
-        document.getElementById('resultModal').classList.remove('active');
-        window.location.href = '/Home/Courses';
-    });
+// Модалка
+document.getElementById('modalContinueBtn')?.addEventListener('click', () => {
+    document.getElementById('resultModal').classList.remove('active');
+});
+document.getElementById('modalCloseBtn')?.addEventListener('click', () => {
+    document.getElementById('resultModal').classList.remove('active');
+});
 
-    loadLesson();
-</script>
+// Навигация
+document.getElementById('profileNav')?.addEventListener('click', () => window.location.href = '/Home/Profile');
+document.getElementById('coursesNav')?.addEventListener('click', () => window.location.href = '/Home/Courses');
+document.getElementById('achievementsNav')?.addEventListener('click', () => window.location.href = '/Home/Achievements');
+document.getElementById('ratingNav')?.addEventListener('click', () => window.location.href = '/Home/Rating');
+document.getElementById('logoutBtn')?.addEventListener('click', () => {
+    localStorage.removeItem('user');
+    window.location.href = '/Home/Index';
+});
+
+loadLesson();
+    </script>
 </body>
 </html>
