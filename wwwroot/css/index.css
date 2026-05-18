@@ -208,10 +208,10 @@ body {
 }
 .image-1 {
     position: absolute;
-    width: 25%;
+    width: 23%;
     max-width: 450px;
     left: 52%;
-    top: 330px;
+    top: 300px;
     transform: translateY(-50%);
     pointer-events: none;
     z-index: 0;
@@ -227,7 +227,7 @@ body {
 }
 .image-2 {
    position: absolute;
-    width: 25%;
+    width: 23%;
     max-width: 450px;
     left: 15%;
     top: 700px;
@@ -248,8 +248,8 @@ body {
     position: absolute;
     width: 23%;
     max-width: 450px;
-    left: 73%;
-    top: 635px;
+    left: 70%;
+    top: 625px;
     transform: translateY(-50%);
     pointer-events: none;
     z-index: 0;
@@ -621,7 +621,7 @@ body {
     position: absolute;
     pointer-events: none;
     width: 100%;
-    top: -820px;
+    top: 1470px;
     left: 0;
     z-index: 0;
 }

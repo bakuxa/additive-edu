@@ -36,11 +36,11 @@ body {
 
 .vector-1 {
     left: 50px;
-    top: 170px;
+    top: 200px;
 }
 
 .vector-2 {
-    left: 683px;
+    left: 883px;
     top: -100px;
 }
 
@@ -170,7 +170,7 @@ body {
 .logout-btn-top {
     width: 38px;
     height: 38px;
-    background: #E74C3C;
+    background: #029FA4;
     border-radius: 10px;
     display: flex;
     align-items: center;

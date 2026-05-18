@@ -29,7 +29,7 @@
                 </div>
                 <div class="nav-item" id="coursesNav">
                     <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
-                    <span>Мои курсы</span>
+                    <span>Обучение</span>
                 </div>
                 <div class="nav-item" id="achievementsNav">
                     <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
@@ -44,7 +44,7 @@
                     <span>Выйти</span>
                 </div>
             </nav>
-           <div class="sidebar-footer" style="position: absolute; top: 620px; left: 0; right: 0; margin-top: 0;">
+            <div class="sidebar-footer">
                 <img src="/img/logo.png" alt="Логотип" class="footer-logo">
             </div>
         </aside>
@@ -52,15 +52,13 @@
         <main class="main-content">
             <div class="top-bar">
                 <h1 class="page-title">Рейтинговая таблица</h1>
-                <div class="notification-btn" id="notificationBtn">
-                    <img src="/img/icon/logout-icon2.png" alt="">
+                <div class="logout-btn-top" id="logoutBtnTop">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти">
                 </div>
             </div>
             
             <div class="rating-filters">
-                <div class="pagination-top" id="paginationTop">
-                    <!-- Пагинация будет здесь -->
-                </div>
+                <div class="pagination-top" id="paginationTop"></div>
                 <div class="custom-select-wrapper">
                     <div class="custom-select-trigger" id="groupFilterTrigger">
                         <span id="selectedGroupName">Все группы</span>
@@ -323,28 +321,32 @@
             loadRating(1);
         });
 
-         // Навигация
-        document.getElementById('profileNav').addEventListener('click', function() {
+         document.getElementById('profileNav')?.addEventListener('click', () => {
             window.location.href = '/Home/Profile';
         });
 
         document.getElementById('coursesNav')?.addEventListener('click', () => {
             window.location.href = '/Home/Courses';
         });
-        
-        document.getElementById('logoutBtn').addEventListener('click', function() {
-            localStorage.removeItem('user');
-            window.location.href = '/Home/Index';
-        });
 
-        document.getElementById('notificationBtn').addEventListener('click', function() {
-            localStorage.removeItem('user');
-            window.location.href = '/Home/Index';
-        });
-        // Переход на страницу Достижения
-        document.querySelector('.nav-item:nth-child(3)').addEventListener('click', function() {
+        document.getElementById('achievementsNav')?.addEventListener('click', () => {
             window.location.href = '/Home/Achievements';
         });
+
+        document.getElementById('ratingNav')?.addEventListener('click', () => {
+            window.location.href = '/Home/Rating';
+        });
+        // Функция выхода
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        }
+
+        // Кнопка выхода в меню (sidebar)
+        document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+        // Кнопка выхода в верхней панели (top-bar)
+        document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
         
     </script>
 </body>

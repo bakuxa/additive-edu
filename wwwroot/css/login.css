@@ -8,9 +8,8 @@ body {
     font-family: 'Poppins', sans-serif;
     background: #FFFFFF;
     min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    margin: 0;
+    padding: 0;
 }
 
 .page-container {
@@ -19,7 +18,7 @@ body {
     max-width: 1280px;
     min-height: 100vh;
     background: #FFFFFF;
-    margin: 0 auto;
+    margin: 0;
     overflow: hidden;
 }
 .logo-link {
@@ -45,7 +44,7 @@ body {
     position: absolute;
     width: 90%;
     max-width: 900px;
-    left: 50%;
+    left: 55%;
     transform: translateX(-50%);
     top: clamp(30px, 3vh, 35px);
     font-family: 'Poppins', sans-serif;
@@ -73,7 +72,7 @@ body {
     max-width: 1200px;
     left: clamp(-150px, -5vw, -130px);
     top: clamp(200px, 15vh, 200px);
-    pointer-events: none; /* изображение пропускает клики сквозь себя */
+    pointer-events: none; 
     z-index: 20; 
 }
 
@@ -86,15 +85,16 @@ body {
 
 .vector-bg {
     position: absolute;
-    left: clamp(-300px, 30vw, -130px);
+    left: -100px;
     top: 0;
     pointer-events: none;
-    width: 85%;
+    transform: translateX(-8%);
+    width: auto;
 }
 
 .vector-bg img {
     width: 60%;
-    height: 60%;
+    height: auto;
 }
 
 .login-card {
@@ -283,9 +283,7 @@ body {
 .modal-ok-btn:hover {
     transform: scale(1.05);
     opacity: 0.9;
-}
-
-/* ========== АДАПТАЦИЯ ДЛЯ 375px ========== */
+}/* ========== АДАПТАЦИЯ ДЛЯ 375px ========== */
 @media (max-width: 480px) {
     body {
         min-height: 100vh;
@@ -301,14 +299,19 @@ body {
         padding: 0 15px;
     }
 
-    .logo {
+    /* ПЕРЕОПРЕДЕЛЯЕМ ЛОГОТИП ДЛЯ ЦЕНТРИРОВАНИЯ */
+    .logo-link {
         position: relative;
-        width: 120px;
         left: auto;
         top: auto;
-        margin: 20px auto 10px auto;
         display: flex;
         justify-content: center;
+        margin: 20px auto 10px auto;
+    }
+
+    .logo {
+        width: 120px;
+        margin: 0 auto;
     }
 
     .hero-text {
@@ -321,6 +324,7 @@ body {
         line-height: 1.3;
         margin: 0 0 20px 0;
         padding: 0 10px;
+        text-align: center;
     }
 
     .main-image {
@@ -336,59 +340,65 @@ body {
         width: 100%;
         max-width: 100%;
         margin: 0 auto 30px auto;
-        padding: 25px 20px;
+        padding: 20px 15px;
         border-radius: 25px;
     }
 
     .login-title {
         font-size: 24px;
         margin-bottom: 10px;
+        text-align: center;
     }
 
     .login-subtitle {
-        font-size: 13px;
-        margin-bottom: 25px;
+        font-size: 12px;
+        margin-bottom: 20px;
         padding: 0 5px;
+        text-align: center;
     }
 
     .input-field {
         max-width: 100%;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
     }
 
     .input-field label {
-        font-size: 12px;
+        font-size: 11px;
         top: -8px;
         left: 12px;
     }
 
     .input-field input {
-        height: 45px;
-        font-size: 14px;
-        padding: 0 14px;
+        height: 42px;
+        font-size: 13px;
+        padding: 0 12px;
     }
 
     .input-field input::placeholder {
-        font-size: 13px;
+        font-size: 12px;
     }
 
     .login-btn {
         width: 100%;
         max-width: 200px;
         height: 42px;
-        font-size: 15px;
-        margin-bottom: 20px;
+        font-size: 14px;
+        margin: 10px auto 15px auto;
+        display: block;
     }
 
     .register-prompt {
         font-size: 12px;
-        margin-bottom: 15px;
+        text-align: center;
+        margin-bottom: 10px;
     }
 
     .register-btn {
         width: 100%;
         max-width: 200px;
         height: 42px;
-        font-size: 15px;
+        font-size: 14px;
+        margin: 0 auto;
+        display: block;
     }
 }

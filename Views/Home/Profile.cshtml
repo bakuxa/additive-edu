@@ -21,8 +21,8 @@
             <img src="/img/vector-bg-2.png" alt="фон">
         </div>
         <div class="vector-bg vector-2-repeat">
-        <img src="/img/vector-bg-2.png" alt="фон">
-    </div>
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
         
         <aside class="sidebar">
             <div class="sidebar-active"></div>
@@ -36,7 +36,7 @@
                 </div>
                 <div class="nav-item" id="coursesNav">
                     <img src="/img/icon/courses-icon.png" alt="Мои курсы" class="nav-icon">
-                    <span>Мои курсы</span>
+                    <span>Обучение</span>
                 </div>
                 <div class="nav-item" id="achievementsNav">
                     <img src="/img/icon/achievements-icon.png" alt="Достижения" class="nav-icon">
@@ -51,7 +51,6 @@
                     <span>Выйти</span>
                 </div>
             </nav>
-            </nav>
             <div class="sidebar-footer">
                 <img src="/img/logo.png" alt="Логотип" class="footer-logo">
             </div>
@@ -60,8 +59,8 @@
         <main class="main-content">
             <div class="top-bar">
                 <h1 class="page-title">Профиль пользователя</h1>
-                <div class="notification-btn" id="notificationBtn">
-                    <img src="/img/icon/logout-icon2.png" alt="">
+                <div class="logout-btn-top" id="logoutBtnTop">
+                    <img src="/img/icon/logout-icon.png" alt="Выйти">
                 </div>
             </div>
             
@@ -81,6 +80,8 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Остальной код без изменений... -->
             
             <!-- Объединенный блок статистики с 3 вертикальными ячейками -->
             <div class="unified-stats-card">
@@ -145,9 +146,8 @@
                     </div>
                 </div>
                 
-                <!-- Новая строка с 3 вертикальными ячейками: достижения, XP, прогресс -->
+                <!-- Новая строка с 3 вертикальными ячейками -->
                 <div class="stats-grid-unified stats-grid-second">
-                    <!-- Получено достижений -->
                     <div class="stat-card">
                         <div class="stat-icon">🏆</div>
                         <div class="stat-content">
@@ -167,7 +167,6 @@
                         </div>
                     </div>
                     
-                    <!-- Всего XP за достижения -->
                     <div class="stat-card">
                         <div class="stat-icon">⭐</div>
                         <div class="stat-content">
@@ -179,7 +178,6 @@
                         </div>
                     </div>
                     
-                    <!-- Прогресс коллекционирования -->
                     <div class="stat-card">
                         <div class="stat-icon">🎯</div>
                         <div class="stat-content">
@@ -209,6 +207,7 @@
                     <div class="loading-small">Загрузка...</div>
                 </div>
             </div>
+            
             <!-- Радар-диаграмма компетенций -->
             <div class="competence-card">
                 <div class="competence-header">
@@ -218,7 +217,6 @@
                 <div class="chart-container">
                     <canvas id="competenceRadar" width="500" height="500"></canvas>
                 </div>
-                <!-- Легенда только здесь, один раз -->
                 <div class="competence-legend">
                     <div class="legend-badge high">80-100% — Эксперт</div>
                     <div class="legend-badge mid">50-79% — Продвинутый</div>
@@ -696,6 +694,17 @@
         document.querySelector('.nav-item:nth-child(4)')?.addEventListener('click', function() {
             window.location.href = '/Home/Rating';
         });
+        // Функция выхода
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        }
+
+        // Кнопка выхода в меню (sidebar)
+        document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+        // Кнопка выхода в верхней панели (top-bar)
+        document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
 
     </script>
 </body>

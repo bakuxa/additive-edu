@@ -1594,6 +1594,17 @@
             localStorage.removeItem('user');
             window.location.href = '/Home/Index';
         });
+        // Функция выхода
+        function logout() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        }
+
+        // Кнопка выхода в меню (sidebar)
+        document.getElementById('logoutBtn')?.addEventListener('click', logout);
+
+        // Кнопка выхода в верхней панели (top-bar)
+        document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
 
         loadLesson();
     </script>
