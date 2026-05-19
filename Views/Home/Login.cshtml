@@ -47,8 +47,8 @@
         </div>
     
     </div>
-   <script>
-        function showModal(message) {
+    <script>
+        function showModal(message, redirectUrl = null) {
             const overlay = document.createElement('div');
             overlay.className = 'modal-overlay';
             overlay.innerHTML = `
@@ -60,6 +60,7 @@
             document.body.appendChild(overlay);
             document.getElementById('modalOkBtn').addEventListener('click', () => {
                 overlay.remove();
+                if (redirectUrl) window.location.href = redirectUrl;
             });
         }
 
@@ -97,10 +98,15 @@
                         roleId: result.roleId
                     }));
                     
-                    showModal('Вход выполнен успешно!');
-                    setTimeout(() => {
-                        window.location.href = '/Home/Profile';
-                    }, 1500);
+                    // Редирект в зависимости от роли
+                    // roleId: 3 = Студент, 4 = Преподаватель
+                    if (result.roleId === 4) {
+                        // Преподаватель → в админ-панель
+                        showModal('Вход выполнен успешно!', '/Admin/Dashboard');
+                    } else {
+                        // Студент → в профиль
+                        showModal('Вход выполнен успешно!', '/Home/Profile');
+                    }
                 } else {
                     showModal(result.message || 'Ошибка при входе');
                 }

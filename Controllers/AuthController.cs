@@ -21,56 +21,79 @@ namespace AdditiveEdu.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
+            Console.WriteLine("=== REGISTER CALLED ===");
+            Console.WriteLine($"Email: {registerDto?.Email}");
+            Console.WriteLine($"LastName: {registerDto?.LastName}");
+            Console.WriteLine($"FirstName: {registerDto?.FirstName}");
+            
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                var errors = ModelState.Values.SelectMany(v => v.Errors);
+                var errorMessages = string.Join(", ", errors.Select(e => e.ErrorMessage));
+                Console.WriteLine($"ModelState invalid: {errorMessages}");
+                return BadRequest(new { message = errorMessages });
             }
 
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == registerDto.Email);
-            if (existingUser != null)
+            try
             {
-                return BadRequest(new { message = "Пользователь с таким email уже существует" });
-            }
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == registerDto.Email);
+                if (existingUser != null)
+                {
+                    Console.WriteLine("User already exists");
+                    return BadRequest(new { message = "Пользователь с таким email уже существует" });
+                }
 
-            var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupName == registerDto.Group);
-            if (group == null)
-            {
-                group = new Group { GroupName = registerDto.Group };
-                _context.Groups.Add(group);
+                // Проверяем, существует ли таблица Group
+                Console.WriteLine("Checking group...");
+                var group = await _context.Groups.FirstOrDefaultAsync(g => g.GroupName == registerDto.Group);
+                if (group == null)
+                {
+                    Console.WriteLine($"Creating new group: {registerDto.Group}");
+                    group = new Group { GroupName = registerDto.Group };
+                    _context.Groups.Add(group);
+                    await _context.SaveChangesAsync();
+                }
+
+                var passwordHash = HashPassword(registerDto.Password);
+                Console.WriteLine("Password hashed");
+
+                var user = new User
+                {
+                    Email = registerDto.Email,
+                    PasswordHash = passwordHash,
+                    LastName = registerDto.LastName,
+                    FirstName = registerDto.FirstName,
+                    MiddleName = registerDto.MiddleName ?? "",
+                    Phone = registerDto.Phone ?? "",
+                    GroupID = group.GroupID,
+                    RoleID = 3,
+                    RegistrationDate = DateTime.UtcNow,
+                    Blocked = false
+                };
+
+                _context.Users.Add(user);
                 await _context.SaveChangesAsync();
+                Console.WriteLine($"User created with ID: {user.UserID}");
+
+                var rating = new Rating
+                {
+                    UserID = user.UserID,
+                    TotalScore = 0,
+                    CurrentLevel = 1,
+                    Experience = 0
+                };
+                _context.Ratings.Add(rating);
+                await _context.SaveChangesAsync();
+                Console.WriteLine("Rating created");
+
+                return Ok(new { message = "Регистрация успешно завершена", userId = user.UserID });
             }
-
-            var passwordHash = HashPassword(registerDto.Password);
-
-            var user = new User
+            catch (Exception ex)
             {
-                Email = registerDto.Email,
-                PasswordHash = passwordHash,
-                LastName = registerDto.LastName,
-                FirstName = registerDto.FirstName,
-                MiddleName = registerDto.MiddleName,
-                Phone = registerDto.Phone,
-                GroupID = group.GroupID,
-                RoleID = 3,
-                RegistrationDate = DateTime.UtcNow,
-                Blocked = false
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            // Создаём запись в рейтинге для нового пользователя
-            var rating = new Rating
-            {
-                UserID = user.UserID,
-                TotalScore = 0,
-                CurrentLevel = 1,
-                Experience = 0
-            };
-            _context.Ratings.Add(rating);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { message = "Регистрация успешно завершена", userId = user.UserID });
+                Console.WriteLine($"ERROR: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+                return StatusCode(500, new { message = $"Ошибка сервера: {ex.Message}" });
+            }
         }
 
         [HttpPost("login")]
@@ -122,6 +145,22 @@ namespace AdditiveEdu.Controllers
             using var sha256 = SHA256.Create();
             var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
             return Convert.ToBase64String(hashedBytes);
+        }
+        public class RegisterDto
+        {
+            public string LastName { get; set; } = "";
+            public string FirstName { get; set; } = "";
+            public string MiddleName { get; set; } = "";
+            public string Group { get; set; } = "";
+            public string Email { get; set; } = "";
+            public string Phone { get; set; } = "";
+            public string Password { get; set; } = "";
+        }
+
+        public class LoginDto
+        {
+            public string Email { get; set; } = "";
+            public string Password { get; set; } = "";
         }
     }
 }
