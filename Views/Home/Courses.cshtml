@@ -23,6 +23,10 @@
         <aside class="sidebar">
             <div class="sidebar-active"></div>
             <div class="sidebar-header">
+                <button class="sidebar-close" id="sidebarCloseBtn">
+                    <span></span>
+                    <span></span>
+                </button>
                 <h2 class="menu-title">Меню</h2>
             </div>
             <nav class="sidebar-nav">
@@ -54,6 +58,11 @@
 
         <main class="main-content">
             <div class="top-bar">
+                <div class="menu-toggle" id="menuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
                 <h1 class="page-title">Мои курсы</h1>
                 <div class="logout-btn-top" id="logoutBtnTop">
                     <img src="/img/icon/logout-icon.png" alt="Выйти">
@@ -128,21 +137,60 @@
     }
 
     async function loadUserProgress(userId) {
-        try {
-            const lessonsRes = await fetch(`/api/courses/user-lessons-progress/${userId}`);
-            if (lessonsRes.ok) {
-                const lessonsData = await lessonsRes.json();
-                lessonsData.forEach(item => {
-                    if (item.isCompleted) {
-                        completedLessonsIds.add(item.lessonID);
-                    }
-                });
-            }
-            console.log('Пройденные уроки:', [...completedLessonsIds]);
-        } catch (error) {
-            console.error('Ошибка загрузки прогресса:', error);
+    try {
+        // Получаем прогресс по урокам
+        const lessonsRes = await fetch(`/api/courses/user-lessons-progress/${userId}`);
+        if (lessonsRes.ok) {
+            const lessonsData = await lessonsRes.json();
+            lessonsData.forEach(item => {
+                if (item.isCompleted) {
+                    completedLessonsIds.add(item.lessonID);
+                }
+            });
         }
+        
+        // Дополнительно: проверяем каждый урок, все ли задания выполнены
+        // Получаем все модули
+        const modulesRes = await fetch('/api/courses/modules');
+        if (modulesRes.ok) {
+            const modules = await modulesRes.json();
+            for (const module of modules) {
+                for (const lesson of module.lessons) {
+                    // Получаем задания урока
+                    const tasksRes = await fetch(`/api/courses/lesson-tasks/${lesson.lessonID}`);
+                    if (tasksRes.ok) {
+                        const tasks = await tasksRes.json();
+                        if (tasks.length > 0) {
+                            // Проверяем, все ли задания выполнены
+                            let allTasksCompleted = true;
+                            for (const task of tasks) {
+                                const taskCompletedRes = await fetch(`/api/lesson/task/${task.taskID}/is-completed/${userId}`);
+                                if (taskCompletedRes.ok) {
+                                    const taskData = await taskCompletedRes.json();
+                                    if (!taskData.isCompleted) {
+                                        allTasksCompleted = false;
+                                        break;
+                                    }
+                                }
+                            }
+                            if (allTasksCompleted && !completedLessonsIds.has(lesson.lessonID)) {
+                                // Если все задания выполнены, но урок не отмечен - обновляем
+                                completedLessonsIds.add(lesson.lessonID);
+                                await fetch(`/api/courses/update-lesson-progress/${lesson.lessonID}/${userId}`, {
+                                    method: 'POST'
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        console.log('Пройденные уроки:', [...completedLessonsIds]);
+    } catch (error) {
+        console.error('Ошибка загрузки прогресса:', error);
     }
+}
 
     function isModuleFullyCompleted(module) {
         if (!module.lessons || module.lessons.length === 0) return false;
@@ -360,6 +408,37 @@
         localStorage.removeItem('user');
         window.location.href = '/Home/Index';
     }
+    // Мобильное меню
+    const menuToggle = document.getElementById('menuToggle');
+    const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+    const sidebar = document.querySelector('.sidebar');
+
+    if (menuToggle) {
+        menuToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            menuToggle.classList.toggle('open');
+            sidebar.classList.toggle('open');
+        });
+    }
+
+    if (sidebarCloseBtn) {
+        sidebarCloseBtn.addEventListener('click', () => {
+            sidebar.classList.remove('open');
+            if (menuToggle) menuToggle.classList.remove('open');
+        });
+    }
+
+    // Закрывать меню при клике вне его
+    document.addEventListener('click', (e) => {
+        if (window.innerWidth <= 480) {
+            if (sidebar && menuToggle) {
+                if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                    menuToggle.classList.remove('open');
+                }
+            }
+        }
+    });
 
     document.getElementById('profileNav')?.addEventListener('click', () => {
         window.location.href = '/Home/Profile';

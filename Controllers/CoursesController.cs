@@ -215,6 +215,62 @@ namespace AdditiveEdu.Controllers
             
             return Ok(lessonsProgress);
         }
+        // POST: api/courses/update-lesson-progress/{lessonId}/{userId}
+        [HttpPost("update-lesson-progress/{lessonId}/{userId}")]
+        public async Task<IActionResult> UpdateLessonProgress(int lessonId, int userId)
+        {
+            // Получаем все задания урока
+            var allTasks = await _context.Tasks
+                .Where(t => t.LessonID == lessonId && t.IsActive)
+                .Select(t => t.TaskID)
+                .ToListAsync();
+            
+            if (allTasks.Count == 0)
+            {
+                return Ok(new { success = true, message = "Нет заданий в уроке" });
+            }
+            
+            // Получаем выполненные задания
+            var completedTaskIds = await _context.TaskResults
+                .Where(tr => tr.UserID == userId && allTasks.Contains(tr.TaskID))
+                .Select(tr => tr.TaskID)
+                .ToListAsync();
+            
+            bool allCompleted = allTasks.All(t => completedTaskIds.Contains(t));
+            int progressPercent = (completedTaskIds.Count * 100 / allTasks.Count);
+            
+            var lessonProgress = await _context.LessonProgresses
+                .FirstOrDefaultAsync(lp => lp.UserID == userId && lp.LessonID == lessonId);
+            
+            if (lessonProgress == null)
+            {
+                lessonProgress = new LessonProgress
+                {
+                    UserID = userId,
+                    LessonID = lessonId,
+                    ProgressPercent = progressPercent,
+                    IsCompleted = allCompleted,
+                    CompletionStatus = allCompleted ? "completed" : "in_progress"
+                };
+                _context.LessonProgresses.Add(lessonProgress);
+            }
+            else
+            {
+                lessonProgress.ProgressPercent = progressPercent;
+                lessonProgress.IsCompleted = allCompleted;
+                lessonProgress.CompletionStatus = allCompleted ? "completed" : "in_progress";
+            }
+            
+            await _context.SaveChangesAsync();
+            
+            return Ok(new { 
+                success = true, 
+                isCompleted = allCompleted,
+                progressPercent = progressPercent,
+                completedTasks = completedTaskIds.Count,
+                totalTasks = allTasks.Count
+            });
+        }
     }
     
 

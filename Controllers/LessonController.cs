@@ -407,17 +407,23 @@ namespace AdditiveEdu.Controllers
         [HttpGet("is-completed/{lessonId}/{userId}")]
         public async Task<IActionResult> IsLessonCompleted(int lessonId, int userId)
         {
-            // !!! ИСПРАВЛЕНИЕ: Проверяем, все ли задания выполнены !!!
+            // Получаем все активные задания урока
             var allTasks = await _context.Tasks
                 .Where(t => t.LessonID == lessonId && t.IsActive)
                 .Select(t => t.TaskID)
                 .ToListAsync();
             
+            // Если в уроке нет заданий - проверяем, есть ли запись в LessonProgress
             if (allTasks.Count == 0)
             {
-                return Ok(new { isCompleted = false });
+                // Урок без заданий считается пройденным, только если есть запись в LessonProgress
+                var lessonProgress = await _context.LessonProgresses
+                    .FirstOrDefaultAsync(lp => lp.UserID == userId && lp.LessonID == lessonId);
+                
+                return Ok(new { isCompleted = lessonProgress?.IsCompleted ?? false });
             }
             
+            // Если задания есть - проверяем, все ли они выполнены
             var completedTaskIds = await _context.TaskResults
                 .Where(tr => tr.UserID == userId && allTasks.Contains(tr.TaskID))
                 .Select(tr => tr.TaskID)
@@ -493,24 +499,29 @@ namespace AdditiveEdu.Controllers
         [HttpPost("mark-completed")]
         public async Task<IActionResult> MarkLessonCompleted([FromBody] MarkCompletedDto dto)
         {
-            // Проверяем, все ли задания действительно выполнены
+            // Проверяем, есть ли задания в уроке
             var allTasks = await _context.Tasks
                 .Where(t => t.LessonID == dto.LessonId && t.IsActive)
                 .Select(t => t.TaskID)
                 .ToListAsync();
             
-            var completedTaskIds = await _context.TaskResults
-                .Where(tr => tr.UserID == dto.UserId && allTasks.Contains(tr.TaskID))
-                .Select(tr => tr.TaskID)
-                .ToListAsync();
-            
-            bool allTasksCompleted = allTasks.Count > 0 && allTasks.All(taskId => completedTaskIds.Contains(taskId));
-            
-            if (!allTasksCompleted)
+            // Если задания есть - проверяем, все ли они выполнены
+            if (allTasks.Count > 0)
             {
-                return BadRequest(new { success = false, message = "Не все задания выполнены" });
+                var completedTaskIds = await _context.TaskResults
+                    .Where(tr => tr.UserID == dto.UserId && allTasks.Contains(tr.TaskID))
+                    .Select(tr => tr.TaskID)
+                    .ToListAsync();
+                
+                bool allTasksCompleted = allTasks.All(taskId => completedTaskIds.Contains(taskId));
+                
+                if (!allTasksCompleted)
+                {
+                    return BadRequest(new { success = false, message = "Не все задания выполнены" });
+                }
             }
             
+            // Если заданий нет или все задания выполнены - отмечаем урок как пройденный
             var lessonProgress = await _context.LessonProgresses
                 .FirstOrDefaultAsync(lp => lp.UserID == dto.UserId && lp.LessonID == dto.LessonId);
             
@@ -536,7 +547,7 @@ namespace AdditiveEdu.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { success = true });
         }
-        // GET: api/lesson/task/{taskId}/quest-stages
+
 // GET: api/lesson/task/{taskId}/quest-stages
 [HttpGet("task/{taskId}/quest-stages")]
 public async Task<IActionResult> GetQuestStages(int taskId)

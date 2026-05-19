@@ -26,6 +26,10 @@
         <aside class="sidebar">
             <div class="sidebar-active"></div>
             <div class="sidebar-header">
+                <button class="sidebar-close" id="sidebarCloseBtn">
+                    <span></span>
+                    <span></span>
+                </button>
                 <h2 class="menu-title">Меню</h2>
             </div>
             <nav class="sidebar-nav">
@@ -57,6 +61,11 @@
 
         <main class="main-content">
             <div class="top-bar">
+                  <div class="menu-toggle" id="menuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
                 <h1 class="page-title">Мои достижения</h1>
                 <div class="logout-btn-top" id="logoutBtnTop">
                     <img src="/img/icon/logout-icon.png" alt="Выйти" onerror="this.style.display='none'">
@@ -410,6 +419,37 @@
             localStorage.removeItem('user');
             window.location.href = '/Home/Index';
         }
+        // Мобильное меню
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+        const sidebar = document.querySelector('.sidebar');
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menuToggle.classList.toggle('open');
+                sidebar.classList.toggle('open');
+            });
+        }
+
+        if (sidebarCloseBtn) {
+            sidebarCloseBtn.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                if (menuToggle) menuToggle.classList.remove('open');
+            });
+        }
+
+        // Закрывать меню при клике вне его
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 480) {
+                if (sidebar && menuToggle) {
+                    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                        sidebar.classList.remove('open');
+                        menuToggle.classList.remove('open');
+                    }
+                }
+            }
+        });
 
         // Навигация
         document.getElementById('profileNav')?.addEventListener('click', () => {

@@ -405,12 +405,39 @@
             font-size: 18px;
             color: #21383E;
         }
+        /* Заглушка для урока без заданий */
+        .no-tasks-message {
+            text-align: center;
+            padding: 50px 20px;
+            background: #F8F9FA;
+            border-radius: 24px;
+            margin-top: 30px;
+        }
+
+        .no-tasks-message h3 {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+            color: #21383E;
+            margin-bottom: 10px;
+        }
+
+        .no-tasks-message p {
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            color: #5A6E7A;
+            margin-bottom: 25px;
+        }
     </style>
 </head>
 <body>
     <div class="page-container">
         <aside class="sidebar">
             <div class="sidebar-header">
+                <button class="sidebar-close" id="sidebarCloseBtn">
+                    <span></span>
+                    <span></span>
+                </button>
                 <h2 class="menu-title">Меню</h2>
             </div>
             <nav class="sidebar-nav">
@@ -442,6 +469,11 @@
 
         <main class="main-content">
             <div class="top-bar">
+                <div class="menu-toggle" id="menuToggle">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
                 <h1 class="page-title" id="pageTitle">Загрузка...</h1>
                 <a href="/Home/Courses" class="back-link">← Назад к обучению</a>
             </div>
@@ -656,7 +688,7 @@
         `;
         
         if (stageData.type === 'sequence') {
-            setTimeout(() => initQuestSequenceDragAndDrop(stageData), 100);
+            setTimeout(() => initTouchDragAndDrop(), 100);
         }
         
         questUserAnswer = null;
@@ -1170,6 +1202,12 @@
                     const tasksResponse = await fetch(`/api/lesson/${lessonId}/tasks`);
                     tasks = await tasksResponse.json();
                     
+                    // Если в уроке нет заданий
+                    if (tasks.length === 0) {
+                        renderLessonWithoutTasks(lesson, moduleNumber, moduleTitle);
+                        return;
+                    }
+                    
                     const completedTasks = await getCompletedTasks(user.userId, tasks.map(t => t.taskID));
                     
                     let nextTaskIndex = -1;
@@ -1248,6 +1286,37 @@
                 </div>
             `;
         }
+        function renderLessonWithoutTasks(lesson, moduleNumber, moduleTitle) {
+        const container = document.getElementById('lessonContent');
+        
+        container.innerHTML = `
+            <div class="lesson-container">
+                <div class="module-breadcrumb">Модуль ${moduleNumber}: ${moduleTitle}</div>
+                <h1 class="lesson-title">${escapeHtml(lesson.lessonTitle)}</h1>
+                <div class="theory-content">${lesson.theoryContent || 'Теоретический материал отсутствует'}</div>
+                <div class="no-tasks-message">
+                    <h3>В этом уроке нет заданий</h3>
+                    <p>Вы можете отметить урок как пройденный и перейти к следующему</p>
+                    <button class="finish-test-btn" id="completeLessonBtn">Продолжить обучение</button>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('completeLessonBtn')?.addEventListener('click', async () => {
+            const user = loadUserData();
+            if (!user) return;
+            
+            const btn = document.getElementById('completeLessonBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Завершение...';
+            
+            // Отмечаем урок как пройденный
+            await markLessonAsCompleted(user.userId, lessonId);
+            
+            // Перезагружаем страницу курсов, чтобы обновить прогресс
+            window.location.href = '/Home/Courses';
+        });
+    }
 
         async function renderTestLesson(lesson, moduleNumber, moduleTitle) {
             const container = document.getElementById('lessonContent');
@@ -1576,6 +1645,37 @@
             if (!str) return '';
             return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
+        // Мобильное меню
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+        const sidebar = document.querySelector('.sidebar');
+
+        if (menuToggle) {
+            menuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menuToggle.classList.toggle('open');
+                sidebar.classList.toggle('open');
+            });
+        }
+
+        if (sidebarCloseBtn) {
+            sidebarCloseBtn.addEventListener('click', () => {
+                sidebar.classList.remove('open');
+                if (menuToggle) menuToggle.classList.remove('open');
+            });
+        }
+
+        // Закрывать меню при клике вне его
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 480) {
+                if (sidebar && menuToggle) {
+                    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                        sidebar.classList.remove('open');
+                        menuToggle.classList.remove('open');
+                    }
+                }
+            }
+        });
 
         // Модалка
         document.getElementById('modalContinueBtn')?.addEventListener('click', () => {
@@ -1607,6 +1707,85 @@
         document.getElementById('logoutBtnTop')?.addEventListener('click', logout);
 
         loadLesson();
+
+        // Поддержка drag-and-drop на тач-устройствах
+        function initTouchDragAndDrop() {
+            const container = document.getElementById('questSequenceItems');
+            if (!container) return;
+            
+            let draggedItem = null;
+            let touchStartY = 0;
+            
+            const items = container.querySelectorAll('.sequence-item');
+            
+            items.forEach(item => {
+                // Для мыши
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+                
+                item.addEventListener('dragend', (e) => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                });
+                
+                // Для тач-устройств
+                item.addEventListener('touchstart', (e) => {
+                    draggedItem = item;
+                    touchStartY = e.touches[0].clientY;
+                    item.classList.add('dragging');
+                    e.preventDefault();
+                });
+                
+                item.addEventListener('touchmove', (e) => {
+                    if (!draggedItem) return;
+                    e.preventDefault();
+                    
+                    const touchY = e.touches[0].clientY;
+                    const elements = document.elementsFromPoint(e.touches[0].clientX, touchY);
+                    
+                    for (let elem of elements) {
+                        if (elem.classList && elem.classList.contains('sequence-item') && elem !== draggedItem) {
+                            const rect = elem.getBoundingClientRect();
+                            if (touchY > rect.top + rect.height / 2) {
+                                elem.parentNode.insertBefore(draggedItem, elem.nextSibling);
+                            } else {
+                                elem.parentNode.insertBefore(draggedItem, elem);
+                            }
+                            updateQuestSequenceNumbers();
+                            break;
+                        }
+                    }
+                });
+                
+                item.addEventListener('touchend', (e) => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                    e.preventDefault();
+                });
+            });
+            
+            container.addEventListener('dragover', (e) => {
+                e.preventDefault();
+            });
+            
+            container.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (draggedItem) {
+                    const target = e.target.closest('.sequence-item');
+                    if (target && target !== draggedItem) {
+                        if (e.clientY > target.getBoundingClientRect().top + target.offsetHeight / 2) {
+                            target.parentNode.insertBefore(draggedItem, target.nextSibling);
+                        } else {
+                            target.parentNode.insertBefore(draggedItem, target);
+                        }
+                        updateQuestSequenceNumbers();
+                    }
+                }
+            });
+        }
     </script>
 </body>
 </html>

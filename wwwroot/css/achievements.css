@@ -596,3 +596,340 @@ body {
 .custom-toast {
     animation: slideIn 0.3s ease-out;
 }
+.sidebar-close {
+    display: none;
+}
+
+.menu-toggle{
+    display: none;
+}
+
+
+
+/* ========== АДАПТАЦИЯ ДЛЯ 375px ========== */
+@media (max-width: 480px) {
+    body {
+        min-height: 100vh;
+        background: #F5F7FA;
+    }
+
+    .page-container {
+        flex-direction: column;
+        background: #F5F7FA;
+    }
+
+    .sidebar {
+        display: none;
+        position: fixed;
+        left: -220px;
+        top: 0;
+        width: 220px;
+        height: 100vh;
+        transition: left 0.3s ease;
+        z-index: 1000;
+        background: #FFFFFF;
+        box-shadow: 10px 0px 20px rgba(64, 72, 82, 0.1);
+    }
+
+    .sidebar.open {
+        display: flex;
+        left: 0;
+    }
+
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        padding: 10px 0 0 20px;
+        gap: 25px;
+    }
+
+    .menu-title {
+        font-size: 20px;
+        margin: 0;
+    }
+
+    .sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: #029FA4;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        margin-left: 10px;
+    }
+
+    .sidebar-close span {
+        display: block;
+        width: 20px;
+        height: 2.5px;
+        background: white;
+        border-radius: 3px;
+        position: absolute;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-close span:first-child {
+        transform: rotate(45deg);
+    }
+
+    .sidebar-close span:last-child {
+        transform: rotate(-45deg);
+    }
+
+    .sidebar-nav {
+        margin-top: 20px;
+    }
+
+    .nav-item {
+        padding: 8px 20px 8px 30px;
+        height: 48px;
+        gap: 15px;
+    }
+
+    .nav-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .nav-item span {
+        font-size: 16px;
+    }
+
+    .sidebar-footer {
+        padding: 20px 0 30px 0;
+    }
+
+    .footer-logo {
+        width: 150px;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 0 15px 15px 15px;
+    }
+
+    .sidebar-active {
+        display: none;
+    }
+
+    .nav-item.active {
+        position: relative;
+    }
+
+    .nav-item.active::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 24px;
+        transform: translateY(-50%);
+        width: 3px;
+        height: 48px;
+        background: #029FA4;
+    }
+
+    .menu-toggle {
+        width: 36px;
+        height: 36px;
+        background: #029FA4;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-direction: column;
+        gap: 4px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .menu-toggle span {
+        width: 20px;
+        height: 2.5px;
+        background: white;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    .menu-toggle.open span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .menu-toggle.open span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .menu-toggle.open span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    .top-bar {
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .page-title {
+        font-size: 18px;
+        margin: 0;
+        flex: 1;
+    }
+
+    .logout-btn-top {
+        display: none;
+    }
+
+    .stats-card {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .stats-title {
+        font-size: 14px;
+    }
+
+    .stats-percent {
+        font-size: 16px;
+    }
+
+    .stats-progress {
+        height: 8px;
+    }
+
+    .stats-info {
+        font-size: 11px;
+    }
+
+    .achievements-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .achievement-card {
+        padding: 12px;
+        gap: 10px;
+        border-radius: 16px;
+    }
+
+    .achievement-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 24px;
+        border-radius: 12px;
+    }
+
+    .achievement-title {
+        font-size: 14px;
+        margin-bottom: 3px;
+    }
+
+    .achievement-description {
+        font-size: 11px;
+        margin-bottom: 4px;
+        line-height: 1.3;
+    }
+
+    .achievement-date {
+        font-size: 9px;
+        margin-bottom: 4px;
+    }
+
+    .achievement-points {
+        padding: 2px 8px;
+        gap: 4px;
+    }
+
+    .points-value {
+        font-size: 10px;
+    }
+
+    .check-icon, .lock-icon {
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+    }
+
+    .vector-bg {
+        display: none;
+    }
+
+    .modal-container {
+        max-width: 320px;
+        padding: 35px 20px 20px 20px;
+    }
+
+    .modal-close {
+        top: 15px;
+        right: 15px;
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+    }
+
+    .modal-congrats h2 {
+        font-size: 20px;
+        margin-bottom: 5px;
+    }
+
+    .modal-congrats p {
+        font-size: 12px;
+    }
+
+    .modal-achievement {
+        padding: 15px;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .modal-achievement-icon {
+        width: 55px;
+        height: 55px;
+        font-size: 30px;
+        border-radius: 15px;
+    }
+
+    .modal-achievement-title {
+        font-size: 16px;
+        margin-bottom: 5px;
+    }
+
+    .modal-achievement-desc {
+        font-size: 11px;
+        margin-bottom: 8px;
+    }
+
+    .modal-points {
+        padding: 4px 10px;
+        gap: 5px;
+    }
+
+    .modal-points span {
+        font-size: 12px;
+    }
+
+    .modal-button {
+        padding: 10px;
+        font-size: 14px;
+        border-radius: 12px;
+    }
+
+    .modal-condition {
+        margin-top: 8px;
+        padding: 6px 10px;
+    }
+
+    .modal-condition span {
+        font-size: 10px;
+    }
+
+    .modal-condition p {
+        font-size: 10px;
+    }
+}

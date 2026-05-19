@@ -919,3 +919,408 @@ body {
     border-color: #E74C3C !important;
     background-color: rgba(231, 76, 60, 0.15) !important;
 }
+.sidebar-close {
+    display: none;
+}
+
+.menu-toggle{
+    display: none;
+}/* ========== АДАПТАЦИЯ ДЛЯ 375px ========== */
+/* ========== АДАПТАЦИЯ ДЛЯ 375px ========== */
+@media (max-width: 480px) {
+    body {
+        background: #F5F7FA;
+    }
+
+    .page-container {
+        flex-direction: column;
+        background: #F5F7FA;
+    }
+
+    /* Боковое меню */
+    .sidebar {
+        display: none;
+        position: fixed;
+        left: -220px;
+        top: 0;
+        width: 220px;
+        height: 100vh;
+        transition: left 0.3s ease;
+        z-index: 1000;
+        background: #FFFFFF;
+        box-shadow: 10px 0px 20px rgba(64, 72, 82, 0.1);
+    }
+
+    .sidebar.open {
+        display: flex;
+        left: 0;
+    }
+
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        padding: 10px 0 0 20px;
+        gap: 25px;
+    }
+
+    .menu-title {
+        font-size: 20px;
+        margin: 0;
+    }
+
+    .sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: #029FA4;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border: none;
+        position: relative;
+        margin-left: 10px;
+    }
+
+    .sidebar-close span {
+        display: block;
+        width: 20px;
+        height: 2.5px;
+        background: white;
+        border-radius: 3px;
+        position: absolute;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-close span:first-child {
+        transform: rotate(45deg);
+    }
+
+    .sidebar-close span:last-child {
+        transform: rotate(-45deg);
+    }
+
+    .sidebar-nav {
+        margin-top: 20px;
+    }
+
+    .nav-item {
+        padding: 8px 20px 8px 30px;
+        height: 48px;
+        gap: 15px;
+    }
+
+    .nav-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .nav-item span {
+        font-size: 16px;
+        display: inline-block;
+    }
+
+    .sidebar-footer {
+        padding: 20px 0 30px 0;
+    }
+
+    .footer-logo {
+        width: 150px;
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 0 15px 15px 15px;
+    }
+
+    /* Кнопка-гамбургер */
+    .menu-toggle {
+        width: 36px;
+        height: 36px;
+        background: #029FA4;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-direction: column;
+        gap: 4px;
+        margin-right: 10px;
+        transition: all 0.3s ease;
+    }
+
+    .menu-toggle span {
+        width: 20px;
+        height: 2.5px;
+        background: white;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    .menu-toggle.open span:nth-child(1) {
+        transform: rotate(45deg) translate(5px, 5px);
+    }
+
+    .menu-toggle.open span:nth-child(2) {
+        opacity: 0;
+    }
+
+    .menu-toggle.open span:nth-child(3) {
+        transform: rotate(-45deg) translate(5px, -5px);
+    }
+
+    .top-bar {
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+    }
+
+    .page-title {
+        font-size: 18px;
+        margin: 0;
+        flex: 1;
+    }
+
+    .back-link {
+        font-size: 11px;
+    }
+
+    /* Контейнер урока */
+    .lesson-container {
+        padding: 12px;
+    }
+
+    .lesson-title {
+        font-size: 20px;
+    }
+
+    .theory-content {
+        font-size: 13px;
+        padding: 12px;
+    }
+
+    /* ========== СОПОСТАВЛЕНИЕ - ГОРИЗОНТАЛЬНАЯ ТАБЛИЦА ========== */
+    .match-container {
+        display: flex;
+        flex-direction: row;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+    }
+
+    .match-column {
+        min-width: 280px;
+        flex-shrink: 0;
+    }
+
+    .match-column h3 {
+        font-size: 13px;
+        margin-bottom: 10px;
+    }
+
+    .match-left-item {
+        padding: 8px 10px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .match-left-text {
+        font-size: 11px;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .custom-select-match {
+        width: 100%;
+    }
+
+    .custom-select-match-trigger {
+        padding: 6px 10px;
+        font-size: 11px;
+    }
+
+    .match-right-item {
+        padding: 8px 10px;
+    }
+
+    .match-right-text {
+        font-size: 11px;
+    }
+
+    .match-right-number {
+        width: 22px;
+        height: 22px;
+        line-height: 22px;
+        font-size: 11px;
+        margin-right: 8px;
+    }
+
+    /* ========== КВЕСТ - ПОСЛЕДОВАТЕЛЬНОСТЬ ДЛЯ ТАЧ-УСТРОЙСТВ ========== */
+    .sequence-items {
+        gap: 8px;
+    }
+
+    .sequence-item {
+        padding: 10px 12px;
+        gap: 10px;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        touch-action: none;
+    }
+
+    .sequence-drag-icon {
+        font-size: 20px;
+        cursor: grab;
+    }
+
+    .sequence-drag-icon:active {
+        cursor: grabbing;
+    }
+
+    .sequence-number {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+        line-height: 28px;
+    }
+
+    .sequence-text {
+        font-size: 12px;
+        flex: 1;
+    }
+
+    /* Квест - остальные элементы */
+    .quest-progress {
+        padding: 10px 12px;
+        margin-bottom: 15px;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .progress-stats {
+        justify-content: space-between;
+    }
+
+    .progress-stats span {
+        font-size: 11px;
+    }
+
+    .progress-stats strong {
+        font-size: 14px;
+    }
+
+    .progress-bar-container {
+        min-width: auto;
+    }
+
+    .quest-stage {
+        padding: 15px;
+    }
+
+    .stage-number {
+        font-size: 11px;
+        padding: 3px 10px;
+    }
+
+    .stage-points {
+        font-size: 12px;
+    }
+
+    .stage-question {
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+
+    .quest-option {
+        padding: 10px 12px;
+        gap: 10px;
+    }
+
+    .option-text {
+        font-size: 12px;
+    }
+
+    .text-input-field {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .quest-btn {
+        padding: 8px 20px;
+        font-size: 12px;
+    }
+
+    .stage-feedback {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    /* Вопросы теста */
+    .question-item {
+        padding: 12px;
+    }
+
+    .question-text {
+        font-size: 14px;
+    }
+
+    .answer-option {
+        padding: 8px 12px;
+    }
+
+    .answer-text {
+        font-size: 12px;
+    }
+
+    /* Кнопки */
+    .finish-test-btn {
+        padding: 10px 20px;
+        font-size: 14px;
+        min-width: 160px;
+    }
+
+    /* Модальное окно */
+    .modal-container {
+        max-width: 320px;
+        padding: 20px;
+    }
+
+    .modal-close {
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        font-size: 18px;
+    }
+
+    .modal-congrats h2 {
+        font-size: 22px;
+    }
+
+    .modal-result {
+        padding: 15px;
+    }
+
+    .modal-score {
+        font-size: 36px;
+    }
+
+    .modal-xp {
+        font-size: 14px;
+    }
+
+    .modal-button {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Векторы */
+    .vector-bg {
+        display: none;
+    }
+}
