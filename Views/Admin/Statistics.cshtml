@@ -1,0 +1,476 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Статистика и аналитика | Админ панель</title>
+    <link rel="stylesheet" href="/css/admin-statistics.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+
+        <div class="top-bar">
+            <div class="logo">
+                <img src="/img/logo.png" alt="Логотип">
+            </div>
+            <h1 class="page-title"><span class="gradient-text">Статистика и аналитика</span></h1>
+            <div class="user-profile" id="profileBtn">
+                <span class="user-name" id="userName"></span>
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="profile-icon">
+            </div>
+        </div>
+
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item" id="profileSettingsBtn">
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="dropdown-icon">
+                <span>Мой профиль</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="dashboardBtn">
+                <img src="/img/icon/dashboard-icon.png" alt="Панель управления" class="dropdown-icon">
+                <span>Панель управления</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="logoutBtn">
+                <img src="/img/icon/logout-icon.png" alt="Выйти" class="dropdown-icon">
+                <span>Выйти</span>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <button class="back-to-dashboard-btn" id="backToDashboardBtn">
+                    ← Вернуться
+            </button>
+            <div class="actions-bar">
+                <button class="action-btn refresh-btn" id="refreshBtn">
+                    Обновить
+                </button>
+                <button class="action-btn export-btn" id="exportBtn">
+                    Экспорт в PDF
+                </button>
+            </div>
+
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Всего пользователей</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="activeUsers">0</div>
+                        <div class="stat-label">Активных пользователей</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👨‍🏫</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="teachersCount">0</div>
+                        <div class="stat-label">Преподавателей</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👩‍🎓</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="studentsCount">0</div>
+                        <div class="stat-label">Студентов</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="card-header">
+                    <h3>📈 Динамика регистраций</h3>
+                    <span class="card-subtitle">По месяцам</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="registrationsChart" width="800" height="400"></canvas>
+                </div>
+            </div>
+
+            <div class="two-columns">
+                <div class="groups-table-card">
+                    <div class="card-header">
+                        <h3>Успеваемость по группам</h3>
+                        <span class="card-subtitle">Средний балл и прогресс</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="groups-table" id="groupsTable">
+                            <thead>
+                                <tr>
+                                    <th>Группа</th>
+                                    <th>Студентов</th>
+                                    <th>Средний балл</th>
+                                    <th>Прогресс</th>
+                                </tr>
+                            </thead>
+                            <tbody id="groupsTableBody">
+                                <tr><td colspan="4" class="loading-cell">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="top-students-card">
+                    <div class="card-header">
+                        <h3>Студенты с лучшей успеваемостью</h3>
+                        <span class="card-subtitle">По общему опыту</span>
+                    </div>
+                    <div class="table-container">
+                        <table class="students-table">
+                            <thead>
+                                <tr>
+                                    <th>Место</th>
+                                    <th>Студент</th>
+                                    <th>Группа</th>
+                                    <th>Уровень</th>
+                                    <th>Опыт</th>
+                                </tr>
+                            </thead>
+                            <tbody id="topStudentsBody">
+                                <tr><td colspan="5" class="loading-cell">Загрузка...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let registrationsChart = null;
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
+            }
+            if (user.roleId !== 4) {
+                window.location.href = '/Home/Courses';
+                return null;
+            }
+            return user;
+        }
+
+        async function loadStatistics() {
+            try {
+                console.log('Загрузка статистики...');
+
+                const response = await fetch('/api/adminapi/analytics');
+                
+                console.log('Статус ответа:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('Полученные данные:', data);
+
+                document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+                document.getElementById('activeUsers').textContent = data.activeUsers || 0;
+                document.getElementById('teachersCount').textContent = data.teachersCount || 0;
+                document.getElementById('studentsCount').textContent = data.studentsCount || 0;
+
+                if (data.registrationsByMonth && data.registrationsByMonth.length > 0) {
+                    renderRegistrationsChart(data.registrationsByMonth);
+                } else {
+                    console.log('Нет данных для графика');
+                }
+                
+                if (data.groupsPerformance && data.groupsPerformance.length > 0) {
+                    renderGroupsTable(data.groupsPerformance);
+                } else {
+                    document.getElementById('groupsTableBody').innerHTML = '<tr><td colspan="4" class="empty-cell">Нет данных по группам</td><tr>';
+                }
+                
+                if (data.topStudents && data.topStudents.length > 0) {
+                    renderTopStudents(data.topStudents);
+                } else {
+                    document.getElementById('topStudentsBody').innerHTML = '<tr><td colspan="5" class="empty-cell">Нет данных по студентам</td><tr>';
+                }
+
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+                document.getElementById('groupsTableBody').innerHTML = '<tr><td colspan="4" class="error-cell">Ошибка: ' + error.message + '</td></tr>';
+                document.getElementById('topStudentsBody').innerHTML = '<tr><td colspan="5" class="error-cell">Ошибка: ' + error.message + '</td></tr>';
+                showToast('Ошибка загрузки данных: ' + error.message);
+            }
+        }
+
+        function renderRegistrationsChart(monthlyData) {
+            const ctx = document.getElementById('registrationsChart').getContext('2d');
+            const labels = monthlyData.map(m => m.month);
+            const counts = monthlyData.map(m => m.count);
+
+            if (registrationsChart) {
+                registrationsChart.destroy();
+            }
+
+            registrationsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Новых пользователей',
+                        data: counts,
+                        borderColor: '#029FA4',
+                        backgroundColor: 'rgba(2, 159, 164, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3,
+                        pointBackgroundColor: '#029FA4',
+                        pointBorderColor: '#fff',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw + ' пользователей';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { stepSize: 1 },
+                            title: { display: true, text: 'Количество' }
+                        },
+                        x: {
+                            title: { display: true, text: 'Месяц' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderGroupsTable(groups) {
+            const tbody = document.getElementById('groupsTableBody');
+            if (!groups || groups.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-cell">Нет данных</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = groups.map(function(group) {
+                return `
+                    <tr>
+                        <td class="group-name">${escapeHtml(group.groupName || '—')}</td>
+                        <td>${group.studentCount}</td>
+                        <td class="score-cell">${group.averageScore}<span class="small-unit">/100</span></td>
+                        <td class="progress-cell">
+                            <div class="progress-bar-small">
+                                <div class="progress-fill-small" style="width: ${group.progressPercent}%"></div>
+                            </div>
+                            <span class="progress-text">${group.progressPercent}%</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderTopStudents(students) {
+            const tbody = document.getElementById('topStudentsBody');
+            if (!students || students.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">Нет данных</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = students.map(function(student, index) {
+                return `
+                    <tr>
+                        <td class="rank-cell ${index < 3 ? 'top-' + (index + 1) : ''}">${index + 1}</td>
+                        <td class="student-name-cell">
+                            <div class="student-avatar">${getInitials(student.firstName, student.lastName)}</div>
+                            <span>${escapeHtml(student.lastName)} ${escapeHtml(student.firstName)}</span>
+                        </td>
+                        <td>${escapeHtml(student.groupName || '—')}</td>
+                        <td class="level-cell">${student.level}</td>
+                        <td class="exp-cell">${formatNumber(student.experience)} XP</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function getInitials(firstName, lastName) {
+            var first = firstName ? firstName.charAt(0) : '';
+            var last = lastName ? lastName.charAt(0) : '';
+            return first + last;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function showToast(message) {
+            var toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.remove();
+            }, 3000);
+        }
+
+        function exportToPDF() {
+            var originalTitle = document.title;
+            document.title = 'Статистика_платформы_' + new Date().toLocaleDateString();
+
+            var printWindow = window.open('', '_blank');
+            var chartImage = '';
+            var chartCanvas = document.getElementById('registrationsChart');
+            if (chartCanvas) {
+                chartImage = '<img src="' + chartCanvas.toDataURL() + '" style="width:100%; max-width:800px;">';
+            }
+
+            var groupsTableHtml = document.getElementById('groupsTable').outerHTML;
+            var topStudentsHtml = document.getElementById('topStudentsBody').parentElement.parentElement.outerHTML;
+
+            printWindow.document.write(`
+                <html>
+                <head>
+                    <title>${document.title}</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+                    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body { font-family: 'Poppins', sans-serif; padding: 20px; background: white; }
+                        .print-header { text-align: center; margin-bottom: 30px; }
+                        .print-header h1 { color: #21383E; margin-bottom: 5px; }
+                        .print-header p { color: #5A6E7A; }
+                        .stats-grid { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+                        .stat-card { flex: 1; min-width: 150px; background: #F8F9FA; border-radius: 16px; padding: 20px; text-align: center; }
+                        .stat-value { font-size: 32px; font-weight: 800; color: #029FA4; }
+                        .stat-label { font-size: 14px; color: #5A6E7A; }
+                        .chart-card, .groups-table-card, .top-students-card { margin-bottom: 30px; }
+                        .card-header { margin-bottom: 15px; }
+                        .card-header h3 { color: #21383E; }
+                        table { width: 100%; border-collapse: collapse; }
+                        th, td { padding: 10px; text-align: left; border-bottom: 1px solid #E8EEEE; }
+                        th { background: #029FA4; color: white; }
+                        .progress-bar-small { width: 100px; height: 6px; background: #E8EEEE; border-radius: 10px; overflow: hidden; display: inline-block; }
+                        .progress-fill-small { height: 100%; background: #029FA4; border-radius: 10px; }
+                        .rank-cell.top-1 { color: #FFD700; font-weight: 800; }
+                        .rank-cell.top-2 { color: #C0C0C0; font-weight: 800; }
+                        .rank-cell.top-3 { color: #CD7F32; font-weight: 800; }
+                        .print-footer { margin-top: 30px; text-align: center; font-size: 12px; color: #8A9AA5; border-top: 1px solid #E8EEEE; padding-top: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="print-header">
+                        <h1>Статистика и аналитика</h1>
+                        <p>Дата формирования: ${new Date().toLocaleString()}</p>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card"><div class="stat-value">${document.getElementById('totalUsers').textContent}</div><div class="stat-label">Всего пользователей</div></div>
+                        <div class="stat-card"><div class="stat-value">${document.getElementById('activeUsers').textContent}</div><div class="stat-label">Активных пользователей</div></div>
+                        <div class="stat-card"><div class="stat-value">${document.getElementById('teachersCount').textContent}</div><div class="stat-label">Преподавателей</div></div>
+                        <div class="stat-card"><div class="stat-value">${document.getElementById('studentsCount').textContent}</div><div class="stat-label">Студентов</div></div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="card-header"><h3>Динамика регистраций</h3></div>
+                        ${chartImage}
+                    </div>
+                    <div class="groups-table-card">
+                        <div class="card-header"><h3>Успеваемость по группам</h3></div>
+                        ${groupsTableHtml}
+                    </div>
+                    <div class="top-students-card">
+                        <div class="card-header"><h3>Студенты с лучшей успеваемостью</h3></div>
+                        ${topStudentsHtml}
+                    </div>
+                    <div class="print-footer">
+                        <p>© Аддитивные технологии | Автоматически сформированный отчёт</p>
+                    </div>
+                    <script>window.onload = function() { window.print(); window.close(); };<\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            document.title = originalTitle;
+        }
+
+        var profileBtn = document.getElementById('profileBtn');
+        var profileDropdown = document.getElementById('profileDropdown');
+        var dropdownTimeout;
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+            profileBtn.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+            profileDropdown.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+            profileDropdown.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+        }
+
+        document.getElementById('profileSettingsBtn')?.addEventListener('click', function() {
+            window.location.href = '/Admin/Profile';
+        });
+        document.getElementById('dashboardBtn')?.addEventListener('click', function() {
+            window.location.href = '/Admin/Dashboard';
+        });
+        document.getElementById('logoutBtn')?.addEventListener('click', function() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+        document.getElementById('refreshBtn')?.addEventListener('click', loadStatistics);
+        document.getElementById('exportBtn')?.addEventListener('click', exportToPDF);
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        var user = loadUserData();
+        if (user) {
+            document.getElementById('userName').textContent = user.firstName + ' ' + user.lastName;
+            loadStatistics();
+        }
+        document.getElementById('backToDashboardBtn')?.addEventListener('click', () => {
+            window.location.href = '/Admin/Dashboard';
+        });
+    </script>
+</body>
+</html>

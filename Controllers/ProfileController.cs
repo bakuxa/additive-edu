@@ -92,7 +92,8 @@ namespace AdditiveEdu.Controllers
                 registrationDate = user.RegistrationDate.ToString("dd MMMM yyyy г."),
                 groupName = user.Group?.GroupName ?? "",
                 photoUrl = user.PhotoUrl ?? "",
-                roleId = user.RoleID
+                roleId = user.RoleID,
+                blocked = user.Blocked 
             });
         }
 
@@ -225,7 +226,6 @@ namespace AdditiveEdu.Controllers
                 double avgScore = 0;
                 if (maxScores.Any())
                 {
-                    // Сумма набранных баллов / сумма максимальных баллов * 100
                     double userSum = bestScoresByTask.Sum();
                     double maxSum = maxScores.Sum();
                     avgScore = maxSum > 0 ? (userSum / maxSum) * 100 : 0;

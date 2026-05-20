@@ -1,0 +1,222 @@
+@{
+    Layout = null;
+    var userId = ViewBag.UserId;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Просмотр пользователя | Админ панель</title>
+    <link rel="stylesheet" href="/css/admin-user-view.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1"><img src="/img/vector-bg-1.png" alt="фон"></div>
+        <div class="vector-bg vector-2"><img src="/img/vector-bg-2.png" alt="фон"></div>
+
+        <div class="top-bar">
+            <div class="logo"><img src="/img/logo.png" alt="Логотип"></div>
+            <h1 class="page-title"><span class="gradient-text">Просмотр пользователя</span></h1>
+            <button class="back-btn" id="backBtn">← Вернуться</button>
+        </div>
+
+        <main class="main-content">
+            <div id="userContent">
+                <div class="loading-spinner"><div class="spinner"></div><p>Загрузка...</p></div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const userId = @userId;
+        let radarChart = null;
+
+        if (!userId || isNaN(userId)) {
+            document.getElementById('userContent').innerHTML = '<div class="error-message">⚠️ Неверный ID пользователя</div>';
+        } else {
+            loadUserData();
+        }
+
+        async function loadUserData() {
+            try {
+                console.log('Загрузка данных для пользователя:', userId);
+                
+                const userResponse = await fetch(`/api/profile/${userId}`);
+                if (!userResponse.ok) throw new Error('Ошибка загрузки профиля');
+                const user = await userResponse.json();
+                console.log('User data:', user);
+                
+                const statsResponse = await fetch(`/api/profile/stats/${userId}`);
+                if (!statsResponse.ok) throw new Error('Ошибка загрузки статистики');
+                const stats = await statsResponse.json();
+                console.log('Stats data:', stats);
+                
+                const achievementsResponse = await fetch(`/api/AchievementsApi/user/${userId}`);
+                if (!achievementsResponse.ok) throw new Error('Ошибка загрузки достижений');
+                const achievementsData = await achievementsResponse.json();
+                console.log('Achievements data:', achievementsData);
+                
+                const radarResponse = await fetch(`/api/profile/radar/${userId}`);
+                if (!radarResponse.ok) throw new Error('Ошибка загрузки радара');
+                const radarData = await radarResponse.json();
+                console.log('Radar data:', radarData);
+                
+                renderProfile(user, stats, achievementsData);
+                renderRadarChart(radarData);
+                renderRecentAchievements(achievementsData.achievements);
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('userContent').innerHTML = `<div class="error-message">⚠️ Ошибка загрузки данных: ${error.message}</div>`;
+            }
+        }
+
+        function renderProfile(user, stats, achievementsData) {
+            const fullName = `${user.lastName || ''} ${user.firstName || ''} ${user.middleName || ''}`.trim();
+            const expPercent = stats.nextLevelExp ? Math.min((stats.experience / stats.nextLevelExp) * 100, 100) : 0;
+            const totalAchievements = achievementsData.totalAchievements || 1;
+            const achievementsPercent = (achievementsData.totalUnlocked / totalAchievements) * 100 || 0;
+            
+            const isBlocked = user.blocked === true;
+            const statusText = isBlocked ? 'Заблокирован' : 'Активен';
+            const statusClass = isBlocked ? 'status-badge status-blocked' : 'status-badge status-active';
+            
+            document.getElementById('userContent').innerHTML = `
+                <div class="profile-card">
+                    <div class="profile-avatar"><img id="avatarImg" src="${user.photoUrl && user.photoUrl !== '' ? user.photoUrl : '/img/no_photo_profile.png'}" alt="Аватар" onerror="this.src='/img/no_photo_profile.png'"></div>
+                    <div class="profile-info">
+                        <h3 class="profile-name">${escapeHtml(fullName)}</h3>
+                        <div class="profile-details">
+                            <div class="detail-row"><span class="detail-label">Дата регистрации:</span><span class="detail-value">${user.registrationDate || 'не указана'}</span></div>
+                            <div class="detail-row"><span class="detail-label">Номер телефона:</span><span class="detail-value">${user.phone || 'не указан'}</span></div>
+                            <div class="detail-row"><span class="detail-label">Электронная почта:</span><span class="detail-value">${escapeHtml(user.email)}</span></div>
+                            <div class="detail-row"><span class="detail-label">Группа:</span><span class="detail-value">${user.groupName || 'не указана'}</span></div>
+                            <div class="detail-row"><span class="detail-label">Статус:</span><span class="detail-value ${statusClass}">${statusText}</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="unified-stats-card">
+                    <div class="stats-header"><h3 class="stats-title-main">Статистика пользователя</h3><div class="level-badge">Уровень <span>${stats.level || 1}</span></div></div>
+                    <div class="stats-grid-unified">
+                        <div class="stat-card"><div class="stat-icon">🌟</div><div class="stat-content"><div class="stat-label">Опыт</div><div class="stat-value-large">${stats.experience || 0}</div><div class="progress-wrapper"><div class="progress-bar-unified"><div class="progress-fill" style="width: ${expPercent}%"></div></div><div class="progress-labels"><span>0 XP</span><span>${stats.nextLevelExp || 100} XP</span></div></div></div></div>
+                        <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-content"><div class="stat-label">Прогресс по курсу</div><div class="stat-value-large">${stats.courseProgress || 0}<span class="small-unit">%</span></div><div class="progress-wrapper"><div class="progress-bar-unified"><div class="progress-fill" style="width: ${stats.courseProgress || 0}%"></div></div><div class="progress-labels"><span>0%</span><span>100%</span></div></div></div></div>
+                        <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-content"><div class="stat-label">Средний балл</div><div class="stat-value-large">${stats.averageScore || 0}<span class="small-unit">/100</span></div><div class="progress-wrapper"><div class="progress-bar-unified"><div class="progress-fill" style="width: ${stats.averageScore || 0}%"></div></div><div class="progress-labels"><span>0</span><span>100</span></div></div></div></div>
+                    </div>
+                    <div class="stats-grid-unified stats-grid-second">
+                        <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-content"><div class="stat-label">Получено достижений</div><div class="stat-value-large">${achievementsData.totalUnlocked || 0}<span class="small-unit">/${achievementsData.totalAchievements || 0}</span></div><div class="progress-wrapper"><div class="progress-bar-unified"><div class="progress-fill" style="width: ${achievementsPercent}%"></div></div><div class="progress-labels"><span>0%</span><span>100%</span></div></div></div></div>
+                        <div class="stat-card"><div class="stat-icon">⭐</div><div class="stat-content"><div class="stat-label">Всего XP за достижения</div><div class="stat-value-large" id="totalXp">${achievementsData.achievements?.filter(a => a.isUnlocked).reduce((sum, a) => sum + a.pointsReward, 0) || 0}</div><div class="xp-bonus-text">Бонусные очки за коллекционирование</div></div></div>
+                        <div class="stat-card"><div class="stat-icon">🎯</div><div class="stat-content"><div class="stat-label">Прогресс коллекционирования</div><div class="stat-value-large">${Math.round(achievementsPercent)}<span class="small-unit">%</span></div><div class="progress-wrapper"><div class="progress-bar-unified"><div class="progress-fill" style="width: ${achievementsPercent}%"></div></div><div class="progress-labels"><span>Начало</span><span>Мастер</span></div></div></div></div>
+                    </div>
+                </div>
+
+                <div class="recent-achievements-table">
+                    <div class="table-header"><h4>Недавние достижения</h4><button class="back-to-users-btn" id="backToUsersBtn">← Вернуться к списку</button></div>
+                    <div class="table-container" id="recentAchievementsTable"><div class="loading-small">Загрузка...</div></div>
+                </div>
+
+                <div class="competence-card">
+                    <div class="competence-header"><h4>Цифровой профиль компетенций</h4><span class="competence-subtitle">Уровень усвоения по модулям</span></div>
+                    <div class="chart-container"><canvas id="competenceRadar" width="500" height="500"></canvas></div>
+                    <div class="competence-legend"><div class="legend-badge high">80-100% — Эксперт</div><div class="legend-badge mid">50-79% — Продвинутый</div><div class="legend-badge low">0-49% — Начинающий</div></div>
+                </div>
+            `;
+            
+            document.getElementById('backToUsersBtn')?.addEventListener('click', () => window.location.href = '/Admin/Users');
+        }
+
+        function renderRadarChart(radarData) {
+            if (!radarData || radarData.length === 0) {
+                const container = document.querySelector('.chart-container');
+                if (container) container.innerHTML = '<div class="empty-radar">Нет данных для отображения</div>';
+                return;
+            }
+            
+            const labels = radarData.map(m => m.moduleName);
+            const scores = radarData.map(m => m.score);
+            function getColor(score) { if (score >= 80) return '#2ECC71'; if (score >= 50) return '#F1C40F'; return '#E74C3C'; }
+            const canvas = document.getElementById('competenceRadar');
+            if (!canvas) return;
+            canvas.width = 550; canvas.height = 550; canvas.style.width = '550px'; canvas.style.height = '550px';
+            if (radarChart) radarChart.destroy();
+            radarChart = new Chart(canvas.getContext('2d'), {
+                type: 'radar', 
+                data: { 
+                    labels: labels, 
+                    datasets: [{ 
+                        label: 'Уровень усвоения (%)', 
+                        data: scores, 
+                        backgroundColor: 'rgba(2, 159, 164, 0.05)', 
+                        borderColor: '#029FA4', 
+                        borderWidth: 1.5, 
+                        pointBackgroundColor: scores.map(s => getColor(s)), 
+                        pointBorderColor: '#fff', 
+                        pointRadius: 6, 
+                        pointHoverRadius: 9, 
+                        pointBorderWidth: 2 
+                    }] 
+                },
+                options: { 
+                    responsive: false, 
+                    maintainAspectRatio: true, 
+                    scales: { 
+                        r: { 
+                            beginAtZero: true, 
+                            max: 100, 
+                            ticks: { stepSize: 20, callback: v => v + '%' }, 
+                            pointLabels: { font: { size: 11 } } 
+                        } 
+                    }, 
+                    plugins: { 
+                        tooltip: { callbacks: { label: ctx => `Уровень освоения: ${ctx.raw}%` } }, 
+                        legend: { display: false } 
+                    } 
+                }
+            });
+        }
+
+        function renderRecentAchievements(achievements) {
+            const container = document.getElementById('recentAchievementsTable');
+            if (!achievements) {
+                container.innerHTML = '<div class="empty-achievements">Нет данных</div>';
+                return;
+            }
+            const unlocked = achievements.filter(a => a.isUnlocked).slice(-5).reverse();
+            if (unlocked.length === 0) { 
+                container.innerHTML = '<div class="empty-achievements">✨ Нет полученных достижений</div>'; 
+                return; 
+            }
+            const iconMap = { 
+                'Первый слой': '🎯', 'Знаток FDM': '🏆', 'Мастер настройки': '⚙️', 
+                'Мастер 3D-печати': '🖨️', 'Сравнительный аналитик': '📊', 'Активный ученик': '📚', 
+                'Эксперт FDM': '⭐', 'Путешественник': '🗺️', 'Быстрый старт': '🚀', 
+                'Любознательный': '🔍', 'Лидер рейтинга': '👑' 
+            };
+            container.innerHTML = `<table class="achievements-table">
+                <thead><tr><th>Достижение</th><th>Описание</th><th>XP</th><th>Дата</th></tr></thead>
+                <tbody>${unlocked.map(a => `
+                    <tr>
+                        <td class="achievement-cell">
+                            <div class="achievement-icon-table">${iconMap[a.title] || '🏅'}</div>
+                            <span class="achievement-name-table">${escapeHtml(a.title)}</span>
+                        </td>
+                        <td class="desc-cell">${escapeHtml(a.description)}</td>
+                        <td class="xp-cell">⭐ ${a.pointsReward}</td>
+                        <td class="date-cell">📅 ${a.unlockedAt || 'Недавно'}</td>
+                    </td>
+                `).join('')}</tbody>
+            </table>`;
+        }
+
+        function escapeHtml(str) { 
+            if (!str) return ''; 
+            return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m])); 
+        }
+
+        document.getElementById('backBtn')?.addEventListener('click', () => window.location.href = '/Admin/Users');
+    </script>
+</body>
+</html>

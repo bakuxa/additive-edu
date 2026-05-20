@@ -1,0 +1,211 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Панель управления | Аддитивные технологии</title>
+    <link rel="stylesheet" href="/css/admin.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+
+        <div class="top-bar">
+            <div class="logo">
+                <img src="/img/logo.png" alt="Логотип">
+            </div>
+            <h1 class="page-title"><span class="gradient-text">Административная панель управления</span></h1>
+            <div class="user-profile" id="profileBtn">
+                <span class="user-name" id="userName"></span>
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="profile-icon">
+            </div>
+        </div>
+
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item" id="profileSettingsBtn">
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="dropdown-icon">
+                <span>Мой профиль</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="logoutBtn">
+                <img src="/img/icon/logout-icon.png" alt="Выйти" class="dropdown-icon">
+                <span>Выйти</span>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="usersCount">0</div>
+                        <div class="stat-label">Пользователей</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="modulesCount">0</div>
+                        <div class="stat-label">Модулей</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📖</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="lessonsCount">0</div>
+                        <div class="stat-label">Уроков</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="tasksCount">0</div>
+                        <div class="stat-label">Заданий</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="achievementsCount">0</div>
+                        <div class="stat-label">Достижений</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sections-grid">
+                <div class="section-card" onclick="window.location.href='/Admin/Users'">
+                    <div class="section-icon">👥</div>
+                    <h3 class="section-title">Управление пользователями</h3>
+                    <p class="section-desc">Просмотр, добавление, редактирование и блокировка пользователей</p>
+                </div>
+                <div class="section-card" onclick="window.location.href='/Admin/Content'">
+                    <div class="section-icon">📚</div>
+                    <h3 class="section-title">Управление контентом</h3>
+                    <p class="section-desc">Модули, уроки, тесты, квесты и сопоставления</p>
+                </div>
+                <div class="section-card" onclick="window.location.href='/Admin/Achievements'">
+                    <div class="section-icon">🏆</div>
+                    <h3 class="section-title">Управление достижениями</h3>
+                    <p class="section-desc">Настройка условий получения достижений</p>
+                </div>
+                <div class="section-card" onclick="window.location.href='/Admin/Statistics'">
+                    <div class="section-icon">📊</div>
+                    <h3 class="section-title">Статистика и аналитика</h3>
+                    <p class="section-desc">Отчёты по успеваемости и активности</p>
+                </div>
+            </div>
+
+            <div class="recent-actions">
+                <div class="section-header">
+                    <h3>Последние действия</h3>
+                    <span class="section-icon">🔄</span>
+                </div>
+                <div class="actions-list" id="actionsList">
+                    <div class="empty-actions">
+                        <div class="empty-icon">📭</div>
+                        <p>Нет действий</p>
+                        <span>Здесь будут отображаться ваши последние действия</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
+            }
+            if (user.roleId !== 4) {
+                window.location.href = '/Home/Courses';
+                return null;
+            }
+            return user;
+        }
+
+        async function loadStats() {
+            const response = await fetch('/api/adminapi/stats');
+        try {
+            
+            const data = await response.json();
+            
+            document.getElementById('usersCount').textContent = data.usersCount || 0;
+            document.getElementById('modulesCount').textContent = data.modulesCount || 0;
+            document.getElementById('lessonsCount').textContent = data.lessonsCount || 0;
+            document.getElementById('tasksCount').textContent = data.tasksCount || 0;
+            document.getElementById('achievementsCount').textContent = data.achievementsCount || 0;
+        } catch (error) {
+            console.error('Ошибка загрузки статистики:', error);
+            document.getElementById('usersCount').textContent = '0';
+            document.getElementById('modulesCount').textContent = '0';
+            document.getElementById('lessonsCount').textContent = '0';
+            document.getElementById('tasksCount').textContent = '0';
+            document.getElementById('achievementsCount').textContent = '0';
+        }
+    }
+
+        // Выпадающее меню
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        let dropdownTimeout;
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('mouseenter', () => {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+
+            profileBtn.addEventListener('mouseleave', () => {
+                dropdownTimeout = setTimeout(() => {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+
+            profileDropdown.addEventListener('mouseenter', () => {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+
+            profileDropdown.addEventListener('mouseleave', () => {
+                dropdownTimeout = setTimeout(() => {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+        }
+
+        document.getElementById('profileSettingsBtn')?.addEventListener('click', () => {
+            window.location.href = '/Admin/Profile';
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+
+        // Инициализация
+        const user = loadUserData();
+        if (user) {
+            currentUser = user;
+            const nameSpan = document.getElementById('userName');
+            if (nameSpan) {
+                nameSpan.textContent = `${user.firstName} ${user.lastName}`;
+            }
+            loadStats();
+        }
+    </script>
+</body>
+</html>

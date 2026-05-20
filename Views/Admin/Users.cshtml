@@ -1,0 +1,526 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Управление пользователями | Админ панель</title>
+    <link rel="stylesheet" href="/css/admin-users.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+
+        <div class="top-bar">
+            <div class="logo">
+                <img src="/img/logo.png" alt="Логотип">
+            </div>
+            <h1 class="page-title"><span class="gradient-text">Управление пользователями</span></h1>
+            <div class="user-profile" id="profileBtn">
+                <span class="user-name" id="userName"></span>
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="profile-icon">
+            </div>
+        </div>
+
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item" id="profileSettingsBtn">
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="dropdown-icon">
+                <span>Мой профиль</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="dashboardBtn">
+                <img src="/img/icon/dashboard-icon.png" alt="Панель управления" class="dropdown-icon">
+                <span>Панель управления</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="logoutBtn">
+                <img src="/img/icon/logout-icon.png" alt="Выйти" class="dropdown-icon">
+                <span>Выйти</span>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <div class="actions-bar">
+                <button class="back-to-dashboard-btn" id="backToDashboardBtn">
+                    ← Вернуться
+                </button>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Поиск по ФИО..." class="search-input">
+                </div>
+                <button class="add-user-btn" id="addUserBtn">
+                    <span>+</span> Добавить пользователя
+                </button>
+            </div>
+
+            <div class="table-container">
+                <table class="users-table">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="fullName">ФИО <span class="sort-icon">⇅</span></th>
+                            <th class="sortable" data-sort="group">Группа <span class="sort-icon">⇅</span></th>
+                            <th class="filterable">Роль <span class="filter-icon">▼</span>
+                                <div class="filter-dropdown" id="roleFilter">
+                                    <div class="filter-option" data-value="all">Все роли</div>
+                                    <div class="filter-option" data-value="3">Студент</div>
+                                    <div class="filter-option" data-value="4">Преподаватель</div>
+                                </div>
+                            </th>
+                            <th class="filterable-status">Статус <span class="filter-icon">▼</span>
+                                <div class="filter-dropdown" id="statusFilter">
+                                    <div class="filter-option" data-value="all">Все статусы</div>
+                                    <div class="filter-option" data-value="active">Активен</div>
+                                    <div class="filter-option" data-value="blocked">Заблокирован</div>
+                                </div>
+                            </th>
+                            <th>Email</th>
+                            <th>Телефон</th>
+                            <th style="text-align: center;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody">
+                        <tr><td colspan="7" class="loading-cell"><div class="spinner"></div>Загрузка...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="userModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Добавление пользователя</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group"><label>Фамилия</label><input type="text" id="editLastName" class="form-input" placeholder="Иванов"></div>
+                <div class="form-group"><label>Имя</label><input type="text" id="editFirstName" class="form-input" placeholder="Иван"></div>
+                <div class="form-group"><label>Отчество</label><input type="text" id="editMiddleName" class="form-input" placeholder="Иванович"></div>
+                <div class="form-group"><label>Email</label><input type="email" id="editEmail" class="form-input" placeholder="example@mail.com"></div>
+                <div class="form-group"><label>Телефон</label><input type="tel" id="editPhone" class="form-input" placeholder="+7 (999) 123-45-67"></div>
+                <div class="form-group"><label>Группа</label><input type="text" id="editGroup" class="form-input" placeholder="ЦИС-27"></div>
+                <div class="form-group"><label>Роль</label>
+                    <select id="editRole" class="form-select">
+                        <option value="3">Студент</option>
+                        <option value="4">Преподаватель</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Статус</label>
+                    <select id="editStatus" class="form-select">
+                        <option value="false">Активен</option>
+                        <option value="true">Заблокирован</option>
+                    </select>
+                </div>
+                <div class="form-group" id="passwordGroup"><label>Пароль</label><input type="password" id="editPassword" class="form-input" placeholder="••••••••"><small class="form-hint">Минимум 6 символов</small></div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel-btn" id="cancelModalBtn">Отмена</button>
+                <button class="modal-save-btn" id="saveUserBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal" style="display: none;">
+        <div class="modal-container small">
+            <div class="modal-header"><h3>Подтверждение удаления</h3><button class="modal-close" id="closeDeleteModalBtn">&times;</button></div>
+            <div class="modal-body"><p>Вы уверены, что хотите удалить пользователя?</p><p class="delete-warning">Это действие нельзя отменить.</p></div>
+            <div class="modal-footer"><button class="modal-cancel-btn" id="cancelDeleteBtn">Отмена</button><button class="modal-confirm-btn" id="confirmDeleteBtn">Удалить</button></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let allUsers = [];
+        let filteredUsers = [];
+        let currentSort = { field: 'fullName', direction: 'asc' };
+        let currentRoleFilter = 'all';
+        let currentStatusFilter = 'all';
+        let searchQuery = '';
+        let editingUserId = null;
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) { window.location.href = '/Home/Login'; return null; }
+            if (user.roleId !== 4) { window.location.href = '/Home/Courses'; return null; }
+            return user;
+        }
+
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/adminusersapi');
+                const data = await response.json();
+                allUsers = data;
+                applyFiltersAndSort();
+            } catch (error) {
+                console.error('Ошибка загрузки:', error);
+                document.getElementById('usersTableBody').innerHTML = '<tr><td colspan="7" class="error-cell">Ошибка загрузки данных</td></tr>';
+            }
+        }
+
+        function applyFiltersAndSort() {
+            let tempUsers = [...allUsers];
+            
+            if (currentRoleFilter !== 'all') {
+                tempUsers = tempUsers.filter(u => u.roleId == currentRoleFilter);
+            }
+            
+            if (currentStatusFilter !== 'all') {
+                if (currentStatusFilter === 'active') {
+                    tempUsers = tempUsers.filter(u => !u.blocked);
+                } else if (currentStatusFilter === 'blocked') {
+                    tempUsers = tempUsers.filter(u => u.blocked === true);
+                }
+            }
+            
+            if (searchQuery.trim() !== '') {
+                const query = searchQuery.trim().toLowerCase();
+                tempUsers = tempUsers.filter(u => `${u.lastName} ${u.firstName} ${u.middleName || ''}`.toLowerCase().includes(query));
+            }
+            
+            filteredUsers = tempUsers;
+
+            filteredUsers.sort((a, b) => {
+                let valA, valB;
+                switch (currentSort.field) {
+                    case 'fullName': 
+                        valA = `${a.lastName} ${a.firstName}`; 
+                        valB = `${b.lastName} ${b.firstName}`; 
+                        break;
+                    case 'group': 
+                        valA = a.groupName || ''; 
+                        valB = b.groupName || ''; 
+                        break;
+                    case 'status':
+                        valA = a.blocked ? 1 : 0;
+                        valB = b.blocked ? 1 : 0;
+                        return currentSort.direction === 'asc' ? valA - valB : valB - valA;
+                    default: 
+                        return 0;
+                }
+                if (currentSort.direction === 'asc') {
+                    return valA.localeCompare(valB, 'ru');
+                } else {
+                    return valB.localeCompare(valA, 'ru');
+                }
+            });
+            
+            renderUsersTable();
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            if (filteredUsers.length === 0) { 
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-cell">Пользователи не найдены</td></tr>'; 
+                return; 
+            }
+            
+            tbody.innerHTML = filteredUsers.map(user => {
+                const userId = user.userId;
+                const firstName = user.firstName || '';
+                const lastName = user.lastName || '';
+                const middleName = user.middleName || '';
+                const groupName = user.groupName || '—';
+                const email = user.email || '';
+                const phone = user.phone || '—';
+                const roleId = user.roleId;
+                const roleName = user.roleName || (roleId === 4 ? 'Преподаватель' : 'Студент');
+                const blocked = user.blocked;
+                const statusText = blocked ? 'Заблокирован' : 'Активен';
+                const statusClass = blocked ? 'status-badge status-blocked' : 'status-badge status-active';
+                
+                return `
+                    <tr>
+                        <td class="user-name-cell">
+                            <div class="user-avatar-mini">${(firstName.charAt(0) || '')}${(lastName.charAt(0) || '')}</div>
+                            <div class="user-fullname">
+                                <strong>${escapeHtml(lastName)} ${escapeHtml(firstName)}</strong>
+                                ${middleName ? `<span class="user-patronymic">${escapeHtml(middleName)}</span>` : ''}
+                            </div>
+                         </td>
+                        <td>${escapeHtml(groupName)}</td>
+                        <td><span class="role-badge ${roleId === 4 ? 'role-teacher' : 'role-student'}">${roleName}</span></td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                        <td class="email-cell">${escapeHtml(email)}</td>
+                        <td>${escapeHtml(phone)}</td>
+                        <td class="actions-cell">
+                            <button class="action-btn view-btn" data-id="${userId}" title="Просмотр">👁️</button>
+                            <button class="action-btn edit-btn" data-id="${userId}" title="Редактировать">✏️</button>
+                            <button class="action-btn delete-btn" data-id="${userId}" title="Удалить">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.addEventListener('click', () => viewUser(parseInt(btn.dataset.id)));
+            });
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editUser(parseInt(btn.dataset.id)));
+            });
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => showDeleteModal(parseInt(btn.dataset.id)));
+            });
+        }
+
+        function viewUser(userId) {
+            window.location.href = `/Admin/UserView/${userId}`;
+        }
+
+        function editUser(userId) {
+            const user = allUsers.find(u => u.userId === userId);
+            if (user) {
+                editingUserId = userId;
+                document.getElementById('modalTitle').textContent = 'Редактирование пользователя';
+                document.getElementById('editLastName').value = user.lastName || '';
+                document.getElementById('editFirstName').value = user.firstName || '';
+                document.getElementById('editMiddleName').value = user.middleName || '';
+                document.getElementById('editEmail').value = user.email || '';
+                document.getElementById('editPhone').value = user.phone || '';
+                document.getElementById('editGroup').value = user.groupName || '';
+                document.getElementById('editRole').value = user.roleId || 3;
+                document.getElementById('editStatus').value = user.blocked ? 'true' : 'false';
+                document.getElementById('passwordGroup').style.display = 'none';
+                document.getElementById('userModal').style.display = 'flex';
+            }
+        }
+
+        function showAddModal() {
+            editingUserId = null;
+            document.getElementById('modalTitle').textContent = 'Добавление пользователя';
+            document.getElementById('editLastName').value = '';
+            document.getElementById('editFirstName').value = '';
+            document.getElementById('editMiddleName').value = '';
+            document.getElementById('editEmail').value = '';
+            document.getElementById('editPhone').value = '';
+            document.getElementById('editGroup').value = '';
+            document.getElementById('editRole').value = '3';
+            document.getElementById('editStatus').value = 'false';
+            document.getElementById('editPassword').value = '';
+            document.getElementById('passwordGroup').style.display = 'block';
+            document.getElementById('userModal').style.display = 'flex';
+        }
+
+        async function saveUser() {
+            const lastName = document.getElementById('editLastName').value.trim();
+            const firstName = document.getElementById('editFirstName').value.trim();
+            const email = document.getElementById('editEmail').value.trim();
+            const password = document.getElementById('editPassword').value;
+            const status = document.getElementById('editStatus').value === 'true';
+            
+            if (!lastName || !firstName || !email) { showToast('Заполните обязательные поля'); return; }
+            if (!editingUserId && (!password || password.length < 6)) { showToast('Пароль должен содержать не менее 6 символов'); return; }
+            
+            const userData = {
+                lastName: lastName,
+                firstName: firstName,
+                middleName: document.getElementById('editMiddleName').value.trim(),
+                email: email,
+                phone: document.getElementById('editPhone').value.trim(),
+                group: document.getElementById('editGroup').value.trim(),
+                roleId: parseInt(document.getElementById('editRole').value),
+                blocked: status
+            };
+            if (!editingUserId) userData.password = password;
+            
+            try {
+                const url = editingUserId ? `/api/admin/adminusersapi/${editingUserId}` : '/api/admin/adminusersapi';
+                const method = editingUserId ? 'PUT' : 'POST';
+                const response = await fetch(url, { 
+                    method: method, 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(userData) 
+                });
+                if (response.ok) {
+                    showToast(editingUserId ? 'Пользователь обновлён' : 'Пользователь добавлен');
+                    document.getElementById('userModal').style.display = 'none';
+                    loadUsers();
+                } else { 
+                    const error = await response.json(); 
+                    showToast(error.message || 'Ошибка'); 
+                }
+            } catch (error) { 
+                showToast('Произошла ошибка'); 
+            }
+        }
+
+        function showDeleteModal(userId) { 
+            editingUserId = userId; 
+            document.getElementById('deleteModal').style.display = 'flex'; 
+        }
+        
+        async function deleteUser() {
+            if (!editingUserId) return;
+            try {
+                const response = await fetch(`/api/admin/adminusersapi/${editingUserId}`, { method: 'DELETE' });
+                if (response.ok) { 
+                    showToast('Пользователь удалён'); 
+                    document.getElementById('deleteModal').style.display = 'none'; 
+                    loadUsers(); 
+                } else { 
+                    showToast('Ошибка при удалении'); 
+                }
+            } catch (error) { 
+                showToast('Произошла ошибка'); 
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div'); 
+            toast.className = 'toast-message'; 
+            toast.textContent = message;
+            document.body.appendChild(toast); 
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        document.getElementById('searchInput')?.addEventListener('input', (e) => { 
+            searchQuery = e.target.value; 
+            applyFiltersAndSort(); 
+        });
+        
+        document.querySelectorAll('.sortable').forEach(header => {
+            header.addEventListener('click', () => {
+                const field = header.dataset.sort;
+                if (currentSort.field === field) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.field = field;
+                    currentSort.direction = 'asc';
+                }
+                applyFiltersAndSort();
+            });
+        });
+
+        const roleHeader = document.querySelector('.filterable'); 
+        const roleFilterDropdown = document.getElementById('roleFilter'); 
+        let roleFilterTimeout;
+        
+        if (roleHeader && roleFilterDropdown) {
+            roleHeader.addEventListener('mouseenter', () => { 
+                clearTimeout(roleFilterTimeout); 
+                roleFilterDropdown.classList.add('show'); 
+            });
+            roleHeader.addEventListener('mouseleave', () => { 
+                roleFilterTimeout = setTimeout(() => roleFilterDropdown.classList.remove('show'), 200); 
+            });
+            roleFilterDropdown.addEventListener('mouseenter', () => { 
+                clearTimeout(roleFilterTimeout); 
+                roleFilterDropdown.classList.add('show'); 
+            });
+            roleFilterDropdown.addEventListener('mouseleave', () => { 
+                roleFilterTimeout = setTimeout(() => roleFilterDropdown.classList.remove('show'), 200); 
+            });
+        }
+        
+        document.querySelectorAll('#roleFilter .filter-option').forEach(option => {
+            option.addEventListener('click', () => {
+                currentRoleFilter = option.dataset.value;
+                document.querySelectorAll('#roleFilter .filter-option').forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                roleFilterDropdown.classList.remove('show');
+                applyFiltersAndSort();
+            });
+        });
+        
+        const statusHeader = document.querySelector('.filterable-status');
+        const statusFilterDropdown = document.getElementById('statusFilter');
+        let statusFilterTimeout;
+
+        if (statusHeader && statusFilterDropdown) {
+            statusHeader.addEventListener('mouseenter', () => { 
+                clearTimeout(statusFilterTimeout); 
+                statusFilterDropdown.classList.add('show'); 
+            });
+            statusHeader.addEventListener('mouseleave', () => { 
+                statusFilterTimeout = setTimeout(() => statusFilterDropdown.classList.remove('show'), 200); 
+            });
+            statusFilterDropdown.addEventListener('mouseenter', () => { 
+                clearTimeout(statusFilterTimeout); 
+                statusFilterDropdown.classList.add('show'); 
+            });
+            statusFilterDropdown.addEventListener('mouseleave', () => { 
+                statusFilterTimeout = setTimeout(() => statusFilterDropdown.classList.remove('show'), 200); 
+            });
+        }
+
+        document.querySelectorAll('#statusFilter .filter-option').forEach(option => {
+            option.addEventListener('click', () => {
+                currentStatusFilter = option.dataset.value;
+                document.querySelectorAll('#statusFilter .filter-option').forEach(opt => opt.classList.remove('active'));
+                option.classList.add('active');
+                statusFilterDropdown.classList.remove('show');
+                applyFiltersAndSort();
+            });
+        });
+
+        document.getElementById('addUserBtn')?.addEventListener('click', showAddModal);
+        document.getElementById('closeModalBtn')?.addEventListener('click', () => document.getElementById('userModal').style.display = 'none');
+        document.getElementById('cancelModalBtn')?.addEventListener('click', () => document.getElementById('userModal').style.display = 'none');
+        document.getElementById('saveUserBtn')?.addEventListener('click', saveUser);
+        document.getElementById('closeDeleteModalBtn')?.addEventListener('click', () => document.getElementById('deleteModal').style.display = 'none');
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', () => document.getElementById('deleteModal').style.display = 'none');
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', deleteUser);
+        
+        window.addEventListener('click', (e) => { 
+            if (e.target.classList.contains('modal-overlay')) { 
+                document.getElementById('userModal').style.display = 'none'; 
+                document.getElementById('deleteModal').style.display = 'none'; 
+            } 
+        });
+
+        const profileBtn = document.getElementById('profileBtn'); 
+        const profileDropdown = document.getElementById('profileDropdown'); 
+        let dropdownTimeout;
+        
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('mouseenter', () => { 
+                clearTimeout(dropdownTimeout); 
+                profileDropdown.classList.add('show'); 
+            });
+            profileBtn.addEventListener('mouseleave', () => { 
+                dropdownTimeout = setTimeout(() => profileDropdown.classList.remove('show'), 200); 
+            });
+            profileDropdown.addEventListener('mouseenter', () => { 
+                clearTimeout(dropdownTimeout); 
+                profileDropdown.classList.add('show'); 
+            });
+            profileDropdown.addEventListener('mouseleave', () => { 
+                dropdownTimeout = setTimeout(() => profileDropdown.classList.remove('show'), 200); 
+            });
+        }
+
+        document.getElementById('profileSettingsBtn')?.addEventListener('click', () => window.location.href = '/Admin/Profile');
+        document.getElementById('dashboardBtn')?.addEventListener('click', () => window.location.href = '/Admin/Dashboard');
+        document.getElementById('logoutBtn')?.addEventListener('click', () => { 
+            localStorage.removeItem('user'); 
+            window.location.href = '/Home/Index'; 
+        });
+        document.getElementById('backToDashboardBtn')?.addEventListener('click', () => {
+            window.location.href = '/Admin/Dashboard';
+        });
+
+        function escapeHtml(str) { 
+            if (!str) return ''; 
+            return str.replace(/[&<>]/g, function(m) { 
+                if (m === '&') return '&amp;'; 
+                if (m === '<') return '&lt;'; 
+                if (m === '>') return '&gt;'; 
+                return m; 
+            }); 
+        }
+
+        const user = loadUserData();
+        if (user) { 
+            document.getElementById('userName').textContent = `${user.firstName} ${user.lastName}`; 
+            loadUsers(); 
+        }
+    </script>
+</body>
+</html>

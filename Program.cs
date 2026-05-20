@@ -35,6 +35,9 @@ app.UseRouting();
 
 app.MapControllers();
 app.MapControllerRoute(
+    name: "api",
+    pattern: "api/{controller}/{action}");
+app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 

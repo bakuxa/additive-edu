@@ -1,0 +1,293 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Профиль | Панель управления</title>
+    <link rel="stylesheet" href="/css/admin-profile.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+
+        <div class="top-bar">
+            <div class="logo">
+                <img src="/img/logo.png" alt="Логотип">
+            </div>
+            <h1 class="page-title"><span class="gradient-text">Мой профиль</span></h1>
+            <div class="user-profile" id="profileBtn">
+                <span class="user-name" id="userName"></span>
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="profile-icon">
+            </div>
+        </div>
+
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item" id="profileSettingsBtn">
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="dropdown-icon">
+                <span>Мой профиль</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="dashboardBtn">
+                <img src="/img/icon/dashboard-icon.png" alt="Панель управления" class="dropdown-icon">
+                <span>Панель управления</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="logoutBtn">
+                <img src="/img/icon/logout-icon.png" alt="Выйти" class="dropdown-icon">
+                <span>Выйти</span>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <img id="avatarImg" src="/img/photo_profile.png" alt="Аватар">
+                </div>
+                <div class="profile-info">
+                    <h3 class="profile-name" id="profileName"></h3>
+                    <div class="profile-details" id="profileDetails"></div>
+                    <button class="edit-profile-btn" id="editProfileBtn">Редактировать профиль</button>
+                    <div id="editActions" class="edit-actions" style="display: none;">
+                        <button class="cancel-btn" id="cancelEditBtn">Отмена</button>
+                        <button class="save-btn" id="saveProfileBtn">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-icon">ℹ️</div>
+                <div class="info-content">
+                    <h3>Информация об аккаунте</h3>
+                    <p>Вы вошли как преподаватель. В панели управления вы можете управлять пользователями, контентом и просматривать статистику.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let isEditing = false;
+        let originalUserData = null;
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
+            }
+            if (user.roleId !== 4) {
+                window.location.href = '/Home/Courses';
+                return null;
+            }
+            return user;
+        }
+
+        function showModal(message) {
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-content">
+                    <p>${message}</p>
+                    <button class="modal-ok-btn" id="modalOkBtn">OK</button>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+            document.getElementById('modalOkBtn').addEventListener('click', () => {
+                overlay.remove();
+            });
+        }
+
+        function displayProfile(user, editMode = false, preserveOriginal = false) {
+            if (!preserveOriginal && editMode) {
+                originalUserData = JSON.parse(JSON.stringify(user));
+            }
+            
+            let fullName = `${user.lastName} ${user.firstName}`;
+            if (user.middleName) fullName += ` ${user.middleName}`;
+            document.getElementById('profileName').textContent = fullName;
+            
+            const avatarImg = document.getElementById('avatarImg');
+            if (avatarImg) {
+                if (user.photoUrl && user.photoUrl !== '' && user.photoUrl !== 'null') {
+                    avatarImg.src = user.photoUrl;
+                } else {
+                    avatarImg.src = '/img/no_photo_profile.png';
+                }
+            }
+            
+            const fields = [
+                { label: 'Дата регистрации:', value: user.registrationDate || 'не указана', key: 'registrationDate', editable: false },
+                { label: 'Номер телефона:', value: user.phone || 'не указан', key: 'phone', editable: true },
+                { label: 'Электронная почта:', value: user.email || 'не указан', key: 'email', editable: true },
+                { label: 'Фото URL:', value: user.photoUrl || '', key: 'photoUrl', editable: true },
+                { label: 'Статус:', value: 'Преподаватель', key: 'status', editable: false }
+            ];
+            
+            const container = document.getElementById('profileDetails');
+            container.innerHTML = '';
+            
+            fields.forEach(field => {
+                const row = document.createElement('div');
+                row.className = 'detail-row';
+                
+                const labelSpan = document.createElement('span');
+                labelSpan.className = 'detail-label';
+                labelSpan.textContent = field.label;
+                
+                if (editMode && field.editable) {
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.className = 'edit-input';
+                    input.value = field.value;
+                    input.id = `edit_${field.key}`;
+                    row.appendChild(labelSpan);
+                    row.appendChild(input);
+                } else {
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'detail-value';
+                    if (field.label.includes('Статус')) {
+                        valueSpan.classList.add('status-active');
+                    }
+                    if (field.key === 'photoUrl') {
+                        valueSpan.textContent = (field.value && field.value !== '') ? 'Есть' : 'Нет изображения';
+                    } else {
+                        valueSpan.textContent = field.value;
+                    }
+                    row.appendChild(labelSpan);
+                    row.appendChild(valueSpan);
+                }
+                container.appendChild(row);
+            });
+            
+            const editActions = document.getElementById('editActions');
+            const editBtn = document.getElementById('editProfileBtn');
+            
+            if (editActions) editActions.style.display = editMode ? 'flex' : 'none';
+            if (editBtn) editBtn.style.display = editMode ? 'none' : 'flex';
+        }
+
+        async function saveProfile() {
+            const user = loadUserData();
+            if (!user) return;
+            
+            const updatedData = {
+                userId: user.userId,
+                phone: document.getElementById('edit_phone')?.value || '',
+                email: document.getElementById('edit_email')?.value || '',
+                photoUrl: document.getElementById('edit_photoUrl')?.value || ''
+            };
+            
+            try {
+                const response = await fetch('/api/profile/update', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(updatedData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    user.phone = updatedData.phone;
+                    user.email = updatedData.email;
+                    user.photoUrl = updatedData.photoUrl;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    
+                    const avatarImg = document.getElementById('avatarImg');
+                    if (avatarImg) {
+                        avatarImg.src = updatedData.photoUrl || '/img/photo_profile.png';
+                    }
+                    
+                    showModal('Профиль успешно обновлён!');
+                    isEditing = false;
+                    displayProfile(user, false);
+                } else {
+                    showModal(result.message || 'Ошибка при обновлении');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showModal('Произошла ошибка при подключении к серверу');
+            }
+        }
+
+        const profileBtn = document.getElementById('profileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        let dropdownTimeout;
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('mouseenter', () => {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+
+            profileBtn.addEventListener('mouseleave', () => {
+                dropdownTimeout = setTimeout(() => {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+
+            profileDropdown.addEventListener('mouseenter', () => {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+
+            profileDropdown.addEventListener('mouseleave', () => {
+                dropdownTimeout = setTimeout(() => {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+        }
+
+        document.getElementById('profileSettingsBtn')?.addEventListener('click', () => {
+            window.location.href = '/Admin/Profile';
+        });
+
+        document.getElementById('dashboardBtn')?.addEventListener('click', () => {
+            window.location.href = '/Admin/Dashboard';
+        });
+
+        document.getElementById('logoutBtn')?.addEventListener('click', () => {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+
+        document.getElementById('editProfileBtn')?.addEventListener('click', () => {
+            if (!isEditing) {
+                const freshUser = JSON.parse(localStorage.getItem('user'));
+                if (freshUser) {
+                    currentUser = freshUser;
+                    isEditing = true;
+                    displayProfile(currentUser, true, false);
+                }
+            }
+        });
+
+        document.getElementById('cancelEditBtn')?.addEventListener('click', () => {
+            if (originalUserData) {
+                isEditing = false;
+                displayProfile(originalUserData, false);
+                currentUser = JSON.parse(JSON.stringify(originalUserData));
+                localStorage.setItem('user', JSON.stringify(currentUser));
+            }
+        });
+
+        document.getElementById('saveProfileBtn')?.addEventListener('click', saveProfile);
+
+        const user = loadUserData();
+        if (user) {
+            currentUser = user;
+            document.getElementById('userName').textContent = `${user.firstName} ${user.lastName}`;
+            displayProfile(user, false);
+        }
+    </script>
+</body>
+</html>

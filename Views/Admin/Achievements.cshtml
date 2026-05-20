@@ -1,0 +1,458 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Управление достижениями | Админ панель</title>
+    <link rel="stylesheet" href="/css/admin-achievements.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1">
+            <img src="/img/vector-bg-1.png" alt="фон">
+        </div>
+        <div class="vector-bg vector-2">
+            <img src="/img/vector-bg-2.png" alt="фон">
+        </div>
+
+        <div class="top-bar">
+            <div class="logo">
+                <img src="/img/logo.png" alt="Логотип">
+            </div>
+            <h1 class="page-title">
+                <span class="gradient-text">Управление достижениями</span>
+            </h1>
+            <div class="user-profile" id="profileBtn">
+                <span class="user-name" id="userName"></span>
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="profile-icon">
+            </div>
+        </div>
+
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item" id="profileSettingsBtn">
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="dropdown-icon">
+                <span>Мой профиль</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="dashboardBtn">
+                <img src="/img/icon/dashboard-icon.png" alt="Панель управления" class="dropdown-icon">
+                <span>Панель управления</span>
+            </div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="logoutBtn">
+                <img src="/img/icon/logout-icon.png" alt="Выйти" class="dropdown-icon">
+                <span>Выйти</span>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <button class="back-to-dashboard-btn" id="backToDashboardBtn">
+                    ← Вернуться
+            </button>
+            <div class="actions-bar">
+                <button class="add-btn" id="addAchievementBtn">
+                     <span>+</span> Добавить достижение
+                </button>
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="🔍 Поиск по названию..." class="search-input">
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalAchievements">0</div>
+                        <div class="stat-label">Всего достижений</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎖️</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="totalAwarded">0</div>
+                        <div class="stat-label">Всего выдано</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="popularAchievement">—</div>
+                        <div class="stat-label">Самое популярное</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">👑</div>
+                    <div class="stat-info">
+                        <div class="stat-value" id="topStudent">—</div>
+                        <div class="stat-label">Лидер по достижениям</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <table class="achievements-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Название</th>
+                            <th>XP</th>
+                            <th>Условие</th>
+                            <th class="center">Получили</th>
+                            <th class="center">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="achievementsTableBody">
+                        <tr>
+                            <td colspan="6" class="loading-cell">Загрузка...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="achievementModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">Добавление достижения</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Название *</label>
+                    <input type="text" id="editTitle" class="form-input" placeholder="Например: Знаток FDM">
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <textarea id="editDescription" class="form-textarea" rows="3" placeholder="Описание достижения..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>XP за получение *</label>
+                    <input type="number" id="editPoints" class="form-input" value="50" min="10">
+                </div>
+                <div class="form-group">
+                    <label>Условие получения</label>
+                    <textarea id="editCondition" class="form-textarea" rows="2" placeholder="Например: Пройти все уроки модуля 1"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel-btn" id="cancelModalBtn">Отмена</button>
+                <button class="modal-save-btn" id="saveAchievementBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="deleteModal" style="display: none;">
+        <div class="modal-container small">
+            <div class="modal-header">
+                <h3>Подтверждение удаления</h3>
+                <button class="modal-close" id="closeDeleteModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Вы уверены, что хотите удалить это достижение?</p>
+                <p class="delete-warning">Это действие нельзя отменить.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel-btn" id="cancelDeleteBtn">Отмена</button>
+                <button class="modal-confirm-btn" id="confirmDeleteBtn">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let achievements = [];
+        let editingId = null;
+        let searchQuery = '';
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) {
+                window.location.href = '/Home/Login';
+                return null;
+            }
+            if (user.roleId !== 4) {
+                window.location.href = '/Home/Courses';
+                return null;
+            }
+            document.getElementById('userName').textContent = user.firstName + ' ' + user.lastName;
+            return user;
+        }
+
+        async function loadAchievements() {
+            try {
+                const response = await fetch('/api/admin/achievements');
+                achievements = await response.json();
+                applyFiltersAndRender();
+                await loadStats();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                document.getElementById('achievementsTableBody').innerHTML = '<tr><td colspan="6" class="error-cell">Ошибка загрузки</td></tr>';
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/achievements/stats');
+                const stats = await response.json();
+                document.getElementById('totalAchievements').textContent = stats.totalAchievements || 0;
+                document.getElementById('totalAwarded').textContent = stats.totalAwarded || 0;
+                document.getElementById('popularAchievement').textContent = stats.popularAchievement || '—';
+                document.getElementById('topStudent').textContent = stats.topStudent || '—';
+            } catch (error) {
+                console.error('Ошибка загрузки статистики:', error);
+            }
+        }
+
+        function applyFiltersAndRender() {
+            let filtered = [...achievements];
+            if (searchQuery.trim()) {
+                var query = searchQuery.trim().toLowerCase();
+                filtered = filtered.filter(function(a) {
+                    return a.achievementTitle && a.achievementTitle.toLowerCase().includes(query);
+                });
+            }
+            renderAchievementsTable(filtered);
+        }
+
+        function getEmoji(title) {
+            var emojiMap = {
+                'Первый слой': '🎯',
+                'Знаток FDM': '🏆',
+                'Мастер настройки': '⚙️',
+                'Мастер 3D-печати': '🖨️',
+                'Сравнительный аналитик': '📊',
+                'Активный ученик': '📚',
+                'Эксперт FDM': '⭐',
+                'Путешественник': '🗺️',
+                'Быстрый старт': '🚀',
+                'Любознательный': '🔍',
+                'Лидер рейтинга': '👑'
+            };
+            return emojiMap[title] || '🏅';
+        }
+
+        function renderAchievementsTable(items) {
+            var tbody = document.getElementById('achievementsTableBody');
+            if (!items.length) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">Достижения не найдены</td></tr>';
+                return;
+            }
+
+            var html = '';
+            for (var i = 0; i < items.length; i++) {
+                var a = items[i];
+                html += '<tr>';
+                html += '<td>' + a.achievementId + '</td>';
+                html += '<td class="title-cell">';
+                html += '<div class="achievement-icon-mini">' + getEmoji(a.achievementTitle) + '</div>';
+                html += '<strong>' + escapeHtml(a.achievementTitle) + '</strong>';
+                html += '</td>';
+                html += '<td class="xp-cell">⭐ ' + a.pointsReward + '</td>';
+                html += '<td class="condition-cell">' + escapeHtml(a.conditionDescription || '—') + '</td>';
+                html += '<td class="center count-cell"><span class="count-badge">' + (a.awardedCount || 0) + '</span></td>';
+                html += '<td class="actions-cell">';
+                html += '<button class="action-btn edit-btn" data-id="' + a.achievementId + '" title="Редактировать">✏️</button>';
+                html += '<button class="action-btn delete-btn" data-id="' + a.achievementId + '" title="Удалить">🗑️</button>';
+                html += '</td>';
+                html += '</tr>';
+            }
+            tbody.innerHTML = html;
+
+            var editBtns = document.querySelectorAll('.edit-btn');
+            for (var j = 0; j < editBtns.length; j++) {
+                editBtns[j].addEventListener('click', function() {
+                    editAchievement(parseInt(this.dataset.id));
+                });
+            }
+
+            var deleteBtns = document.querySelectorAll('.delete-btn');
+            for (var k = 0; k < deleteBtns.length; k++) {
+                deleteBtns[k].addEventListener('click', function() {
+                    showDeleteModal(parseInt(this.dataset.id));
+                });
+            }
+        }
+
+        function editAchievement(id) {
+            var achievement = null;
+            for (var i = 0; i < achievements.length; i++) {
+                if (achievements[i].achievementId === id) {
+                    achievement = achievements[i];
+                    break;
+                }
+            }
+            if (achievement) {
+                editingId = id;
+                document.getElementById('modalTitle').textContent = 'Редактирование достижения';
+                document.getElementById('editTitle').value = achievement.achievementTitle || '';
+                document.getElementById('editDescription').value = achievement.achievementDescription || '';
+                document.getElementById('editPoints').value = achievement.pointsReward || 50;
+                document.getElementById('editCondition').value = achievement.conditionDescription || '';
+                document.getElementById('achievementModal').style.display = 'flex';
+            }
+        }
+
+        function showAddModal() {
+            editingId = null;
+            document.getElementById('modalTitle').textContent = 'Добавление достижения';
+            document.getElementById('editTitle').value = '';
+            document.getElementById('editDescription').value = '';
+            document.getElementById('editPoints').value = '50';
+            document.getElementById('editCondition').value = '';
+            document.getElementById('achievementModal').style.display = 'flex';
+        }
+
+        async function saveAchievement() {
+            var title = document.getElementById('editTitle').value.trim();
+            if (!title) {
+                showToast('Введите название достижения');
+                return;
+            }
+
+            var data = {
+                title: title,
+                description: document.getElementById('editDescription').value.trim(),
+                pointsReward: parseInt(document.getElementById('editPoints').value) || 50,
+                conditionDescription: document.getElementById('editCondition').value.trim()
+            };
+
+            try {
+                var url = editingId ? '/api/admin/achievements/' + editingId : '/api/admin/achievements';
+                var method = editingId ? 'PUT' : 'POST';
+                var response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                if (response.ok) {
+                    showToast(editingId ? 'Достижение обновлено' : 'Достижение добавлено');
+                    document.getElementById('achievementModal').style.display = 'none';
+                    loadAchievements();
+                } else {
+                    showToast('Ошибка при сохранении');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showToast('Произошла ошибка');
+            }
+        }
+
+        var deleteId = null;
+
+        function showDeleteModal(id) {
+            deleteId = id;
+            document.getElementById('deleteModal').style.display = 'flex';
+        }
+
+        async function deleteAchievement() {
+            if (!deleteId) return;
+            try {
+                var response = await fetch('/api/admin/achievements/' + deleteId, { method: 'DELETE' });
+                if (response.ok) {
+                    showToast('Достижение удалено');
+                    document.getElementById('deleteModal').style.display = 'none';
+                    loadAchievements();
+                } else {
+                    showToast('Ошибка при удалении');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showToast('Произошла ошибка');
+            }
+        }
+
+        function showToast(message) {
+            var toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(function() {
+                toast.remove();
+            }, 3000);
+        }
+
+        var profileBtn = document.getElementById('profileBtn');
+        var profileDropdown = document.getElementById('profileDropdown');
+        var dropdownTimeout;
+
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+            profileBtn.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+            profileDropdown.addEventListener('mouseenter', function() {
+                clearTimeout(dropdownTimeout);
+                profileDropdown.classList.add('show');
+            });
+            profileDropdown.addEventListener('mouseleave', function() {
+                dropdownTimeout = setTimeout(function() {
+                    profileDropdown.classList.remove('show');
+                }, 200);
+            });
+        }
+
+        document.getElementById('profileSettingsBtn')?.addEventListener('click', function() {
+            window.location.href = '/Admin/Profile';
+        });
+        document.getElementById('dashboardBtn')?.addEventListener('click', function() {
+            window.location.href = '/Admin/Dashboard';
+        });
+        document.getElementById('logoutBtn')?.addEventListener('click', function() {
+            localStorage.removeItem('user');
+            window.location.href = '/Home/Index';
+        });
+        document.getElementById('addAchievementBtn')?.addEventListener('click', showAddModal);
+        document.getElementById('closeModalBtn')?.addEventListener('click', function() {
+            document.getElementById('achievementModal').style.display = 'none';
+        });
+        document.getElementById('cancelModalBtn')?.addEventListener('click', function() {
+            document.getElementById('achievementModal').style.display = 'none';
+        });
+        document.getElementById('saveAchievementBtn')?.addEventListener('click', saveAchievement);
+        document.getElementById('closeDeleteModalBtn')?.addEventListener('click', function() {
+            document.getElementById('deleteModal').style.display = 'none';
+        });
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', function() {
+            document.getElementById('deleteModal').style.display = 'none';
+        });
+        document.getElementById('confirmDeleteBtn')?.addEventListener('click', deleteAchievement);
+        document.getElementById('searchInput')?.addEventListener('input', function(e) {
+            searchQuery = e.target.value;
+            applyFiltersAndRender();
+        });
+        window.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                document.getElementById('achievementModal').style.display = 'none';
+                document.getElementById('deleteModal').style.display = 'none';
+            }
+        });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        loadUserData();
+        loadAchievements();
+
+        document.getElementById('backToDashboardBtn')?.addEventListener('click', () => {
+            window.location.href = '/Admin/Dashboard';
+        });
+    </script>
+</body>
+</html>
