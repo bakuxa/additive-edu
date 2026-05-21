@@ -519,8 +519,16 @@
         let questSelectedOptions = [];
         let questSequenceOrder = [];
         let questIsChecking = false;
+        let questSequenceOriginalOrder = [];
 
-
+        // Функция перемешивания массива (алгоритм Фишера-Йетса)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
         function loadUserData() {
             const user = JSON.parse(localStorage.getItem('user'));
             if (!user) {
@@ -746,11 +754,19 @@
                 `;
             case 'sequence':
                 if (!stageData.items) return '<div>Ошибка: нет элементов для сортировки</div>';
-                questSequenceOrder = [...stageData.items];
+                
+                // ПЕРЕМЕШИВАЕМ элементы для отображения
+                const originalItems = [...stageData.items];
+                const shuffledItems = shuffleArray([...originalItems]);
+                
+                // Сохраняем правильный порядок для проверки
+                questSequenceOrder = shuffledItems;
+                questSequenceOriginalOrder = originalItems;
+                
                 return `
                     <div class="sequence-items" id="questSequenceItems">
-                        ${questSequenceOrder.map((item, idx) => `
-                            <div class="sequence-item" draggable="true" data-index="${idx}">
+                        ${shuffledItems.map((item, idx) => `
+                            <div class="sequence-item" draggable="true" data-index="${idx}" data-original-value="${escapeHtml(item)}">
                                 <span class="sequence-drag-icon">⋮⋮</span>
                                 <span class="sequence-number">${idx + 1}</span>
                                 <span class="sequence-text">${escapeHtml(item)}</span>
@@ -901,16 +917,17 @@
                 userResponse = questSelectedOptions;
                 break;
             case 'sequence':
-                const items = document.querySelectorAll('#questSequenceItems .sequence-item');
-                const orderIndices = [];
-                items.forEach(item => {
-                    const text = item.querySelector('.sequence-text')?.textContent;
-                    const originalIndex = stageData.items.findIndex(original => original === text);
-                    orderIndices.push(originalIndex);
-                });
-                requestBody.orderIndices = orderIndices;
-                userResponse = orderIndices;
-                break;
+            const items = document.querySelectorAll('#questSequenceItems .sequence-item');
+            const orderIndices = [];
+            items.forEach(item => {
+                const text = item.querySelector('.sequence-text')?.textContent;
+                // Находим индекс элемента в оригинальном (правильном) порядке
+                const originalIndex = questSequenceOriginalOrder.findIndex(original => original === text);
+                orderIndices.push(originalIndex);
+            });
+            requestBody.orderIndices = orderIndices;
+            userResponse = orderIndices;
+            break;
         }
         
         try {
@@ -1499,51 +1516,77 @@
         async function loadMatchTask(taskId) {
             const response = await fetch(`/api/lesson/task/${taskId}/match-data`);
             matchData = await response.json();
+            
+            // ПЕРЕМЕШИВАЕМ правые элементы и сохраняем оригинальные соответствия
+            const originalRightItems = [...matchData.rightItems];
+            const shuffledRightItems = shuffleArray([...originalRightItems]);
+            
+            // Создаем маппинг между перемешанными элементами и их оригинальными индексами
+            const rightItemMapping = shuffledRightItems.map(shuffledText => {
+                const originalIndex = originalRightItems.findIndex(original => original === shuffledText);
+                return { text: shuffledText, originalIndex };
+            });
+            
+            // Сохраняем перемешанные данные
+            matchData.rightItemsShuffled = rightItemMapping;
+            matchData.originalRightItems = originalRightItems;
+            matchData.correctMatchesOriginal = [...matchData.correctMatches];
+            
+            // Обновляем correctMatches для работы с перемешанными индексами
+            matchData.correctMatches = matchData.correctMatches.map(match => {
+                const rightText = originalRightItems[match.right];
+                const newRightIndex = rightItemMapping.findIndex(item => item.text === rightText);
+                return { left: match.left, right: newRightIndex };
+            });
+            
+            // Инициализируем userMatches
             for (let i = 0; i < matchData.leftItems.length; i++) userMatches[i] = null;
+            
             renderMatchInterface();
         }
 
-        function renderMatchInterface() {
-            const container = document.getElementById('matchContainer');
-            if (!container) return;
-            
-            const rightNumbered = matchData.rightItems.map((item, idx) => ({ number: idx + 1, text: item }));
-            
-            container.innerHTML = `
-                <div class="match-container">
-                    <div class="match-column">
-                        <h3>Термин</h3>
-                        ${matchData.leftItems.map((item, idx) => `
-                            <div class="match-left-item">
-                                <div class="match-left-text">${escapeHtml(item)}</div>
-                                <div class="custom-select-match" data-left-idx="${idx}">
-                                    <div class="custom-select-match-trigger" onclick="toggleMatchSelect(${idx})">
-                                        <span id="match-selected-${idx}">Выберите</span>
-                                        <div class="custom-select-match-arrow"></div>
-                                    </div>
-                                    <div class="custom-select-match-dropdown" id="match-dropdown-${idx}">
-                                        <div class="custom-select-match-option" data-value="" onclick="selectMatchOption(${idx}, '', '— Выберите —')">— Выберите —</div>
-                                        ${rightNumbered.map(opt => `
-                                            <div class="custom-select-match-option" data-value="${opt.number}" onclick="selectMatchOption(${idx}, ${opt.number}, '${opt.number}')">
-                                                ${opt.number}
-                                            </div>
-                                        `).join('')}
-                                    </div>
+       function renderMatchInterface() {
+        const container = document.getElementById('matchContainer');
+        if (!container) return;
+        
+        // Используем перемешанные правые элементы
+        const rightItemsDisplay = matchData.rightItemsShuffled || matchData.rightItems.map((text, idx) => ({ text, originalIndex: idx }));
+        
+        container.innerHTML = `
+            <div class="match-container">
+                <div class="match-column">
+                    <h3>Термин</h3>
+                    ${matchData.leftItems.map((item, idx) => `
+                        <div class="match-left-item">
+                            <div class="match-left-text">${escapeHtml(item)}</div>
+                            <div class="custom-select-match" data-left-idx="${idx}">
+                                <div class="custom-select-match-trigger" onclick="toggleMatchSelect(${idx})">
+                                    <span id="match-selected-${idx}">Выберите</span>
+                                    <div class="custom-select-match-arrow"></div>
+                                </div>
+                                <div class="custom-select-match-dropdown" id="match-dropdown-${idx}">
+                                    <div class="custom-select-match-option" data-value="" onclick="selectMatchOption(${idx}, '', '— Выберите —')">— Выберите —</div>
+                                    ${rightItemsDisplay.map((opt, optIdx) => `
+                                        <div class="custom-select-match-option" data-value="${optIdx}" onclick="selectMatchOption(${idx}, ${optIdx}, '${optIdx + 1}')">
+                                            ${optIdx + 1}
+                                        </div>
+                                    `).join('')}
                                 </div>
                             </div>
-                        `).join('')}
-                    </div>
-                    <div class="match-column">
-                        <h3>Определение</h3>
-                        ${rightNumbered.map(item => `
-                            <div class="match-right-item">
-                                <div class="match-right-text"><span class="match-right-number">${item.number}</span> ${escapeHtml(item.text)}</div>
-                            </div>
-                        `).join('')}
-                    </div>
+                        </div>
+                    `).join('')}
                 </div>
-            `;
-        }
+                <div class="match-column">
+                    <h3>Определение</h3>
+                    ${rightItemsDisplay.map((item, idx) => `
+                        <div class="match-right-item">
+                            <div class="match-right-text"><span class="match-right-number">${idx + 1}</span> ${escapeHtml(item.text)}</div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
 
         window.toggleMatchSelect = function(leftIdx) {
             document.querySelectorAll('.custom-select-match').forEach(select => {
@@ -1556,13 +1599,23 @@
         };
 
         window.selectMatchOption = function(leftIdx, value, displayText) {
-            userMatches[leftIdx] = value ? parseInt(value) : null;
-            const triggerSpan = document.getElementById(`match-selected-${leftIdx}`);
-            triggerSpan.textContent = displayText;
-            const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
-            selectDiv.classList.remove('open');
-            selectDiv.classList.remove('correct', 'wrong');
-        };
+        // Сохраняем значение как число (индекс)
+        userMatches[leftIdx] = (value === '' || value === null) ? null : parseInt(value);
+        const triggerSpan = document.getElementById(`match-selected-${leftIdx}`);
+        triggerSpan.textContent = displayText;
+        const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${leftIdx}"]`);
+        selectDiv.classList.remove('open');
+        selectDiv.classList.remove('correct', 'wrong');
+        
+        // Удаляем подсказку о правильном ответе, если была
+        const wrongItem = selectDiv.querySelector('.custom-select-match-trigger');
+        if (wrongItem) {
+            const hint = wrongItem.querySelector('.correct-hint');
+            if (hint) hint.remove();
+        }
+        
+        console.log(`Выбрано для термина ${leftIdx}: ${userMatches[leftIdx]}`);
+    };
 
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.custom-select-match')) {
@@ -1572,15 +1625,41 @@
             }
         });
 
+
         async function checkMatchAnswers() {
-            const allSelected = Object.values(userMatches).every(v => v !== null && v !== '');
-            if (!allSelected) { alert('Выберите соответствия для всех терминов!'); return; }
+            // Находим все невыбранные термины
+            const unselectedIndices = [];
+            for (let i = 0; i < matchData.leftItems.length; i++) {
+                const selectedValue = userMatches[i];
+                if (selectedValue === null || selectedValue === undefined || selectedValue === '' || isNaN(selectedValue)) {
+                    unselectedIndices.push(i);
+                }
+            }
+            
+            if (unselectedIndices.length > 0) {
+                const unselectedTerms = unselectedIndices.map(i => matchData.leftItems[i]).join(', ');
+                alert(`Выберите соответствия для следующих терминов:\n${unselectedTerms}`);
+                return;
+            }
             
             let correct = 0;
-            for (const m of matchData.correctMatches) {
-                if (userMatches[m.left] === m.right + 1) correct++;
+            // Для отладки - выведем в консоль
+            console.log('=== Проверка сопоставления ===');
+            console.log('userMatches:', userMatches);
+            console.log('correctMatches:', matchData.correctMatches);
+            
+            for (let i = 0; i < matchData.leftItems.length; i++) {
+                // Сравниваем выбранный студентом индекс с правильным соответствием
+                const userChoice = userMatches[i];
+                const correctChoice = matchData.correctMatches[i]?.right;
+                console.log(`Термин ${i}: userChoice=${userChoice}, correctChoice=${correctChoice}`);
+                
+                if (userChoice === correctChoice) {
+                    correct++;
+                }
             }
             const score = Math.round((correct / matchData.leftItems.length) * 100);
+            console.log(`Правильных: ${correct} из ${matchData.leftItems.length}, Score: ${score}`);
             
             const user = loadUserData();
             
@@ -1594,17 +1673,32 @@
                 console.error('Ошибка сохранения:', error);
             }
             
-            for (const m of matchData.correctMatches) {
-                const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${m.left}"]`);
+            // Подсветка правильных/неправильных ответов
+            for (let i = 0; i < matchData.leftItems.length; i++) {
+                const selectDiv = document.querySelector(`.custom-select-match[data-left-idx="${i}"]`);
                 if (selectDiv) {
-                    const isCorrect = (userMatches[m.left] === m.right + 1);
+                    const isCorrect = (userMatches[i] === matchData.correctMatches[i]?.right);
                     if (isCorrect) {
                         selectDiv.classList.add('correct');
                     } else {
                         selectDiv.classList.add('wrong');
+                        // Показываем правильный ответ рядом
+                        const correctNumber = matchData.correctMatches[i]?.right + 1;
+                        const triggerSpan = document.getElementById(`match-selected-${i}`);
+                        if (triggerSpan && triggerSpan.textContent !== correctNumber.toString()) {
+                            // Добавляем подсказку с правильным ответом
+                            const wrongItem = selectDiv.querySelector('.custom-select-match-trigger');
+                            if (wrongItem && !wrongItem.querySelector('.correct-hint')) {
+                                const hintSpan = document.createElement('span');
+                                hintSpan.className = 'correct-hint';
+                                hintSpan.style.cssText = 'font-size: 10px; color: #2ECC71; margin-left: 8px;';
+                                hintSpan.textContent = `${correctNumber}`;
+                                wrongItem.appendChild(hintSpan);
+                            }
+                        }
                     }
                     const trigger = selectDiv.querySelector('.custom-select-match-trigger');
-                    trigger.style.pointerEvents = 'none';
+                    if (trigger) trigger.style.pointerEvents = 'none';
                 }
             }
             
