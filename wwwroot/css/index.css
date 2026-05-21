@@ -438,7 +438,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
+    gap: 15px;
 }
 
 .app-row {
@@ -934,5 +934,112 @@ body {
 
     .bg-vector {
         display: none;
+    }
+}
+/* ========== КОМПАКТНЫЙ ВЫПАДАЮЩИЙ СПИСОК С УРОКАМИ ========== */
+.course-expandable-content {
+    background: #F8F9FA;
+    border-radius: 16px;
+    margin: 5px 0 20px 0;
+    overflow: hidden;
+    border-left: 3px solid #029FA4;
+    animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.expandable-inner {
+    padding: 12px 20px;
+}
+
+.expandable-inner h4 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    color: #029FA4;
+    margin: 0 0 10px 0;
+    letter-spacing: 0.5px;
+}
+
+.expandable-inner ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.expandable-inner li {
+    font-family: 'Poppins', sans-serif;
+    font-size: 13px;
+    color: #21383E;
+    padding: 8px 0;
+    border-bottom: 1px solid #E8EEEE;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.expandable-inner li:last-child {
+    border-bottom: none;
+}
+
+.expandable-inner li:hover {
+    color: #029FA4;
+    padding-left: 8px;
+}
+
+.expandable-inner p {
+    font-family: 'Poppins', sans-serif;
+    font-size: 11px;
+    color: #d5e9e4;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #E8EEEE;
+    text-align: right;
+}
+
+/* Анимация загрузки */
+.loading-lessons {
+    text-align: center;
+    padding: 20px;
+    font-size: 12px;
+    color: #8A9AA5;
+}
+
+.loading-lessons::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #E8EEEE;
+    border-top-color: #029FA4;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Адаптация для мобильных */
+@media (max-width: 768px) {
+    .footer {
+        padding: 20px 20px 15px;
+    }
+    
+    .footer-copyright p {
+        font-size: 11px;
     }
 }

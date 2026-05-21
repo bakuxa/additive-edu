@@ -58,7 +58,7 @@
         <h2 class="advantages-title">Преимущества<br>обучения</h2>
         <div class="title-line"></div>
         <div class="advantages-quote">
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.</p>
+            <p>Современный подход к изучению аддитивных технологий, который объединяет теорию, практику и игровые механики для максимальной эффективности.</p>
         </div>
     </div>
 
@@ -66,7 +66,7 @@
     <div class="chess-block">
         <div class="chess-column-left">
             <div class="chess-left">
-                <span>Занятия в любое время</span>
+                <span>Доступ 24/7</span>
             </div>
             <div class="chess-left">
                 <span>Адаптивное тестирование</span>
@@ -78,13 +78,13 @@
         
         <div class="chess-column-right">
             <div class="chess-right">
-                <span>Адаптивное тестирование</span>
+                <span>Автоматическая проверка</span>
             </div>
             <div class="chess-right">
-                <span>Адаптивное тестирование</span>
+                <span>Образовательные квесты</span>
             </div>
             <div class="chess-right">
-                <span>Адаптивное тестирование</span>
+                <span>Система уровней и достижений</span>
             </div>
         </div>
     </div>
@@ -96,8 +96,8 @@
         <div class="useful-content">
             <h2 class="useful-title">Для кого полезно?</h2>
             <div class="useful-text">
-                <p>“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.”</p>
-                <p class="useful-text-second">“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.”</p>
+                <p>Студенты технических специальностей получат практические навыки работы с 3D-печатью и смогут закрепить теорию с помощью интерактивных заданий.</p>
+                <p class="useful-text-second">Преподаватели смогут отслеживать прогресс студентов и использовать платформу как дополнительный образовательный инструмент.</p>
             </div>
         </div>
     </div>
@@ -106,13 +106,13 @@
         <h2 class="applications-title">Сферы применения</h2>
         <div class="applications-grid">
             <div class="app-row">
-                <button class="app-btn">Группа 1</button>
-                <button class="app-btn">Группа 2</button>
-                <button class="app-btn">Группа 3</button>
+                <button class="app-btn">Машиностроение</button>
+                <button class="app-btn">Медицина</button>
+                <button class="app-btn">Авиация</button>
             </div>
             <div class="app-row">
-                <button class="app-btn">Группа 4</button>
-                <button class="app-btn">Группа 5</button>
+                <button class="app-btn">Строительство</button>
+                <button class="app-btn">Образование</button>
             </div>
         </div>
     </div>
@@ -122,76 +122,20 @@
 <!-- Блок программы обучения с курсами -->
 <div class="program-courses-wrapper">
     
-    
     <!-- Левая часть: Программа обучения -->
     <div class="program-left">
         <h2 class="program-title">Программа<br>обучения</h2>
         <div class="program-line"></div>
         <div class="program-quote">
-            <p>“Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.”</p>
+            <p>Изучите современные аддитивные технологии с нуля до профессионального уровня. Практические задания, симуляторы и квесты ждут вас!</p>
         </div>
     </div>
     
-    <!-- Правая часть: Курсы -->
-    <div class="courses-right">
-        <div class="course-card">
-            <div class="course-left">
-                <span class="course-number">01</span>
-                <div class="course-info">
-                    <h3 class="course-title">Введение в аддитивные технологии</h3>
-                    <span class="course-lessons">4 урока, 8 тестов</span>
-                </div>
-            </div>
-            <div class="course-right">
-                <button class="course-expand">+</button>
-            </div>
-        </div>
-        <div class="course-line"></div>
-        
-        <div class="course-card">
-            <div class="course-left">
-                <span class="course-number">02</span>
-                <div class="course-info">
-                    <h3 class="course-title">Основы 3D-моделирования</h3>
-                    <span class="course-lessons">6 уроков, 12 тестов</span>
-                </div>
-            </div>
-            <div class="course-right">
-                <button class="course-expand">+</button>
-            </div>
-        </div>
-        <div class="course-line"></div>
-        
-        <div class="course-card">
-            <div class="course-left">
-                <span class="course-number">03</span>
-                <div class="course-info">
-                    <h3 class="course-title">Материалы и технологии печати</h3>
-                    <span class="course-lessons">5 уроков, 10 тестов</span>
-                </div>
-            </div>
-            <div class="course-right">
-                <button class="course-expand">+</button>
-            </div>
-        </div>
-        <div class="course-line"></div>
-        
-        <div class="course-card">
-            <div class="course-left">
-                <span class="course-number">04</span>
-                <div class="course-info">
-                    <h3 class="course-title">Постобработка и финиширование</h3>
-                    <span class="course-lessons">4 урока, 8 тестов</span>
-                </div>
-            </div>
-            <div class="course-right">
-                <button class="course-expand">+</button>
-            </div>
-        </div>
-        <div class="course-line"></div>
+    <!-- Правая часть: Курсы (динамические) -->
+    <div class="courses-right" id="coursesContainer">
+        <div class="loading-courses">Загрузка программы обучения...</div>
     </div>
 </div>
-
 </div>
 
     <script>
@@ -304,6 +248,157 @@
     }
     
     document.addEventListener('DOMContentLoaded', initMobileLayout);
+
+    // Загрузка курсов из БД
+    async function loadCourses() {
+        const container = document.getElementById('coursesContainer');
+        if (!container) return;
+        
+        try {
+            const response = await fetch('/Home/GetCourses');
+            const modules = await response.json();
+            
+            if (!modules || modules.length === 0) {
+                container.innerHTML = '<div class="empty-courses">Курсы скоро появятся...</div>';
+                return;
+            }
+            
+            let html = '';
+            for (let i = 0; i < modules.length; i++) {
+                const module = modules[i];
+                const numberStr = module.number.toString().padStart(2, '0');
+                const lessonsText = getLessonsText(module.lessonsCount, module.tasksCount);
+                
+                html += `
+                    <div class="course-card" data-module-id="${module.id}">
+                        <div class="course-left">
+                            <span class="course-number">${numberStr}</span>
+                            <div class="course-info">
+                                <h3 class="course-title">${escapeHtml(module.title)}</h3>
+                                <span class="course-lessons">${lessonsText}</span>
+                            </div>
+                        </div>
+                        <div class="course-right">
+                            <button class="course-expand" data-module-id="${module.id}">+</button>
+                        </div>
+                    </div>
+                    <div class="course-line"></div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            
+            initCourseAccordion();
+            
+        } catch (error) {
+            console.error('Ошибка загрузки курсов:', error);
+            container.innerHTML = '<div class="error-courses">Не удалось загрузить программу обучения</div>';
+        }
+    }
+
+    function getLessonsText(lessonsCount, tasksCount) {
+        const lessonsWord = getDeclension(lessonsCount, 'урок', 'урока', 'уроков');
+        const tasksWord = getDeclension(tasksCount, 'задание', 'задания', 'заданий');
+        return `${lessonsCount} ${lessonsWord}, ${tasksCount} ${tasksWord}`;
+    }
+
+    function getDeclension(number, one, two, five) {
+        const n = Math.abs(number) % 100;
+        const n1 = n % 10;
+        if (n > 10 && n < 20) return five;
+        if (n1 > 1 && n1 < 5) return two;
+        if (n1 === 1) return one;
+        return five;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function initCourseAccordion() {
+        const expandButtons = document.querySelectorAll('.course-expand');
+        
+        expandButtons.forEach((button) => {
+            const courseCard = button.closest('.course-card');
+            const moduleId = button.dataset.moduleId;
+            
+            let expandableContent = courseCard.nextElementSibling;
+            if (expandableContent && expandableContent.classList.contains('course-expandable-content')) {
+
+                const newButton = button.cloneNode(true);
+                button.parentNode.replaceChild(newButton, button);
+                button = newButton;
+                expandableContent = courseCard.nextElementSibling;
+            } else {
+                expandableContent = document.createElement('div');
+                expandableContent.className = 'course-expandable-content';
+                expandableContent.innerHTML = `
+                    <div class="expandable-inner">
+                        <div class="loading-lessons">Загрузка содержания...</div>
+                    </div>
+                `;
+                courseCard.insertAdjacentElement('afterend', expandableContent);
+                expandableContent.style.display = 'none';
+            }
+            
+            button.addEventListener('click', async function() {
+                const isVisible = expandableContent.style.display === 'block';
+                
+                if (isVisible) {
+                    expandableContent.style.display = 'none';
+                    this.style.transform = 'rotate(0deg)';
+                } else {
+
+                    if (expandableContent.querySelector('.loading-lessons')) {
+                        await loadModuleLessons(moduleId, expandableContent);
+                    }
+                    expandableContent.style.display = 'block';
+                    this.style.transform = 'rotate(45deg)';
+                }
+            });
+        });
+    }
+
+    async function loadModuleLessons(moduleId, container) {
+        try {
+            const response = await fetch(`/api/courses/module/${moduleId}/lessons`);
+            const lessons = await response.json();
+            
+            if (!lessons || lessons.length === 0) {
+                container.querySelector('.expandable-inner').innerHTML = `
+                    <h4>Содержание модуля:</h4>
+                    <p>В этом модуле пока нет уроков.</p>
+                `;
+                return;
+            }
+            
+            let lessonsHtml = '<h4>Уроки модуля:</h4><ul>';
+            for (const lesson of lessons) {
+                lessonsHtml += `<li> ${escapeHtml(lesson.lessonTitle)}</li>`;
+            }
+            lessonsHtml += '</ul>';
+            
+            container.querySelector('.expandable-inner').innerHTML = lessonsHtml;
+            
+        } catch (error) {
+            console.error('Ошибка загрузки уроков:', error);
+            container.querySelector('.expandable-inner').innerHTML = `
+                <h4>Содержание модуля:</h4>
+                <p class="error-text">Не удалось загрузить уроки</p>
+            `;
+        }
+    }
+
+    // Запускаем загрузку курсов после загрузки страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCourses();
+    });
 </script>
 </body>
 </html>
