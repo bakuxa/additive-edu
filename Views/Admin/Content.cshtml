@@ -1,0 +1,1591 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Управление контентом | Админ панель</title>
+    <link rel="stylesheet" href="/css/admin-content.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="page-container">
+        <div class="vector-bg vector-1"><img src="/img/vector-bg-1.png" alt="фон"></div>
+        <div class="vector-bg vector-2"><img src="/img/vector-bg-2.png" alt="фон"></div>
+
+        <div class="top-bar">
+            <div class="logo"><img src="/img/logo.png" alt="Логотип"></div>
+            <h1 class="page-title"><span class="gradient-text">Управление контентом</span></h1>
+            <div class="user-profile" id="profileBtn">
+                <span class="user-name" id="userName"></span>
+                <img src="/img/icon/profile-icon.png" alt="Профиль" class="profile-icon">
+            </div>
+        </div>
+
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="dropdown-item" id="profileSettingsBtn"><img src="/img/icon/profile-icon.png" alt="Профиль" class="dropdown-icon"><span>Мой профиль</span></div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="dashboardBtn"><img src="/img/icon/dashboard-icon.png" alt="Панель управления" class="dropdown-icon"><span>Панель управления</span></div>
+            <div class="dropdown-divider"></div>
+            <div class="dropdown-item" id="logoutBtn"><img src="/img/icon/logout-icon.png" alt="Выйти" class="dropdown-icon"><span>Выйти</span></div>
+        </div>
+
+        <main class="main-content">
+            <button class="back-to-dashboard-btn" id="backToDashboardBtn">
+                    ← Вернуться
+            </button>
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-info"><div class="stat-value" id="modulesCount">0</div><div class="stat-label">Всего модулей</div></div></div>
+                <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-info"><div class="stat-value" id="lessonsCount">0</div><div class="stat-label">Всего уроков</div></div></div>
+                <div class="stat-card"><div class="stat-icon">📝</div><div class="stat-info"><div class="stat-value" id="tasksCount">0</div><div class="stat-label">Всего заданий</div></div></div>
+                <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-info"><div class="stat-value" id="activeTasksCount">0</div><div class="stat-label">Активных заданий</div></div></div>
+            </div>
+
+            <div class="actions-bar">
+                <button class="add-btn" id="addModuleBtn"><span>+</span> Создать модуль</button>
+                <div class="search-box"><input type="text" id="searchInput" placeholder="🔍 Поиск модулей..." class="search-input"></div>
+            </div>
+
+            <div class="content-tree" id="contentTree"><div class="loading-spinner"><div class="spinner"></div><p>Загрузка...</p></div></div>
+        </main>
+    </div>
+
+    <!-- Модальное окно для модуля -->
+    <div class="modal-overlay" id="moduleModal" style="display: none;">
+        <div class="modal-container">
+            <div class="modal-header"><h3 id="moduleModalTitle">Создание модуля</h3><button class="modal-close" id="closeModuleModalBtn">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label>Номер модуля *</label><input type="number" id="moduleNumber" class="form-input" placeholder="1"></div>
+                <div class="form-group"><label>Название *</label><input type="text" id="moduleTitle" class="form-input" placeholder="Например: Основы аддитивных технологий"></div>
+                <div class="form-group"><label>Описание</label><textarea id="moduleDescription" class="form-textarea" rows="3" placeholder="Краткое описание модуля..."></textarea></div>
+                <div class="form-group"><label>Уровень сложности</label><select id="moduleDifficulty" class="form-select"><option value="1">Начинающий</option><option value="2">Средний</option><option value="3">Продвинутый</option></select></div>
+                <div class="form-group checkbox-group"><label><input type="checkbox" id="modulePublished" checked> Опубликован</label></div>
+            </div>
+            <div class="modal-footer"><button class="modal-cancel-btn" id="cancelModuleBtn">Отмена</button><button class="modal-save-btn" id="saveModuleBtn">Сохранить</button></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для урока (расширенное) -->
+    <div class="modal-overlay" id="lessonModal" style="display: none;">
+        <div class="modal-container wide">
+            <div class="modal-header"><h3 id="lessonModalTitle">Создание урока</h3><button class="modal-close" id="closeLessonModalBtn">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-group"><label>Название *</label><input type="text" id="lessonTitle" class="form-input" placeholder="Например: Введение в 3D-печать"></div>
+                <div class="form-group"><label>Описание</label><textarea id="lessonDescription" class="form-textarea" rows="2" placeholder="Краткое описание урока..."></textarea></div>
+                <div class="form-group"><label>Порядковый номер</label><input type="number" id="lessonOrder" class="form-input" placeholder="1"><div class="error-hint" id="lessonOrderError" style="display: none;">⚠️ Этот номер урока уже занят в данном модуле</div></div>
+                <div class="form-group">
+                    <label>Теоретический материал</label>
+                        <textarea id="lessonTheory" class="form-textarea large-textarea" rows="12" placeholder="HTML-текст с теорией..."></textarea>
+                        <small class="form-hint">Поддерживается HTML-разметка</small>
+                    </div>   
+                </div>
+            <div class="modal-footer"><button class="modal-cancel-btn" id="cancelLessonBtn">Отмена</button><button class="modal-save-btn" id="saveLessonBtn">Сохранить</button></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для задания (с расширенным редактированием) -->
+    <div class="modal-overlay" id="taskModal" style="display: none;">
+        <div class="modal-container extra-wide">
+            <div class="modal-header"><h3 id="taskModalTitle">Создание задания</h3><button class="modal-close" id="closeTaskModalBtn">&times;</button></div>
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group"><label>Тип задания *</label><select id="taskType" class="form-select"><option value="Тест">📝 Тест</option><option value="Сопоставление">🔄 Сопоставление</option><option value="Квест">🗺️ Квест</option></select></div>
+                    <div class="form-group"><label>Уровень сложности</label><select id="taskDifficulty" class="form-select"><option value="1">Легкий</option><option value="2">Средний</option><option value="3">Сложный</option></select></div>
+                    <div class="form-group"><label>Макс. баллов</label><input type="number" id="taskMaxScore" class="form-input" value="100"></div>
+                </div>
+                <div class="form-group"><label>Название *</label><input type="text" id="taskTitle" class="form-input" placeholder="Например: Тест: Основы АТ"></div>
+                <div class="form-group"><label>Описание</label><textarea id="taskDescription" class="form-textarea" rows="2" placeholder="Инструкция для студента..."></textarea></div>
+                <div class="form-group checkbox-group"><label><input type="checkbox" id="taskActive" checked> Активно (доступно студентам)</label></div>
+
+                <!-- Блок для теста -->
+                <div id="testEditorBlock" class="content-editor-block" style="display: none;">
+                    <div class="section-divider"><span>📝 Вопросы теста</span><button class="inline-add-btn" id="addQuestionBtn">+ Добавить вопрос</button></div>
+                    <div id="questionsList" class="sortable-list"></div>
+                </div>
+
+                <!-- Блок для сопоставления -->
+                <div id="matchingEditorBlock" class="content-editor-block" style="display: none;">
+                    <div class="section-divider"><span>🔄 Пары для сопоставления</span><button class="inline-add-btn" id="addPairBtn">+ Добавить пару</button></div>
+                    <div id="pairsList" class="sortable-list"></div>
+                </div>
+
+                <!-- Блок для квеста -->
+                <div id="questEditorBlock" class="content-editor-block" style="display: none;">
+                    <div class="section-divider"><span>🗺️ Этапы квеста</span><button class="inline-add-btn" id="addStageBtn">+ Добавить этап</button></div>
+                    <div id="stagesList" class="sortable-list"></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="modal-cancel-btn" id="cancelTaskBtn">Отмена</button><button class="modal-save-btn" id="saveTaskBtn">Сохранить задание</button></div>
+        </div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div class="modal-overlay" id="deleteModal" style="display: none;">
+        <div class="modal-container small">
+            <div class="modal-header"><h3>Подтверждение удаления</h3><button class="modal-close" id="closeDeleteModalBtn">&times;</button></div>
+            <div class="modal-body"><p>Вы уверены, что хотите удалить этот элемент?</p><p class="delete-warning">Это действие нельзя отменить.</p></div>
+            <div class="modal-footer"><button class="modal-cancel-btn" id="cancelDeleteBtn">Отмена</button><button class="modal-confirm-btn" id="confirmDeleteBtn">Удалить</button></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let modules = [];
+        let editingModuleId = null;
+        let editingLessonId = null;
+        let editingTaskId = null;
+        let currentModuleId = null;
+        let currentLessonId = null;
+        let deleteType = null;
+        let deleteId = null;
+        let deleteQuestionId = null;
+        let deleteQuestionIndex = null;
+        let searchQuery = '';
+
+        let currentQuestions = [];
+        let currentPairs = [];
+        let currentStages = [];
+
+        function loadUserData() {
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user) { window.location.href = '/Home/Login'; return null; }
+            if (user.roleId !== 4) { window.location.href = '/Home/Courses'; return null; }
+            document.getElementById('userName').textContent = user.firstName + ' ' + user.lastName;
+            return user;
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/admin/content/stats');
+                const stats = await response.json();
+                document.getElementById('modulesCount').textContent = stats.modulesCount || 0;
+                document.getElementById('lessonsCount').textContent = stats.lessonsCount || 0;
+                document.getElementById('tasksCount').textContent = stats.tasksCount || 0;
+                document.getElementById('activeTasksCount').textContent = stats.activeTasksCount || 0;
+            } catch (error) { console.error(error); }
+        }
+
+        async function loadContent() {
+            try {
+                const response = await fetch('/api/admin/content/modules');
+                modules = await response.json();
+                applyFiltersAndRender();
+                await loadStats();
+            } catch (error) {
+                document.getElementById('contentTree').innerHTML = '<div class="error-message">⚠️ Ошибка загрузки данных</div>';
+            }
+        }
+
+        function applyFiltersAndRender() {
+            let filtered = [...modules];
+            if (searchQuery.trim()) {
+                const query = searchQuery.trim().toLowerCase();
+                filtered = filtered.filter(m => m.moduleTitle && m.moduleTitle.toLowerCase().includes(query));
+            }
+            renderContentTree(filtered);
+        }
+
+        function getDifficultyText(level) {
+            if (level === 1) return 'Начинающий';
+            if (level === 2) return 'Средний';
+            return 'Продвинутый';
+        }
+
+        function getDifficultyClass(level) {
+            if (level === 1) return 'easy';
+            if (level === 2) return 'medium';
+            return 'hard';
+        }
+
+        function getTaskIcon(typeName) {
+            if (typeName === 'Тест') return '📝';
+            if (typeName === 'Сопоставление') return '🔄';
+            if (typeName === 'Квест') return '🗺️';
+            return '📌';
+        }
+
+        function renderContentTree(items) {
+            const container = document.getElementById('contentTree');
+            if (!items.length) {
+                container.innerHTML = '<div class="empty-message">📭 Нет модулей. Создайте первый модуль!</div>';
+                return;
+            }
+
+            let html = '<div class="modules-tree">';
+            for (let i = 0; i < items.length; i++) {
+                const module = items[i];
+                let lessonsHtml = '';
+
+                if (module.lessons && module.lessons.length) {
+                    for (let j = 0; j < module.lessons.length; j++) {
+                        const lesson = module.lessons[j];
+                        let tasksHtml = '';
+
+                        if (lesson.tasks && lesson.tasks.length) {
+                            for (let k = 0; k < lesson.tasks.length; k++) {
+                                const task = lesson.tasks[k];
+                                tasksHtml += `<div class="tree-task">
+                                    <div class="task-info">
+                                        <span class="task-icon">${getTaskIcon(task.typeName)}</span>
+                                        <span class="task-title">${escapeHtml(task.taskTitle)}</span>
+                                        <span class="task-score">${task.maxScore} XP</span>
+                                        ${task.isActive ? '<span class="badge-active">Активен</span>' : '<span class="badge-inactive">Неактивен</span>'}
+                                    </div>
+                                    <div class="task-actions">
+                                        <button class="action-btn edit-task" data-module-id="${module.moduleId}" data-lesson-id="${lesson.lessonId}" data-task-id="${task.taskId}" title="Редактировать задание">✏️</button>
+                                        <button class="action-btn delete-task" data-module-id="${module.moduleId}" data-lesson-id="${lesson.lessonId}" data-task-id="${task.taskId}" title="Удалить задание">🗑️</button>
+                                    </div>
+                                </div>`;
+                            }
+                        }
+
+                        tasksHtml += `<div class="tree-add-task"><button class="add-task-btn" data-module-id="${module.moduleId}" data-lesson-id="${lesson.lessonId}">+ Добавить задание</button></div>`;
+
+                        lessonsHtml += `<div class="tree-lesson">
+                            <div class="lesson-header">
+                                <div class="lesson-info"><span class="lesson-order">Урок ${lesson.lessonOrder}</span><span class="lesson-title">${escapeHtml(lesson.lessonTitle)}</span></div>
+                                <div class="lesson-actions">
+                                    <button class="action-btn edit-lesson" data-module-id="${module.moduleId}" data-lesson-id="${lesson.lessonId}" title="Редактировать урок">✏️</button>
+                                    <button class="action-btn delete-lesson" data-module-id="${module.moduleId}" data-lesson-id="${lesson.lessonId}" title="Удалить урок">🗑️</button>
+                                </div>
+                            </div>
+                            <div class="lesson-tasks">${tasksHtml}</div>
+                        </div>`;
+                    }
+                }
+
+                lessonsHtml += `<div class="tree-add-lesson"><button class="add-lesson-btn" data-module-id="${module.moduleId}">+ Добавить урок</button></div>`;
+                const publishStatus = module.isPublished ? '<span class="published-badge">Опубликован</span>' : '<span class="draft-badge">Скрыт</span>';
+
+                html += `<div class="tree-module">
+                    <div class="module-header" data-module-id="${module.moduleId}">
+                        <div class="module-info">
+                            <span class="module-expand-icon" data-module-id="${module.moduleId}">▼</span>
+                            <div class="module-number-panel">Модуль ${module.moduleNumber}</div>
+                            <div class="module-details">
+                                <div class="module-title">${escapeHtml(module.moduleTitle)}</div>
+                                <div class="module-meta">
+                                    <span class="difficulty-tag ${getDifficultyClass(module.difficultyLevel)}">${getDifficultyText(module.difficultyLevel)}</span>
+                                    ${publishStatus}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="module-actions">
+                            <button class="action-btn edit-module" data-module-id="${module.moduleId}" title="Редактировать модуль">✏️</button>
+                            <button class="action-btn delete-module" data-module-id="${module.moduleId}" title="Удалить модуль">🗑️</button>
+                        </div>
+                    </div>
+                    <div class="module-lessons" data-module-id="${module.moduleId}">
+                        ${lessonsHtml}
+                    </div>
+                </div>`;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+
+            // Обработчики для сворачивания модулей
+            document.querySelectorAll('.module-header').forEach(header => {
+                const moduleId = header.dataset.moduleId;
+                const lessonsDiv = document.querySelector(`.module-lessons[data-module-id="${moduleId}"]`);
+                const expandIcon = header.querySelector('.module-expand-icon');
+                
+                const isCollapsed = localStorage.getItem(`module_${moduleId}_collapsed`) === 'true';
+                if (isCollapsed && lessonsDiv) {
+                    lessonsDiv.classList.add('collapsed');
+                    if (expandIcon) expandIcon.classList.add('collapsed');
+                }
+                
+                header.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('action-btn') || e.target.closest('.module-actions')) return;
+                    
+                    if (lessonsDiv) {
+                        lessonsDiv.classList.toggle('collapsed');
+                        if (expandIcon) expandIcon.classList.toggle('collapsed');
+                        localStorage.setItem(`module_${moduleId}_collapsed`, lessonsDiv.classList.contains('collapsed'));
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-module').forEach(btn => btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                editModule(parseInt(btn.dataset.moduleId));
+            }));
+            document.querySelectorAll('.delete-module').forEach(btn => btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showDeleteModal('module', parseInt(btn.dataset.moduleId));
+            }));
+            document.querySelectorAll('.edit-lesson').forEach(btn => btn.addEventListener('click', () => editLesson(parseInt(btn.dataset.moduleId), parseInt(btn.dataset.lessonId))));
+            document.querySelectorAll('.delete-lesson').forEach(btn => btn.addEventListener('click', () => showDeleteModal('lesson', parseInt(btn.dataset.lessonId))));
+            document.querySelectorAll('.edit-task').forEach(btn => btn.addEventListener('click', () => editTask(parseInt(btn.dataset.taskId), parseInt(btn.dataset.lessonId), parseInt(btn.dataset.moduleId))));
+            document.querySelectorAll('.delete-task').forEach(btn => btn.addEventListener('click', () => showDeleteModal('task', parseInt(btn.dataset.taskId))));
+            document.querySelectorAll('.add-lesson-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showAddLesson(parseInt(btn.dataset.moduleId));
+            }));
+            document.querySelectorAll('.add-task-btn').forEach(btn => btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                showAddTask(parseInt(btn.dataset.lessonId), parseInt(btn.dataset.moduleId));
+            }));
+        }
+
+        function showAddModule() {
+            editingModuleId = null;
+            document.getElementById('moduleModalTitle').textContent = 'Создание модуля';
+            document.getElementById('moduleNumber').value = modules.length + 1;
+            document.getElementById('moduleTitle').value = '';
+            document.getElementById('moduleDescription').value = '';
+            document.getElementById('moduleDifficulty').value = '1';
+            document.getElementById('modulePublished').checked = true;
+            document.getElementById('moduleModal').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        function editModule(moduleId) {
+            const module = modules.find(m => m.moduleId === moduleId);
+            if (module) {
+                editingModuleId = moduleId;
+                document.getElementById('moduleModalTitle').textContent = 'Редактирование модуля';
+                document.getElementById('moduleNumber').value = module.moduleNumber;
+                document.getElementById('moduleTitle').value = module.moduleTitle;
+                document.getElementById('moduleDescription').value = module.moduleDescription || '';
+                document.getElementById('moduleDifficulty').value = module.difficultyLevel;
+                document.getElementById('modulePublished').checked = module.isPublished;
+                document.getElementById('moduleModal').style.display = 'flex';
+                document.body.classList.add('modal-open');
+            }
+        }
+
+        async function saveModule() {
+            const data = {
+                moduleNumber: parseInt(document.getElementById('moduleNumber').value),
+                moduleTitle: document.getElementById('moduleTitle').value.trim(),
+                moduleDescription: document.getElementById('moduleDescription').value.trim(),
+                difficultyLevel: parseInt(document.getElementById('moduleDifficulty').value),
+                isPublished: document.getElementById('modulePublished').checked
+            };
+            if (!data.moduleTitle) { showToast('Введите название модуля'); return; }
+            try {
+                const url = editingModuleId ? `/api/admin/content/modules/${editingModuleId}` : '/api/admin/content/modules';
+                const method = editingModuleId ? 'PUT' : 'POST';
+                const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (response.ok) {
+                    showToast(editingModuleId ? 'Модуль обновлён' : 'Модуль создан');
+                    document.getElementById('moduleModal').style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                    loadContent();
+                } else showToast('Ошибка при сохранении');
+            } catch (error) { showToast('Произошла ошибка'); }
+        }
+
+        function showAddLesson(moduleId) {
+            currentModuleId = moduleId;
+            editingLessonId = null;
+            document.getElementById('lessonModalTitle').textContent = 'Создание урока';
+            document.getElementById('lessonTitle').value = '';
+            document.getElementById('lessonDescription').value = '';
+            document.getElementById('lessonOrder').value = '';
+            document.getElementById('lessonTheory').value = '';
+            document.getElementById('lessonOrderError').style.display = 'none';
+            document.getElementById('lessonModal').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        function editLesson(moduleId, lessonId) {
+            currentModuleId = moduleId;
+            editingLessonId = lessonId;
+            const module = modules.find(m => m.moduleId === moduleId);
+            const lesson = module.lessons.find(l => l.lessonId === lessonId);
+            if (lesson) {
+                document.getElementById('lessonModalTitle').textContent = 'Редактирование урока';
+                document.getElementById('lessonTitle').value = lesson.lessonTitle;
+                document.getElementById('lessonDescription').value = lesson.lessonDescription || '';
+                document.getElementById('lessonOrder').value = lesson.lessonOrder;
+                document.getElementById('lessonTheory').value = lesson.theoryContent || '';
+                document.getElementById('lessonOrderError').style.display = 'none';
+                document.getElementById('lessonModal').style.display = 'flex';
+                document.body.classList.add('modal-open');
+            }
+        }
+
+        function checkLessonOrder() {
+            const orderValue = parseInt(document.getElementById('lessonOrder').value);
+            if (isNaN(orderValue)) return false;
+            const module = modules.find(m => m.moduleId === currentModuleId);
+            if (!module) return false;
+            const existingOrders = module.lessons.filter(l => l.lessonId !== editingLessonId).map(l => l.lessonOrder);
+            if (existingOrders.includes(orderValue)) {
+                document.getElementById('lessonOrderError').style.display = 'block';
+                return false;
+            } else {
+                document.getElementById('lessonOrderError').style.display = 'none';
+                return true;
+            }
+        }
+
+        async function saveLesson() {
+            if (!checkLessonOrder()) { showToast('Номер урока уже занят, выберите другой'); return; }
+            const data = {
+                moduleId: currentModuleId,
+                lessonTitle: document.getElementById('lessonTitle').value.trim(),
+                lessonDescription: document.getElementById('lessonDescription').value.trim(),
+                lessonOrder: parseInt(document.getElementById('lessonOrder').value) || 1,
+                theoryContent: document.getElementById('lessonTheory').value
+            };
+            if (!data.lessonTitle) { showToast('Введите название урока'); return; }
+            try {
+                const url = editingLessonId ? `/api/admin/content/lessons/${editingLessonId}` : '/api/admin/content/lessons';
+                const method = editingLessonId ? 'PUT' : 'POST';
+                const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (response.ok) {
+                    showToast(editingLessonId ? 'Урок обновлён' : 'Урок создан');
+                    document.getElementById('lessonModal').style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                    loadContent();
+                } else showToast('Ошибка при сохранении');
+            } catch (error) { showToast('Произошла ошибка'); }
+        }
+
+        document.getElementById('lessonOrder')?.addEventListener('input', checkLessonOrder);
+
+        async function loadTaskData(taskId) {
+            try {
+                const [questionsRes, matchingRes, stagesRes] = await Promise.all([
+                    fetch(`/api/admin/content/questions/by-task/${taskId}`),
+                    fetch(`/api/admin/content/matching/by-task/${taskId}`),
+                    fetch(`/api/admin/content/quest-stages/by-task/${taskId}`)
+                ]);
+                
+                if (questionsRes.ok) {
+                    currentQuestions = await questionsRes.json();
+                    console.log('Загружено вопросов:', currentQuestions.length);
+                } else {
+                    currentQuestions = [];
+                }
+                
+                if (matchingRes.ok) {
+                    const matchingData = await matchingRes.json();
+                    console.log('Загружено данных сопоставления:', matchingData);
+                    if (matchingData.leftItems && matchingData.leftItems.length) {
+                        currentPairs = matchingData.leftItems.map((left, idx) => ({
+                            leftText: left,
+                            rightText: matchingData.rightItems[idx] || ''
+                        }));
+                    } else {
+                        currentPairs = [];
+                    }
+                    console.log('Преобразовано пар:', currentPairs.length);
+                } else {
+                    currentPairs = [];
+                }
+                
+                if (stagesRes.ok) {
+                    currentStages = await stagesRes.json();
+                    console.log('Загружено этапов квеста:', currentStages.length);
+                } else {
+                    currentStages = [];
+                }
+            } catch (error) { 
+                console.error('Ошибка загрузки данных задания:', error);
+                currentQuestions = [];
+                currentPairs = [];
+                currentStages = [];
+            }
+        }
+
+        function showAddTask(lessonId, moduleId) {
+            currentLessonId = lessonId;
+            currentModuleId = moduleId;
+            editingTaskId = null;
+            currentQuestions = [];
+            currentPairs = [];
+            currentStages = [];
+            document.getElementById('taskModalTitle').textContent = 'Создание задания';
+            document.getElementById('taskType').value = 'Тест';
+            document.getElementById('taskTitle').value = '';
+            document.getElementById('taskDescription').value = '';
+            document.getElementById('taskDifficulty').value = '1';
+            document.getElementById('taskMaxScore').value = '100';
+            document.getElementById('taskActive').checked = true;
+            toggleTaskTypeEditor('Тест');
+            document.getElementById('taskModal').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        async function editTask(taskId, lessonId, moduleId) {
+            currentLessonId = lessonId;
+            currentModuleId = moduleId;
+            editingTaskId = taskId;
+            const module = modules.find(m => m.moduleId === moduleId);
+            const lesson = module.lessons.find(l => l.lessonId === lessonId);
+            const task = lesson.tasks.find(t => t.taskId === taskId);
+            if (task) {
+                await loadTaskData(taskId);
+                document.getElementById('taskModalTitle').textContent = 'Редактирование задания';
+                document.getElementById('taskType').value = task.typeName;
+                document.getElementById('taskTitle').value = task.taskTitle;
+                document.getElementById('taskDescription').value = task.taskDescription || '';
+                document.getElementById('taskDifficulty').value = task.difficultyLevel;
+                document.getElementById('taskMaxScore').value = task.maxScore;
+                document.getElementById('taskActive').checked = task.isActive;
+                toggleTaskTypeEditor(task.typeName);
+                document.getElementById('taskModal').style.display = 'flex';
+                document.body.classList.add('modal-open');
+            }
+        }
+
+        function toggleTaskTypeEditor(typeName) {
+            const testEditor = document.getElementById('testEditorBlock');
+            const matchingEditor = document.getElementById('matchingEditorBlock');
+            const questEditor = document.getElementById('questEditorBlock');
+            
+            testEditor.style.display = 'none';
+            matchingEditor.style.display = 'none';
+            questEditor.style.display = 'none';
+            
+            if (typeName === 'Тест') {
+                testEditor.style.display = 'block';
+                renderQuestionsList();
+            } else if (typeName === 'Сопоставление') {
+                matchingEditor.style.display = 'block';
+                renderPairsList();
+            } else if (typeName === 'Квест') {
+                questEditor.style.display = 'block';
+                renderStagesList();
+            }
+        }
+
+        function renderQuestionsList() {
+            const container = document.getElementById('questionsList');
+            if (!currentQuestions.length) {
+                container.innerHTML = '<div class="empty-editor">📭 Нет вопросов. Добавьте первый вопрос!</div>';
+                return;
+            }
+            container.innerHTML = currentQuestions.map((q, idx) => `
+                <div class="sortable-item" data-id="${q.questionId}" data-type="question" data-index="${idx}">
+                    <div class="sortable-handle" draggable="true">⋮⋮</div>
+                    <div class="sortable-content">
+                        <div class="question-preview">
+                            <span class="question-order">${idx + 1}</span>
+                            <span class="question-text">${escapeHtml(q.questionText.substring(0, 80))}${q.questionText.length > 80 ? '...' : ''}</span>
+                            <span class="question-weight">${q.questionWeight} баллов</span>
+                        </div>
+                        <div class="answers-preview">
+                            ${(q.answers || []).map(a => `<span class="answer-badge ${a.isCorrect ? 'correct' : ''}">${escapeHtml(a.answerText.substring(0, 20))}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="sortable-actions">
+                        <button class="action-btn edit-question" data-id="${q.questionId}" data-index="${idx}">✏️</button>
+                        <button class="action-btn delete-question" data-id="${q.questionId}" data-index="${idx}">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            initSortable('questionsList', updateQuestionsOrder);
+            
+            document.querySelectorAll('.edit-question').forEach(btn => btn.addEventListener('click', () => editQuestionInPlace(parseInt(btn.dataset.id), parseInt(btn.dataset.index))));
+            document.querySelectorAll('.delete-question').forEach(btn => btn.addEventListener('click', () => {
+                const id = parseInt(btn.dataset.id);
+                const idx = parseInt(btn.dataset.index);
+                showDeleteQuestionModal(id, idx);
+            }));
+        }
+
+        function showDeleteQuestionModal(questionId, index) {
+            deleteQuestionId = questionId;
+            deleteQuestionIndex = index;
+            document.getElementById('deleteModal').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        async function deleteQuestionConfirmed() {
+            if (deleteQuestionId) {
+                try {
+                    await fetch(`/api/admin/content/questions/${deleteQuestionId}`, { method: 'DELETE' });
+                    showToast('Вопрос удалён');
+                } catch (error) { showToast('Ошибка при удалении'); }
+            }
+            if (deleteQuestionIndex !== null) {
+                currentQuestions.splice(deleteQuestionIndex, 1);
+                renderQuestionsList();
+            }
+            document.getElementById('deleteModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+            deleteQuestionId = null;
+            deleteQuestionIndex = null;
+        }
+
+        function updateQuestionsOrder() {
+            const items = document.querySelectorAll('#questionsList .sortable-item');
+            const newOrder = [];
+            items.forEach((item, newIdx) => {
+                const oldIdx = parseInt(item.dataset.index);
+                if (oldIdx !== newIdx) {
+                    const question = currentQuestions[oldIdx];
+                    if (question) {
+                        newOrder.push(question);
+                    }
+                } else {
+                    newOrder.push(currentQuestions[oldIdx]);
+                }
+            });
+            if (newOrder.length === currentQuestions.length) {
+                currentQuestions = newOrder;
+                renderQuestionsList();
+            }
+        }
+
+        function showAddQuestionInPlace() {
+            const questionData = {
+                questionText: '',
+                questionLevel: 1,
+                questionOrder: currentQuestions.length + 1,
+                questionWeight: 10,
+                answers: [{ answerText: '', isCorrect: false }, { answerText: '', isCorrect: false }]
+            };
+            currentQuestions.push(questionData);
+            renderQuestionsList();
+            editQuestionInPlace(null, currentQuestions.length - 1);
+        }
+
+        function editQuestionInPlace(questionId, index) {
+            const question = currentQuestions[index];
+            if (!question) return;
+            
+            const item = document.querySelector(`.sortable-item[data-index="${index}"]`);
+            if (!item) return;
+            
+            const answersHtml = (question.answers || []).map((ans, ansIdx) => `
+                <div class="inline-answer">
+                    <input type="text" class="inline-answer-text" value="${escapeHtml(ans.answerText)}" placeholder="Вариант ответа" data-ans-index="${ansIdx}">
+                    <label class="inline-correct"><input type="radio" name="correct_answer_${index}" value="${ansIdx}" ${ans.isCorrect ? 'checked' : ''}> Верно</label>
+                    <button class="action-btn remove-answer" data-ans-index="${ansIdx}">🗑️</button>
+                </div>
+            `).join('');
+            
+            const editHtml = `
+                <div class="inline-editor">
+                    <div class="inline-editor-field">
+                        <label>Текст вопроса</label>
+                        <textarea class="question-text-input" rows="2">${escapeHtml(question.questionText)}</textarea>
+                    </div>
+                    <div class="inline-editor-row">
+                        <div class="inline-editor-field"><label>Уровень</label><select class="question-level"><option value="1" ${question.questionLevel === 1 ? 'selected' : ''}>Легкий</option><option value="2" ${question.questionLevel === 2 ? 'selected' : ''}>Средний</option><option value="3" ${question.questionLevel === 3 ? 'selected' : ''}>Сложный</option></select></div>
+                        <div class="inline-editor-field"><label>Вес (баллы)</label><input type="number" class="question-weight" value="${question.questionWeight}"></div>
+                    </div>
+                    <div class="inline-editor-field"><label>Варианты ответов</label><div class="answers-editor">${answersHtml}</div><button class="inline-add-answer">+ Добавить вариант</button></div>
+                    <div class="inline-editor-buttons"><button class="save-question-inline">✓ Сохранить</button><button class="cancel-question-inline">✗ Отмена</button></div>
+                </div>
+            `;
+            
+            const contentDiv = item.querySelector('.sortable-content');
+            const originalContent = contentDiv.innerHTML;
+            contentDiv.innerHTML = editHtml;
+            
+            const addAnswerBtn = contentDiv.querySelector('.inline-add-answer');
+            
+            const updateAnswersList = () => {
+                const inputs = contentDiv.querySelectorAll('.inline-answer-text');
+                const radios = contentDiv.querySelectorAll('.inline-correct input');
+                const newAnswers = [];
+                inputs.forEach((input, i) => {
+                    newAnswers.push({
+                        answerText: input.value,
+                        isCorrect: radios[i]?.checked || false
+                    });
+                });
+                question.answers = newAnswers;
+            };
+            
+            if (addAnswerBtn) {
+                addAnswerBtn.addEventListener('click', () => {
+                    question.answers.push({ answerText: '', isCorrect: false });
+                    editQuestionInPlace(questionId, index);
+                });
+            }
+            
+            contentDiv.querySelectorAll('.remove-answer').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const ansIdx = parseInt(btn.dataset.ansIndex);
+                    question.answers.splice(ansIdx, 1);
+                    editQuestionInPlace(questionId, index);
+                });
+            });
+            
+            contentDiv.querySelector('.save-question-inline')?.addEventListener('click', async () => {
+                question.questionText = contentDiv.querySelector('.question-text-input').value;
+                question.questionLevel = parseInt(contentDiv.querySelector('.question-level').value);
+                question.questionWeight = parseInt(contentDiv.querySelector('.question-weight').value);
+                updateAnswersList();
+                await saveQuestionToServer(question, index, question.questionId);
+                renderQuestionsList();
+                showToast('Вопрос сохранён');
+            });
+            
+            contentDiv.querySelector('.cancel-question-inline')?.addEventListener('click', () => {
+                contentDiv.innerHTML = originalContent;
+            });
+        }
+
+        async function saveQuestionToServer(question, index, questionId) {
+            const questionData = {
+                taskId: editingTaskId,
+                questionText: question.questionText,
+                questionLevel: question.questionLevel,
+                questionOrder: index + 1,
+                questionWeight: question.questionWeight,
+                answers: question.answers
+            };
+            try {
+                const url = questionId ? `/api/admin/content/questions/${questionId}` : '/api/admin/content/questions';
+                const method = questionId ? 'PUT' : 'POST';
+                const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(questionData) });
+                const result = await response.json();
+                if (response.ok && result.questionId) {
+                    question.questionId = result.questionId;
+                }
+                if (!response.ok) showToast('Ошибка при сохранении вопроса');
+            } catch (error) { showToast('Произошла ошибка'); }
+        }
+
+        function renderPairsList() {
+            const container = document.getElementById('pairsList');
+            if (!currentPairs.length) {
+                container.innerHTML = '<div class="empty-editor">🔄 Нет пар. Добавьте первую пару!</div>';
+                return;
+            }
+            
+            container.innerHTML = currentPairs.map((pair, idx) => `
+                <div class="sortable-item" data-idx="${idx}">
+                    <div class="sortable-handle" draggable="true">⋮⋮</div>
+                    <div class="sortable-content pair-content">
+                        <div class="pair-left">${escapeHtml(pair.leftText)}</div>
+                        <div class="pair-arrow">→</div>
+                        <div class="pair-right">${escapeHtml(pair.rightText)}</div>
+                    </div>
+                    <div class="sortable-actions">
+                        <button class="action-btn edit-pair" data-idx="${idx}" title="Редактировать пару">✏️</button>
+                        <button class="action-btn delete-pair" data-idx="${idx}" title="Удалить пару">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            initSortable('pairsList', updatePairsOrder);
+            
+            document.querySelectorAll('.edit-pair').forEach(btn => btn.addEventListener('click', () => editPairInPlace(parseInt(btn.dataset.idx))));
+            document.querySelectorAll('.delete-pair').forEach(btn => btn.addEventListener('click', () => {
+                if (confirm('Вы уверены, что хотите удалить эту пару? Это действие нельзя отменить.')) {
+                    deletePairInPlace(parseInt(btn.dataset.idx));
+                }
+            }));
+        }
+
+        function updatePairsOrder() {
+            const items = document.querySelectorAll('#pairsList .sortable-item');
+            const newOrder = [];
+            items.forEach((item, newIdx) => {
+                const oldIdx = parseInt(item.dataset.idx);
+                if (oldIdx !== newIdx && currentPairs[oldIdx]) {
+                    newOrder.push(currentPairs[oldIdx]);
+                } else if (currentPairs[oldIdx]) {
+                    newOrder.push(currentPairs[oldIdx]);
+                }
+            });
+            if (newOrder.length === currentPairs.length) {
+                currentPairs = newOrder;
+                renderPairsList();
+            }
+        }
+
+        function showAddPairInPlace() {
+            currentPairs.push({ leftText: '', rightText: '' });
+            renderPairsList();
+            editPairInPlace(currentPairs.length - 1);
+        }
+
+        function editPairInPlace(index) {
+            const pair = currentPairs[index];
+            if (!pair) return;
+            
+            const item = document.querySelector(`.sortable-item[data-idx="${index}"]`);
+            if (!item) return;
+            
+            const editHtml = `
+                <div class="inline-editor">
+                    <div class="inline-editor-row">
+                        <div class="inline-editor-field"><label>Термин / Левая часть</label><input type="text" class="pair-left-input" value="${escapeHtml(pair.leftText)}" placeholder="Например: FDM"></div>
+                        <div class="inline-editor-field"><label>Определение / Правая часть</label><input type="text" class="pair-right-input" value="${escapeHtml(pair.rightText)}" placeholder="Например: Экструзия пластика"></div>
+                    </div>
+                    <div class="inline-editor-buttons"><button class="save-pair-inline">✓ Сохранить</button><button class="cancel-pair-inline">✗ Отмена</button></div>
+                </div>
+            `;
+            const contentDiv = item.querySelector('.sortable-content');
+            const originalContent = contentDiv.innerHTML;
+            contentDiv.innerHTML = editHtml;
+            
+            contentDiv.querySelector('.save-pair-inline')?.addEventListener('click', () => {
+                pair.leftText = contentDiv.querySelector('.pair-left-input').value;
+                pair.rightText = contentDiv.querySelector('.pair-right-input').value;
+                renderPairsList();
+            });
+            contentDiv.querySelector('.cancel-pair-inline')?.addEventListener('click', () => { contentDiv.innerHTML = originalContent; });
+        }
+
+        async function deletePairInPlace(index) {
+            if (!confirm('Удалить эту пару?')) return;
+            currentPairs.splice(index, 1);
+            renderPairsList();
+        }
+        
+        async function saveMatchingToServer() {
+            const leftItems = currentPairs.map(p => p.leftText);
+            const rightItems = currentPairs.map(p => p.rightText);
+            const correctMatches = currentPairs.map((p, idx) => ({ left: idx, right: idx }));
+            const maxScore = parseInt(document.getElementById('taskMaxScore').value);
+            
+            const data = {
+                leftItems: leftItems,
+                rightItems: rightItems,
+                correctMatches: correctMatches,
+                maxScore: maxScore
+            };
+            
+            console.log('Saving matching data:', data);
+            
+            try {
+                const response = await fetch(`/api/admin/content/matching/by-task/${editingTaskId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                console.log('Save result:', result);
+                if (!response.ok) showToast('Ошибка при сохранении пар');
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showToast('Произошла ошибка');
+            }
+        }
+
+                // ========== ФУНКЦИИ ДЛЯ КВЕСТА С ПОНЯТНЫМ UI ==========
+        
+        // Глобальные переменные для редактирования этапа
+        let editingStageDataGlobal = {
+            type: 'single_choice',
+            question: '',
+            options: ['', ''],
+            correctAnswer: 0,
+            correctAnswers: [0],
+            points: 10,
+            hint: '',
+            items: ['', ''],
+            alternatives: []
+        };
+        let tempStageId = null;
+        let tempStageIndex = null;
+        let tempStageOriginalTitle = '';
+
+        function getQuestTypeName(type) {
+            const types = {
+                'single_choice': 'Одиночный выбор',
+                'multiple_choice': 'Множественный выбор',
+                'true_false': 'Верно/Неверно',
+                'text_input': 'Текстовый ввод',
+                'fill_blank': 'Заполнить пропуск',
+                'sequence': 'Сортировка'
+            };
+            return types[type] || 'Неизвестный тип';
+        }
+
+        function renderStagesList() {
+            const container = document.getElementById('stagesList');
+            if (!currentStages.length) {
+                container.innerHTML = '<div class="empty-editor">🗺️ Нет этапов. Добавьте первый этап!</div>';
+                return;
+            }
+            
+            container.innerHTML = currentStages.map((stage, idx) => {
+                let typeInfo = '';
+                let questionPreview = '';
+                try {
+                    if (stage.stageDescription && stage.stageDescription !== '') {
+                        const data = JSON.parse(stage.stageDescription);
+                        typeInfo = `<span class="stage-type-badge">${getQuestTypeName(data.type)}</span>`;
+                        if (data.question) {
+                            questionPreview = `<div class="stage-question-preview">${escapeHtml(data.question.substring(0, 50))}${data.question.length > 50 ? '...' : ''}</div>`;
+                        }
+                    }
+                } catch(e) {
+                    typeInfo = '<span class="stage-type-badge error">invalid JSON</span>';
+                }
+                
+                return `
+                    <div class="sortable-item" data-id="${stage.questStageId}" data-type="stage" data-index="${idx}">
+                        <div class="sortable-handle" draggable="true">⋮⋮</div>
+                        <div class="sortable-content">
+                            <div class="stage-preview">
+                                <span class="stage-order">${stage.stageOrder || idx + 1}</span>
+                                <span class="stage-title">${escapeHtml(stage.stageTitle)}</span>
+                                ${typeInfo}
+                            </div>
+                            ${questionPreview}
+                        </div>
+                        <div class="sortable-actions">
+                            <button class="action-btn edit-stage" data-id="${stage.questStageId}" data-index="${idx}" title="Редактировать этап">✏️</button>
+                            <button class="action-btn delete-stage" data-id="${stage.questStageId}" data-index="${idx}" title="Удалить этап">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            initSortable('stagesList', updateStagesOrder);
+            
+            document.querySelectorAll('.edit-stage').forEach(btn => btn.addEventListener('click', () => editStageWithNiceUI(parseInt(btn.dataset.id), parseInt(btn.dataset.index))));
+            document.querySelectorAll('.delete-stage').forEach(btn => btn.addEventListener('click', () => {
+                const id = parseInt(btn.dataset.id);
+                const idx = parseInt(btn.dataset.index);
+                showDeleteStageModal(id, idx);
+            }));
+        }
+
+        function updateStagesOrder() {
+            const items = document.querySelectorAll('#stagesList .sortable-item');
+            const newOrder = [];
+            items.forEach((item, newIdx) => {
+                const oldIdx = parseInt(item.dataset.index);
+                if (oldIdx !== newIdx && currentStages[oldIdx]) {
+                    const stage = currentStages[oldIdx];
+                    stage.stageOrder = newIdx + 1;
+                    newOrder.push(stage);
+                } else if (currentStages[oldIdx]) {
+                    const stage = currentStages[oldIdx];
+                    stage.stageOrder = newIdx + 1;
+                    newOrder.push(stage);
+                }
+            });
+            if (newOrder.length === currentStages.length) {
+                currentStages = newOrder;
+                renderStagesList();
+            }
+        }
+
+        function showAddStageInPlace() {
+            // Создаём временный объект этапа
+            const newStage = { 
+                questStageId: null,
+                stageTitle: '', 
+                stageDescription: '',
+                stageOrder: currentStages.length + 1,
+                successCondition: ''
+            };
+            currentStages.push(newStage);
+            renderStagesList();
+            // Открываем редактор для нового этапа
+            editStageWithNiceUI(null, currentStages.length - 1);
+        }
+
+        function editStageWithNiceUI(stageId, index) {
+            const stage = currentStages[index];
+            if (!stage) return;
+            
+            tempStageId = stageId;
+            tempStageIndex = index;
+            tempStageOriginalTitle = stage.stageTitle;
+            
+            // Парсим существующие данные
+            let existingData = {};
+            try {
+                if (stage.stageDescription && stage.stageDescription !== '') {
+                    existingData = JSON.parse(stage.stageDescription);
+                }
+            } catch(e) {
+                existingData = {};
+            }
+            
+            // Заполняем глобальные переменные
+            editingStageDataGlobal = {
+                type: existingData.type || 'single_choice',
+                question: existingData.question || '',
+                options: existingData.options && existingData.options.length ? [...existingData.options] : ['', ''],
+                correctAnswer: existingData.correctAnswer !== undefined ? existingData.correctAnswer : 0,
+                correctAnswers: existingData.correctAnswers ? [...existingData.correctAnswers] : [0],
+                points: existingData.points || 10,
+                hint: existingData.hint || '',
+                items: existingData.items && existingData.items.length ? [...existingData.items] : ['', ''],
+                alternatives: existingData.alternatives || []
+            };
+            
+            const item = document.querySelector(`.sortable-item[data-index="${index}"]`);
+            if (!item) return;
+            
+            // Генерируем HTML редактора
+            const editHtml = `
+                <div class="inline-editor quest-editor">
+                    <div class="inline-editor-field">
+                        <label>Название этапа *</label>
+                        <input type="text" class="stage-title-input" value="${escapeHtml(stage.stageTitle)}" placeholder="Например: Выбор технологии">
+                    </div>
+                    <div class="inline-editor-row">
+                        <div class="inline-editor-field">
+                            <label>Тип вопроса</label>
+                            <select class="quest-type-select">
+                                <option value="single_choice" ${editingStageDataGlobal.type === 'single_choice' ? 'selected' : ''}>📝 Одиночный выбор</option>
+                                <option value="multiple_choice" ${editingStageDataGlobal.type === 'multiple_choice' ? 'selected' : ''}>☑️ Множественный выбор</option>
+                                <option value="true_false" ${editingStageDataGlobal.type === 'true_false' ? 'selected' : ''}>✅ Верно/Неверно</option>
+                                <option value="text_input" ${editingStageDataGlobal.type === 'text_input' ? 'selected' : ''}>✏️ Текстовый ввод</option>
+                                <option value="fill_blank" ${editingStageDataGlobal.type === 'fill_blank' ? 'selected' : ''}>📝 Заполнить пропуск</option>
+                                <option value="sequence" ${editingStageDataGlobal.type === 'sequence' ? 'selected' : ''}>🔄 Сортировка</option>
+                            </select>
+                        </div>
+                        <div class="inline-editor-field">
+                            <label>Баллы за этап</label>
+                            <input type="number" class="stage-points-input" value="${editingStageDataGlobal.points}">
+                        </div>
+                    </div>
+                    <div class="inline-editor-field">
+                        <label>Текст вопроса</label>
+                        <textarea class="stage-question-input" rows="2" placeholder="Введите вопрос...">${escapeHtml(editingStageDataGlobal.question)}</textarea>
+                    </div>
+                    <div id="questTypeSpecificEditor">
+                        ${renderQuestTypeEditorByType()}
+                    </div>
+                    <div class="inline-editor-field">
+                        <label>Подсказка (необязательно)</label>
+                        <textarea class="stage-hint-input" rows="2" placeholder="Подсказка для студентов...">${escapeHtml(editingStageDataGlobal.hint)}</textarea>
+                    </div>
+                    <div class="inline-editor-buttons">
+                        <button class="save-stage-inline">✓ Сохранить</button>
+                        <button class="cancel-stage-inline">✗ Отмена</button>
+                    </div>
+                </div>
+            `;
+            
+            const contentDiv = item.querySelector('.sortable-content');
+            const originalContent = contentDiv.innerHTML;
+            contentDiv.innerHTML = editHtml;
+            
+            // Обработчик изменения типа вопроса
+            const typeSelect = contentDiv.querySelector('.quest-type-select');
+            typeSelect?.addEventListener('change', (e) => {
+                editingStageDataGlobal.type = e.target.value;
+                if (editingStageDataGlobal.type === 'single_choice') {
+                    editingStageDataGlobal.options = ['', ''];
+                    editingStageDataGlobal.correctAnswer = 0;
+                } else if (editingStageDataGlobal.type === 'multiple_choice') {
+                    editingStageDataGlobal.options = ['', ''];
+                    editingStageDataGlobal.correctAnswers = [0];
+                } else if (editingStageDataGlobal.type === 'sequence') {
+                    editingStageDataGlobal.items = ['', ''];
+                } else if (editingStageDataGlobal.type === 'true_false') {
+                    editingStageDataGlobal.correctAnswer = true;
+                } else if (editingStageDataGlobal.type === 'text_input' || editingStageDataGlobal.type === 'fill_blank') {
+                    editingStageDataGlobal.correctAnswer = '';
+                }
+                const editorDiv = contentDiv.querySelector('#questTypeSpecificEditor');
+                if (editorDiv) editorDiv.innerHTML = renderQuestTypeEditorByType();
+                attachQuestEditorHandlers(contentDiv);
+            });
+            
+            attachQuestEditorHandlers(contentDiv);
+            
+            contentDiv.querySelector('.save-stage-inline')?.addEventListener('click', async () => {
+                stage.stageTitle = contentDiv.querySelector('.stage-title-input').value;
+                if (!stage.stageTitle) {
+                    showToast('Введите название этапа');
+                    return;
+                }
+                
+                const stageData = buildStageDataFromGlobal();
+                stage.stageDescription = JSON.stringify(stageData);
+                stage.stageOrder = tempStageIndex + 1;
+                await saveStageToServer(stage, tempStageIndex, stage.questStageId);
+                renderStagesList();
+                showToast('Этап сохранён');
+            });
+            
+            contentDiv.querySelector('.cancel-stage-inline')?.addEventListener('click', () => {
+                contentDiv.innerHTML = originalContent;
+            });
+        }
+        
+        function renderQuestTypeEditorByType() {
+            switch(editingStageDataGlobal.type) {
+                case 'single_choice':
+                    return `
+                        <div class="inline-editor-field">
+                            <label>Варианты ответов (один правильный)</label>
+                            <div class="options-editor" id="optionsEditor">
+                                ${editingStageDataGlobal.options.map((opt, idx) => `
+                                    <div class="option-item">
+                                        <input type="text" class="option-text" value="${escapeHtml(opt)}" placeholder="Вариант ${idx + 1}" data-opt-index="${idx}">
+                                        <label class="option-correct">
+                                            <input type="radio" name="correct_option" value="${idx}" ${editingStageDataGlobal.correctAnswer === idx ? 'checked' : ''}> Верно
+                                        </label>
+                                        <button type="button" class="action-btn remove-option" data-opt-index="${idx}">🗑️</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" class="add-option-btn">+ Добавить вариант</button>
+                        </div>
+                    `;
+                    
+                case 'multiple_choice':
+                    return `
+                        <div class="inline-editor-field">
+                            <label>Варианты ответов (можно выбрать несколько)</label>
+                            <div class="options-editor" id="optionsEditor">
+                                ${editingStageDataGlobal.options.map((opt, idx) => `
+                                    <div class="option-item">
+                                        <input type="text" class="option-text" value="${escapeHtml(opt)}" placeholder="Вариант ${idx + 1}" data-opt-index="${idx}">
+                                        <label class="option-correct">
+                                            <input type="checkbox" class="correct-checkbox" value="${idx}" ${editingStageDataGlobal.correctAnswers.includes(idx) ? 'checked' : ''}> Верно
+                                        </label>
+                                        <button type="button" class="action-btn remove-option" data-opt-index="${idx}">🗑️</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" class="add-option-btn">+ Добавить вариант</button>
+                        </div>
+                    `;
+                    
+                case 'true_false':
+                    return `
+                        <div class="inline-editor-field">
+                            <label>Правильный ответ</label>
+                            <select class="true-false-select">
+                                <option value="true" ${editingStageDataGlobal.correctAnswer === true ? 'selected' : ''}>✅ Верно</option>
+                                <option value="false" ${editingStageDataGlobal.correctAnswer === false ? 'selected' : ''}>❌ Неверно</option>
+                            </select>
+                        </div>
+                    `;
+                    
+                case 'text_input':
+                    return `
+                        <div class="inline-editor-field">
+                            <label>Правильный ответ (точное совпадение)</label>
+                            <input type="text" class="correct-answer-input" value="${escapeHtml(editingStageDataGlobal.correctAnswer || '')}" placeholder="Например: 3D-печать">
+                        </div>
+                        <div class="inline-editor-field">
+                            <label>Альтернативные ответы (через запятую)</label>
+                            <input type="text" class="alternatives-input" value="${escapeHtml(editingStageDataGlobal.alternatives.join(', '))}" placeholder="печать, 3D печать">
+                            <small class="form-hint">Будут засчитаны как правильные</small>
+                        </div>
+                    `;
+                    
+                case 'fill_blank':
+                    return `
+                        <div class="inline-editor-field">
+                            <label>Правильный ответ для пропуска</label>
+                            <input type="text" class="correct-answer-input" value="${escapeHtml(editingStageDataGlobal.correctAnswer || '')}" placeholder="Например: FDM">
+                        </div>
+                        <div class="inline-editor-field">
+                            <label>Альтернативные ответы (через запятую)</label>
+                            <input type="text" class="alternatives-input" value="${escapeHtml(editingStageDataGlobal.alternatives.join(', '))}" placeholder="Fused Deposition Modeling, экструзия">
+                        </div>
+                    `;
+                    
+                case 'sequence':
+                    return `
+                        <div class="inline-editor-field">
+                            <label>Элементы для сортировки (правильный порядок)</label>
+                            <div class="sequence-editor" id="sequenceEditor">
+                                ${editingStageDataGlobal.items.map((item, idx) => `
+                                    <div class="sequence-item-editor">
+                                        <input type="text" class="sequence-item-text" value="${escapeHtml(item)}" placeholder="Элемент ${idx + 1}" data-seq-index="${idx}">
+                                        <button type="button" class="action-btn remove-sequence-item" data-seq-index="${idx}">🗑️</button>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <button type="button" class="add-sequence-btn">+ Добавить элемент</button>
+                            <small class="form-hint">Порядок в списке определяет правильную последовательность</small>
+                        </div>
+                    `;
+                    
+                default:
+                    return '<div>Неизвестный тип вопроса</div>';
+            }
+        }
+        
+        function attachQuestEditorHandlers(container) {
+            // Обработчики для single_choice и multiple_choice
+            container.querySelectorAll('.remove-option')?.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.optIndex);
+                    editingStageDataGlobal.options.splice(idx, 1);
+                    if (editingStageDataGlobal.type === 'single_choice') {
+                        if (editingStageDataGlobal.correctAnswer === idx) editingStageDataGlobal.correctAnswer = 0;
+                        else if (editingStageDataGlobal.correctAnswer > idx) editingStageDataGlobal.correctAnswer--;
+                    }
+                    if (editingStageDataGlobal.type === 'multiple_choice') {
+                        editingStageDataGlobal.correctAnswers = editingStageDataGlobal.correctAnswers.filter(i => i !== idx).map(i => i > idx ? i - 1 : i);
+                    }
+                    const editorDiv = container.querySelector('#questTypeSpecificEditor');
+                    if (editorDiv) editorDiv.innerHTML = renderQuestTypeEditorByType();
+                    attachQuestEditorHandlers(container);
+                });
+            });
+            
+            container.querySelector('.add-option-btn')?.addEventListener('click', () => {
+                editingStageDataGlobal.options.push('');
+                if (editingStageDataGlobal.type === 'multiple_choice') {
+                    editingStageDataGlobal.correctAnswers.push(editingStageDataGlobal.options.length - 1);
+                }
+                const editorDiv = container.querySelector('#questTypeSpecificEditor');
+                if (editorDiv) editorDiv.innerHTML = renderQuestTypeEditorByType();
+                attachQuestEditorHandlers(container);
+            });
+            
+            container.querySelectorAll('.option-text')?.forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const idx = parseInt(input.dataset.optIndex);
+                    editingStageDataGlobal.options[idx] = input.value;
+                });
+            });
+            
+            container.querySelectorAll('input[name="correct_option"]')?.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    editingStageDataGlobal.correctAnswer = parseInt(radio.value);
+                });
+            });
+            
+            container.querySelectorAll('.correct-checkbox')?.forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    const val = parseInt(cb.value);
+                    if (cb.checked) {
+                        if (!editingStageDataGlobal.correctAnswers.includes(val)) editingStageDataGlobal.correctAnswers.push(val);
+                    } else {
+                        editingStageDataGlobal.correctAnswers = editingStageDataGlobal.correctAnswers.filter(i => i !== val);
+                    }
+                });
+            });
+            
+            container.querySelector('.true-false-select')?.addEventListener('change', (e) => {
+                editingStageDataGlobal.correctAnswer = e.target.value === 'true';
+            });
+            
+            container.querySelector('.correct-answer-input')?.addEventListener('change', (e) => {
+                editingStageDataGlobal.correctAnswer = e.target.value;
+            });
+            
+            container.querySelector('.alternatives-input')?.addEventListener('change', (e) => {
+                editingStageDataGlobal.alternatives = e.target.value.split(',').map(s => s.trim()).filter(s => s);
+            });
+            
+            container.querySelectorAll('.remove-sequence-item')?.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(btn.dataset.seqIndex);
+                    editingStageDataGlobal.items.splice(idx, 1);
+                    const editorDiv = container.querySelector('#questTypeSpecificEditor');
+                    if (editorDiv) editorDiv.innerHTML = renderQuestTypeEditorByType();
+                    attachQuestEditorHandlers(container);
+                });
+            });
+            
+            container.querySelector('.add-sequence-btn')?.addEventListener('click', () => {
+                editingStageDataGlobal.items.push('');
+                const editorDiv = container.querySelector('#questTypeSpecificEditor');
+                if (editorDiv) editorDiv.innerHTML = renderQuestTypeEditorByType();
+                attachQuestEditorHandlers(container);
+            });
+            
+            container.querySelectorAll('.sequence-item-text')?.forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const idx = parseInt(input.dataset.seqIndex);
+                    editingStageDataGlobal.items[idx] = input.value;
+                });
+            });
+        }
+        
+        function buildStageDataFromGlobal() {
+            const baseData = {
+                type: editingStageDataGlobal.type,
+                points: editingStageDataGlobal.points,
+                question: editingStageDataGlobal.question
+            };
+            
+            if (editingStageDataGlobal.hint) baseData.hint = editingStageDataGlobal.hint;
+            
+            switch(editingStageDataGlobal.type) {
+                case 'single_choice':
+                    return {
+                        ...baseData,
+                        options: editingStageDataGlobal.options.filter(opt => opt.trim()),
+                        correctAnswer: editingStageDataGlobal.correctAnswer
+                    };
+                case 'multiple_choice':
+                    return {
+                        ...baseData,
+                        options: editingStageDataGlobal.options.filter(opt => opt.trim()),
+                        correctAnswers: editingStageDataGlobal.correctAnswers
+                    };
+                case 'true_false':
+                    return {
+                        ...baseData,
+                        correctAnswer: editingStageDataGlobal.correctAnswer
+                    };
+                case 'text_input':
+                case 'fill_blank':
+                    const result = {
+                        ...baseData,
+                        correctAnswer: editingStageDataGlobal.correctAnswer
+                    };
+                    if (editingStageDataGlobal.alternatives.length) {
+                        result.alternatives = editingStageDataGlobal.alternatives;
+                    }
+                    return result;
+                case 'sequence':
+                    const validItems = editingStageDataGlobal.items.filter(item => item.trim());
+                    return {
+                        ...baseData,
+                        items: validItems,
+                        correctOrder: validItems.map((_, idx) => idx)
+                    };
+                default:
+                    return baseData;
+            }
+        }
+
+        let deleteStageId = null;
+        let deleteStageIndex = null;
+
+        function showDeleteStageModal(stageId, index) {
+            deleteStageId = stageId;
+            deleteStageIndex = index;
+            document.getElementById('deleteModal').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        async function deleteStageConfirmed() {
+            if (deleteStageId) {
+                try {
+                    await fetch(`/api/admin/content/quest-stages/${deleteStageId}`, { method: 'DELETE' });
+                    showToast('Этап удалён');
+                } catch (error) { showToast('Ошибка при удалении'); }
+            }
+            if (deleteStageIndex !== null) {
+                currentStages.splice(deleteStageIndex, 1);
+                renderStagesList();
+            }
+            document.getElementById('deleteModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+            deleteStageId = null;
+            deleteStageIndex = null;
+        }
+
+        async function saveStageToServer(stage, index, stageId) {
+            const stageData = {
+                taskId: editingTaskId,
+                stageTitle: stage.stageTitle,
+                stageDescription: stage.stageDescription || '',
+                stageOrder: index + 1,
+                successCondition: stage.successCondition || ''
+            };
+            try {
+                const url = stageId ? `/api/admin/content/quest-stages/${stageId}` : '/api/admin/content/quest-stages';
+                const method = stageId ? 'PUT' : 'POST';
+                const response = await fetch(url, { 
+                    method, 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(stageData) 
+                });
+                const result = await response.json();
+                if (response.ok && result.questStageId && !stageId) {
+                    stage.questStageId = result.questStageId;
+                }
+                if (!response.ok) showToast('Ошибка при сохранении этапа');
+            } catch (error) { 
+                console.error('Ошибка:', error);
+                showToast('Произошла ошибка'); 
+            }
+        }
+
+        async function saveTask() {
+            const data = {
+                lessonId: currentLessonId,
+                typeName: document.getElementById('taskType').value,
+                taskTitle: document.getElementById('taskTitle').value.trim(),
+                taskDescription: document.getElementById('taskDescription').value.trim(),
+                difficultyLevel: parseInt(document.getElementById('taskDifficulty').value),
+                maxScore: parseInt(document.getElementById('taskMaxScore').value),
+                isActive: document.getElementById('taskActive').checked
+            };
+            if (!data.taskTitle) { showToast('Введите название задания'); return; }
+            try {
+                const url = editingTaskId ? `/api/admin/content/tasks/${editingTaskId}` : '/api/admin/content/tasks';
+                const method = editingTaskId ? 'PUT' : 'POST';
+                const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                if (response.ok) {
+                    const result = await response.json();
+                    const newTaskId = result.taskId || editingTaskId;
+                    
+                    if (!editingTaskId && newTaskId) {
+                        editingTaskId = newTaskId;
+                    }
+                    
+                    if (data.typeName === 'Сопоставление') {
+                        await saveMatchingToServer();
+                    }
+                    
+                    showToast(editingTaskId ? 'Задание обновлено' : 'Задание создано');
+                    document.getElementById('taskModal').style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                    loadContent();
+                } else showToast('Ошибка при сохранении');
+            } catch (error) { showToast('Произошла ошибка'); }
+        }
+
+        function initSortable(containerId, onOrderChange) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            let draggedItem = null;
+            
+            const items = container.querySelectorAll('.sortable-item');
+            
+            items.forEach(item => {
+                item.setAttribute('draggable', 'true');
+                
+                item.addEventListener('dragstart', (e) => {
+                    draggedItem = item;
+                    item.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', '');
+                });
+                
+                item.addEventListener('dragend', (e) => {
+                    item.classList.remove('dragging');
+                    draggedItem = null;
+                    if (onOrderChange) onOrderChange();
+                });
+                
+                item.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                
+                item.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    if (draggedItem && draggedItem !== item) {
+                        const rect = item.getBoundingClientRect();
+                        const offset = e.clientY - rect.top;
+                        if (offset < rect.height / 2) {
+                            item.parentNode.insertBefore(draggedItem, item);
+                        } else {
+                            item.parentNode.insertBefore(draggedItem, item.nextSibling);
+                        }
+                    }
+                });
+            });
+        }
+
+        function showDeleteModal(type, id) { 
+            deleteType = type; 
+            deleteId = id; 
+            document.getElementById('deleteModal').style.display = 'flex'; 
+            document.body.classList.add('modal-open'); 
+        }
+        
+        async function deleteItem() {
+            if (!deleteId) return;
+            let url = '';
+            if (deleteType === 'module') url = `/api/admin/content/modules/${deleteId}`;
+            else if (deleteType === 'lesson') url = `/api/admin/content/lessons/${deleteId}`;
+            else if (deleteType === 'task') url = `/api/admin/content/tasks/${deleteId}`;
+            try {
+                const response = await fetch(url, { method: 'DELETE' });
+                if (response.ok) { 
+                    showToast('Элемент удалён'); 
+                    document.getElementById('deleteModal').style.display = 'none'; 
+                    document.body.classList.remove('modal-open'); 
+                    loadContent(); 
+                }
+                else showToast('Ошибка при удалении');
+            } catch (error) { showToast('Произошла ошибка'); }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast-message';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => { if (m === '&') return '&amp;'; if (m === '<') return '&lt;'; if (m === '>') return '&gt;'; return m; });
+        }
+
+        document.getElementById('searchInput')?.addEventListener('input', e => { searchQuery = e.target.value; applyFiltersAndRender(); });
+        document.getElementById('addModuleBtn')?.addEventListener('click', showAddModule);
+        document.getElementById('addQuestionBtn')?.addEventListener('click', showAddQuestionInPlace);
+        document.getElementById('addPairBtn')?.addEventListener('click', showAddPairInPlace);
+        document.getElementById('addStageBtn')?.addEventListener('click', showAddStageInPlace);
+        document.getElementById('taskType')?.addEventListener('change', e => toggleTaskTypeEditor(e.target.value));
+        
+        const profileBtn = document.getElementById('profileBtn'), profileDropdown = document.getElementById('profileDropdown');
+        let dropdownTimeout;
+        if (profileBtn && profileDropdown) {
+            profileBtn.addEventListener('mouseenter', () => { clearTimeout(dropdownTimeout); profileDropdown.classList.add('show'); });
+            profileBtn.addEventListener('mouseleave', () => { dropdownTimeout = setTimeout(() => profileDropdown.classList.remove('show'), 200); });
+            profileDropdown.addEventListener('mouseenter', () => { clearTimeout(dropdownTimeout); profileDropdown.classList.add('show'); });
+            profileDropdown.addEventListener('mouseleave', () => { dropdownTimeout = setTimeout(() => profileDropdown.classList.remove('show'), 200); });
+        }
+        document.getElementById('profileSettingsBtn')?.addEventListener('click', () => window.location.href = '/Admin/Profile');
+        document.getElementById('dashboardBtn')?.addEventListener('click', () => window.location.href = '/Admin/Dashboard');
+        document.getElementById('logoutBtn')?.addEventListener('click', () => { localStorage.removeItem('user'); window.location.href = '/Home/Index'; });
+        
+        function closeModals() {
+            document.getElementById('moduleModal').style.display = 'none';
+            document.getElementById('lessonModal').style.display = 'none';
+            document.getElementById('taskModal').style.display = 'none';
+            document.getElementById('deleteModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+        
+        document.getElementById('closeModuleModalBtn')?.addEventListener('click', closeModals);
+        document.getElementById('cancelModuleBtn')?.addEventListener('click', closeModals);
+        document.getElementById('saveModuleBtn')?.addEventListener('click', saveModule);
+        document.getElementById('closeLessonModalBtn')?.addEventListener('click', closeModals);
+        document.getElementById('cancelLessonBtn')?.addEventListener('click', closeModals);
+        document.getElementById('saveLessonBtn')?.addEventListener('click', saveLesson);
+        document.getElementById('closeTaskModalBtn')?.addEventListener('click', closeModals);
+        document.getElementById('cancelTaskBtn')?.addEventListener('click', closeModals);
+        document.getElementById('saveTaskBtn')?.addEventListener('click', saveTask);
+        document.getElementById('closeDeleteModalBtn')?.addEventListener('click', closeModals);
+        document.getElementById('cancelDeleteBtn')?.addEventListener('click', closeModals);
+        
+        // Обновляем обработчик кнопки подтверждения удаления
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        if (confirmDeleteBtn) {
+            const newConfirmBtn = confirmDeleteBtn.cloneNode(true);
+            confirmDeleteBtn.parentNode.replaceChild(newConfirmBtn, confirmDeleteBtn);
+            newConfirmBtn.addEventListener('click', () => {
+                if (deleteQuestionId !== null && deleteQuestionIndex !== null) {
+                    deleteQuestionConfirmed();
+                } else if (deleteStageId !== null && deleteStageIndex !== null) {
+                    deleteStageConfirmed();
+                } else {
+                    deleteItem();
+                }
+            });
+        }
+        
+        window.addEventListener('click', e => { 
+            if (e.target.classList.contains('modal-overlay')) { 
+                closeModals();
+            } 
+        });
+        
+        currentUser = loadUserData();
+        if (currentUser) {
+            loadContent();
+        }
+        document.getElementById('backToDashboardBtn')?.addEventListener('click', () => {
+            window.location.href = '/Admin/Dashboard';
+        });
+    </script>
+</body>
+</html>
