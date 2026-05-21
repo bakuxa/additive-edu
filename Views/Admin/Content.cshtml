@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/admin-content.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/js/admin-common.js"></script>
 </head>
 <body>
     <div class="page-container">
@@ -372,6 +373,13 @@
                 const method = editingModuleId ? 'PUT' : 'POST';
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (response.ok) {
+                    if (typeof window.addAdminAction === 'function') {
+                        if (editingModuleId) {
+                            window.addAdminAction('✏️', `Отредактирован модуль: ${data.moduleTitle}`);
+                        } else {
+                            window.addAdminAction('📚', `Добавлен модуль: ${data.moduleTitle}`);
+                        }
+                    }
                     showToast(editingModuleId ? 'Модуль обновлён' : 'Модуль создан');
                     document.getElementById('moduleModal').style.display = 'none';
                     document.body.classList.remove('modal-open');
@@ -440,6 +448,15 @@
                 const method = editingLessonId ? 'PUT' : 'POST';
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (response.ok) {
+
+                    if (typeof window.addAdminAction === 'function') {
+                        if (editingLessonId) {
+                            window.addAdminAction('✏️', `Отредактирован урок: ${data.lessonTitle}`);
+                        } else {
+                            window.addAdminAction('📖', `Добавлен урок: ${data.lessonTitle}`);
+                        }
+                    }
+
                     showToast(editingLessonId ? 'Урок обновлён' : 'Урок создан');
                     document.getElementById('lessonModal').style.display = 'none';
                     document.body.classList.remove('modal-open');
@@ -604,6 +621,9 @@
             if (deleteQuestionId) {
                 try {
                     await fetch(`/api/admin/content/questions/${deleteQuestionId}`, { method: 'DELETE' });
+                    if (typeof window.addAdminAction === 'function') {
+                        window.addAdminAction('🗑️', `Удалён вопрос теста: ID ${deleteQuestionId}`);
+                    }
                     showToast('Вопрос удалён');
                 } catch (error) { showToast('Ошибка при удалении'); }
             }
@@ -862,6 +882,13 @@
                 });
                 const result = await response.json();
                 console.log('Save result:', result);
+                
+                if (response.ok) {
+                    if (typeof window.addAdminAction === 'function') {
+                        window.addAdminAction('🔄', `Сохранены пары сопоставления для задания ID ${editingTaskId}`);
+                    }
+                }
+                
                 if (!response.ok) showToast('Ошибка при сохранении пар');
             } catch (error) {
                 console.error('Ошибка:', error);
@@ -1361,6 +1388,9 @@
             if (deleteStageId) {
                 try {
                     await fetch(`/api/admin/content/quest-stages/${deleteStageId}`, { method: 'DELETE' });
+                    if (typeof window.addAdminAction === 'function') {
+                        window.addAdminAction('🗑️', `Удалён этап квеста: ID ${deleteStageId}`);
+                    }
                     showToast('Этап удалён');
                 } catch (error) { showToast('Ошибка при удалении'); }
             }
@@ -1417,6 +1447,15 @@
                 const method = editingTaskId ? 'PUT' : 'POST';
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (response.ok) {
+
+                    if (typeof window.addAdminAction === 'function') {
+                        if (editingTaskId) {
+                            window.addAdminAction('✏️', `Отредактировано задание: ${data.taskTitle}`);
+                        } else {
+                            window.addAdminAction('📝', `Добавлено задание: ${data.taskTitle}`);
+                        }
+                    }
+
                     const result = await response.json();
                     const newTaskId = result.taskId || editingTaskId;
                     
@@ -1488,22 +1527,40 @@
         }
         
         async function deleteItem() {
-            if (!deleteId) return;
-            let url = '';
-            if (deleteType === 'module') url = `/api/admin/content/modules/${deleteId}`;
-            else if (deleteType === 'lesson') url = `/api/admin/content/lessons/${deleteId}`;
-            else if (deleteType === 'task') url = `/api/admin/content/tasks/${deleteId}`;
-            try {
-                const response = await fetch(url, { method: 'DELETE' });
-                if (response.ok) { 
-                    showToast('Элемент удалён'); 
-                    document.getElementById('deleteModal').style.display = 'none'; 
-                    document.body.classList.remove('modal-open'); 
-                    loadContent(); 
-                }
-                else showToast('Ошибка при удалении');
-            } catch (error) { showToast('Произошла ошибка'); }
+        if (!deleteId) return;
+        let url = '';
+        let actionText = '';
+        
+        if (deleteType === 'module') {
+            url = `/api/admin/content/modules/${deleteId}`;
+            actionText = `Удалён модуль: ID ${deleteId}`;
         }
+        else if (deleteType === 'lesson') {
+            url = `/api/admin/content/lessons/${deleteId}`;
+            actionText = `Удалён урок: ID ${deleteId}`;
+        }
+        else if (deleteType === 'task') {
+            url = `/api/admin/content/tasks/${deleteId}`;
+            actionText = `Удалено задание: ID ${deleteId}`;
+        }
+        
+        try {
+            const response = await fetch(url, { method: 'DELETE' });
+            if (response.ok) { 
+                if (typeof window.addAdminAction === 'function') {
+                    window.addAdminAction('🗑️', actionText);
+                }
+                showToast('Элемент удалён'); 
+                document.getElementById('deleteModal').style.display = 'none'; 
+                document.body.classList.remove('modal-open'); 
+                loadContent(); 
+            }
+            else showToast('Ошибка при удалении');
+        } catch (error) { 
+            console.error('Ошибка:', error);
+            showToast('Произошла ошибка'); 
+        }
+    }
 
         function showToast(message) {
             const toast = document.createElement('div');

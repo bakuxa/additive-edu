@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/admin-achievements.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/js/admin-common.js"></script>
 </head>
 <body>
     <div class="page-container">
@@ -330,6 +331,15 @@
                     body: JSON.stringify(data)
                 });
                 if (response.ok) {
+
+                    if (typeof window.addAdminAction === 'function') {
+                        if (editingId) {
+                            window.addAdminAction('✏️', `Отредактировано достижение: ${title}`);
+                        } else {
+                            window.addAdminAction('🏆', `Добавлено достижение: ${title}`);
+                        }
+                    }
+                    
                     showToast(editingId ? 'Достижение обновлено' : 'Достижение добавлено');
                     document.getElementById('achievementModal').style.display = 'none';
                     loadAchievements();
@@ -350,21 +360,37 @@
         }
 
         async function deleteAchievement() {
-            if (!deleteId) return;
-            try {
-                var response = await fetch('/api/admin/achievements/' + deleteId, { method: 'DELETE' });
-                if (response.ok) {
-                    showToast('Достижение удалено');
-                    document.getElementById('deleteModal').style.display = 'none';
-                    loadAchievements();
-                } else {
-                    showToast('Ошибка при удалении');
-                }
-            } catch (error) {
-                console.error('Ошибка:', error);
-                showToast('Произошла ошибка');
+        if (!deleteId) return;
+        
+        // Находим название достижения для логирования
+        var achievement = null;
+        for (var i = 0; i < achievements.length; i++) {
+            if (achievements[i].achievementId === deleteId) {
+                achievement = achievements[i];
+                break;
             }
         }
+        var achievementTitle = achievement ? achievement.achievementTitle : `ID ${deleteId}`;
+        
+        try {
+            var response = await fetch('/api/admin/achievements/' + deleteId, { method: 'DELETE' });
+            if (response.ok) {
+                // Добавляем действие в историю
+                if (typeof window.addAdminAction === 'function') {
+                    window.addAdminAction('🗑️', `Удалено достижение: ${achievementTitle}`);
+                }
+                
+                showToast('Достижение удалено');
+                document.getElementById('deleteModal').style.display = 'none';
+                loadAchievements();
+            } else {
+                showToast('Ошибка при удалении');
+            }
+        } catch (error) {
+            console.error('Ошибка:', error);
+            showToast('Произошла ошибка');
+        }
+    }
 
         function showToast(message) {
             var toast = document.createElement('div');

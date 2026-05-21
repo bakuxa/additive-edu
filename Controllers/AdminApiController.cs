@@ -37,37 +37,103 @@ namespace AdditiveEdu.Controllers
         [HttpGet("recent-activity")]
         public async Task<IActionResult> GetRecentActivity()
         {
-            var recentUsers = await _context.Users
+            var activities = new List<object>();
+
+            // Новые пользователи
+            var newUsers = await _context.Users
                 .OrderByDescending(u => u.RegistrationDate)
-                .Take(5)
+                .Take(10)
                 .Select(u => new
                 {
                     icon = "👤",
-                    text = $"Новый пользователь: {u.LastName} {u.FirstName}",
-                    time = u.RegistrationDate.ToString("dd.MM.yyyy HH:mm")
+                    text = $"Добавлен пользователь: {u.LastName} {u.FirstName}",
+                    time = u.RegistrationDate.ToString("dd.MM.yyyy HH:mm"),
+                    type = "user_add"
                 })
                 .ToListAsync();
+            activities.AddRange(newUsers);
 
-            var recentResults = await _context.TaskResults
+            // Модули
+            var modules = await _context.Modules
+                .OrderByDescending(m => m.ModuleID)
+                .Take(10)
+                .Select(m => new
+                {
+                    icon = "📚",
+                    text = m.IsPublished ? $"Добавлен модуль: {m.ModuleTitle}" : $"Создан черновик модуля: {m.ModuleTitle}",
+                    time = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm"),
+                    type = "module_add"
+                })
+                .ToListAsync();
+            activities.AddRange(modules);
+
+            // Уроки
+            var lessons = await _context.Lessons
+                .OrderByDescending(l => l.LessonID)
+                .Take(10)
+                .Select(l => new
+                {
+                    icon = "📖",
+                    text = $"Добавлен урок: {l.LessonTitle}",
+                    time = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm"),
+                    type = "lesson_add"
+                })
+                .ToListAsync();
+            activities.AddRange(lessons);
+
+            // Задания
+            var tasks = await _context.Tasks
+                .OrderByDescending(t => t.TaskID)
+                .Take(10)
+                .Select(t => new
+                {
+                    icon = "📝",
+                    text = t.IsActive ? $"Добавлено задание: {t.TaskTitle}" : $"Создано неактивное задание: {t.TaskTitle}",
+                    time = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm"),
+                    type = "task_add"
+                })
+                .ToListAsync();
+            activities.AddRange(tasks);
+
+            // Достижения
+            var achievements = await _context.Achievements
+                .OrderByDescending(a => a.AchievementID)
+                .Take(10)
+                .Select(a => new
+                {
+                    icon = "🏆",
+                    text = $"Добавлено достижение: {a.AchievementTitle}",
+                    time = DateTime.UtcNow.ToString("dd.MM.yyyy HH:mm"),
+                    type = "achievement_add"
+                })
+                .ToListAsync();
+            activities.AddRange(achievements);
+
+            // Результаты тестов/квестов (выполненные задания)
+            var taskResults = await _context.TaskResults
+                .Include(tr => tr.User)
                 .OrderByDescending(tr => tr.CompletedAt)
-                .Take(5)
+                .Where(tr => tr.CompletedAt != null)
+                .Take(10)
                 .Select(tr => new
                 {
                     icon = "✅",
-                    text = $"Задание выполнено на {tr.Score} баллов",
-                    time = tr.CompletedAt != null ? tr.CompletedAt.Value.ToString("dd.MM.yyyy HH:mm") : ""
+                    text = $"{tr.User.LastName} {tr.User.FirstName} выполнил задание на {tr.Score} баллов",
+                    time = tr.CompletedAt != null ? tr.CompletedAt.Value.ToString("dd.MM.yyyy HH:mm") : "",
+                    type = "task_complete"
                 })
                 .ToListAsync();
+            activities.AddRange(taskResults);
 
-            var allActivities = recentUsers.Concat(recentResults)
-                .OrderByDescending(a => a.time)
-                .Take(5)
+            // Сортировка по времени и взятие последних 15
+            var sortedActivities = activities
+                .OrderByDescending(a => a.GetType().GetProperty("time")?.GetValue(a, null))
+                .Take(15)
                 .ToList();
 
-            return Ok(allActivities);
+            return Ok(sortedActivities);
         }
 
-        // ДОБАВЬТЕ ЭТОТ МЕТОД
         [HttpGet("analytics")]
         public async Task<IActionResult> GetAnalytics()
         {

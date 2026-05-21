@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/admin-users.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/js/admin-common.js"></script>
 </head>
 <body>
     <div class="page-container">
@@ -339,6 +340,16 @@
                     body: JSON.stringify(userData) 
                 });
                 if (response.ok) {
+                    
+                        if (typeof window.addAdminAction === 'function') {
+                            if (editingUserId) {
+                                window.addAdminAction('✏️', `Отредактирован пользователь: ${lastName} ${firstName}`);
+                            } else {
+                                window.addAdminAction('👤', `Добавлен пользователь: ${lastName} ${firstName}`);
+                            }
+                        } else {
+                            console.error('window.addAdminAction не определена!');
+                        }
                     showToast(editingUserId ? 'Пользователь обновлён' : 'Пользователь добавлен');
                     document.getElementById('userModal').style.display = 'none';
                     loadUsers();
@@ -357,20 +368,31 @@
         }
         
         async function deleteUser() {
-            if (!editingUserId) return;
-            try {
-                const response = await fetch(`/api/admin/adminusersapi/${editingUserId}`, { method: 'DELETE' });
-                if (response.ok) { 
-                    showToast('Пользователь удалён'); 
-                    document.getElementById('deleteModal').style.display = 'none'; 
-                    loadUsers(); 
-                } else { 
-                    showToast('Ошибка при удалении'); 
+        if (!editingUserId) return;
+        
+        // Находим имя пользователя для логирования
+        const deletedUser = allUsers.find(u => u.userId === editingUserId);
+        const userName = deletedUser ? `${deletedUser.lastName} ${deletedUser.firstName}` : `ID ${editingUserId}`;
+        
+        try {
+            const response = await fetch(`/api/admin/adminusersapi/${editingUserId}`, { method: 'DELETE' });
+            if (response.ok) { 
+                
+                if (window.addAdminAction) {
+                    window.addAdminAction('🗑️', `Удалён пользователь: ${userName}`);
                 }
-            } catch (error) { 
-                showToast('Произошла ошибка'); 
+                localStorage.setItem('needRefreshDashboard', 'true');
+                
+                showToast('Пользователь удалён'); 
+                document.getElementById('deleteModal').style.display = 'none'; 
+                loadUsers(); 
+            } else { 
+                showToast('Ошибка при удалении'); 
             }
+        } catch (error) { 
+            showToast('Произошла ошибка'); 
         }
+    }
 
         function showToast(message) {
             const toast = document.createElement('div'); 
