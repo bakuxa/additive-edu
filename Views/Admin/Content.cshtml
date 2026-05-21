@@ -10,7 +10,6 @@
     <link rel="stylesheet" href="/css/admin-content.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="/js/admin-common.js"></script>
 </head>
 <body>
     <div class="page-container">
@@ -373,13 +372,6 @@
                 const method = editingModuleId ? 'PUT' : 'POST';
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (response.ok) {
-                    if (typeof window.addAdminAction === 'function') {
-                        if (editingModuleId) {
-                            window.addAdminAction('✏️', `Отредактирован модуль: ${data.moduleTitle}`);
-                        } else {
-                            window.addAdminAction('📚', `Добавлен модуль: ${data.moduleTitle}`);
-                        }
-                    }
                     showToast(editingModuleId ? 'Модуль обновлён' : 'Модуль создан');
                     document.getElementById('moduleModal').style.display = 'none';
                     document.body.classList.remove('modal-open');
@@ -448,15 +440,6 @@
                 const method = editingLessonId ? 'PUT' : 'POST';
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (response.ok) {
-
-                    if (typeof window.addAdminAction === 'function') {
-                        if (editingLessonId) {
-                            window.addAdminAction('✏️', `Отредактирован урок: ${data.lessonTitle}`);
-                        } else {
-                            window.addAdminAction('📖', `Добавлен урок: ${data.lessonTitle}`);
-                        }
-                    }
-
                     showToast(editingLessonId ? 'Урок обновлён' : 'Урок создан');
                     document.getElementById('lessonModal').style.display = 'none';
                     document.body.classList.remove('modal-open');
@@ -467,112 +450,121 @@
 
         document.getElementById('lessonOrder')?.addEventListener('input', checkLessonOrder);
 
-        async function loadTaskData(taskId) {
-            try {
-                const [questionsRes, matchingRes, stagesRes] = await Promise.all([
-                    fetch(`/api/admin/content/questions/by-task/${taskId}`),
-                    fetch(`/api/admin/content/matching/by-task/${taskId}`),
-                    fetch(`/api/admin/content/quest-stages/by-task/${taskId}`)
-                ]);
-                
-                if (questionsRes.ok) {
-                    currentQuestions = await questionsRes.json();
-                    console.log('Загружено вопросов:', currentQuestions.length);
-                } else {
-                    currentQuestions = [];
-                }
-                
-                if (matchingRes.ok) {
-                    const matchingData = await matchingRes.json();
-                    console.log('Загружено данных сопоставления:', matchingData);
-                    if (matchingData.leftItems && matchingData.leftItems.length) {
-                        currentPairs = matchingData.leftItems.map((left, idx) => ({
-                            leftText: left,
-                            rightText: matchingData.rightItems[idx] || ''
-                        }));
-                    } else {
-                        currentPairs = [];
-                    }
-                    console.log('Преобразовано пар:', currentPairs.length);
-                } else {
-                    currentPairs = [];
-                }
-                
-                if (stagesRes.ok) {
-                    currentStages = await stagesRes.json();
-                    console.log('Загружено этапов квеста:', currentStages.length);
-                } else {
-                    currentStages = [];
-                }
-            } catch (error) { 
-                console.error('Ошибка загрузки данных задания:', error);
-                currentQuestions = [];
-                currentPairs = [];
-                currentStages = [];
-            }
+        // ========== ЗАГРУЗКА ДАННЫХ ЗАДАНИЯ ==========
+async function loadTaskData(taskId) {
+    try {
+        // Загружаем вопросы для теста
+        const questionsRes = await fetch(`/api/admin/content/questions/by-task/${taskId}`);
+        if (questionsRes.ok) {
+            currentQuestions = await questionsRes.json();
+            console.log('Загружено вопросов:', currentQuestions.length);
+        } else {
+            currentQuestions = [];
         }
+        
+        // Загружаем данные сопоставления
+        const matchingRes = await fetch(`/api/admin/content/matching/by-task/${taskId}`);
+        if (matchingRes.ok) {
+            const matchingData = await matchingRes.json();
+            console.log('Загружено данных сопоставления:', matchingData);
+            if (matchingData.leftItems && matchingData.leftItems.length) {
+                currentPairs = matchingData.leftItems.map((left, idx) => ({
+                    leftText: left,
+                    rightText: matchingData.rightItems[idx] || ''
+                }));
+            } else {
+                currentPairs = [];
+            }
+        } else {
+            currentPairs = [];
+        }
+        
+        // Загружаем этапы квеста
+        const stagesRes = await fetch(`/api/admin/content/quest-stages/by-task/${taskId}`);
+        if (stagesRes.ok) {
+            currentStages = await stagesRes.json();
+            console.log('Загружено этапов квеста:', currentStages.length);
+        } else {
+            currentStages = [];
+        }
+    } catch (error) { 
+        console.error('Ошибка загрузки данных задания:', error);
+        currentQuestions = [];
+        currentPairs = [];
+        currentStages = [];
+    }
+}
 
         function showAddTask(lessonId, moduleId) {
-            currentLessonId = lessonId;
-            currentModuleId = moduleId;
-            editingTaskId = null;
-            currentQuestions = [];
-            currentPairs = [];
-            currentStages = [];
-            document.getElementById('taskModalTitle').textContent = 'Создание задания';
-            document.getElementById('taskType').value = 'Тест';
-            document.getElementById('taskTitle').value = '';
-            document.getElementById('taskDescription').value = '';
-            document.getElementById('taskDifficulty').value = '1';
-            document.getElementById('taskMaxScore').value = '100';
-            document.getElementById('taskActive').checked = true;
-            toggleTaskTypeEditor('Тест');
-            document.getElementById('taskModal').style.display = 'flex';
-            document.body.classList.add('modal-open');
-        }
+    currentLessonId = lessonId;
+    currentModuleId = moduleId;
+    editingTaskId = null;
+    currentQuestions = [];
+    currentPairs = [];
+    currentStages = [];
+    
+    document.getElementById('taskModalTitle').textContent = 'Создание задания';
+    document.getElementById('taskType').value = 'Тест';
+    document.getElementById('taskTitle').value = '';
+    document.getElementById('taskDescription').value = '';
+    document.getElementById('taskDifficulty').value = '1';
+    document.getElementById('taskMaxScore').value = '100';
+    document.getElementById('taskActive').checked = true;
+    
+    toggleTaskTypeEditor('Тест');
+    document.getElementById('taskModal').style.display = 'flex';
+    document.body.classList.add('modal-open');
+}
 
-        async function editTask(taskId, lessonId, moduleId) {
-            currentLessonId = lessonId;
-            currentModuleId = moduleId;
-            editingTaskId = taskId;
-            const module = modules.find(m => m.moduleId === moduleId);
-            const lesson = module.lessons.find(l => l.lessonId === lessonId);
-            const task = lesson.tasks.find(t => t.taskId === taskId);
-            if (task) {
-                await loadTaskData(taskId);
-                document.getElementById('taskModalTitle').textContent = 'Редактирование задания';
-                document.getElementById('taskType').value = task.typeName;
-                document.getElementById('taskTitle').value = task.taskTitle;
-                document.getElementById('taskDescription').value = task.taskDescription || '';
-                document.getElementById('taskDifficulty').value = task.difficultyLevel;
-                document.getElementById('taskMaxScore').value = task.maxScore;
-                document.getElementById('taskActive').checked = task.isActive;
-                toggleTaskTypeEditor(task.typeName);
-                document.getElementById('taskModal').style.display = 'flex';
-                document.body.classList.add('modal-open');
-            }
-        }
+async function editTask(taskId, lessonId, moduleId) {
+    currentLessonId = lessonId;
+    currentModuleId = moduleId;
+    editingTaskId = taskId;
+    
+    // Находим задание в загруженных данных
+    const module = modules.find(m => m.moduleId === moduleId);
+    const lesson = module?.lessons.find(l => l.lessonId === lessonId);
+    const task = lesson?.tasks.find(t => t.taskId === taskId);
+    
+    if (task) {
+        // Загружаем связанные данные
+        await loadTaskData(taskId);
+        
+        document.getElementById('taskModalTitle').textContent = 'Редактирование задания';
+        document.getElementById('taskType').value = task.typeName;
+        document.getElementById('taskTitle').value = task.taskTitle;
+        document.getElementById('taskDescription').value = task.taskDescription || '';
+        document.getElementById('taskDifficulty').value = task.difficultyLevel;
+        document.getElementById('taskMaxScore').value = task.maxScore;
+        document.getElementById('taskActive').checked = task.isActive;
+        
+        toggleTaskTypeEditor(task.typeName);
+        document.getElementById('taskModal').style.display = 'flex';
+        document.body.classList.add('modal-open');
+    }
+}
+
 
         function toggleTaskTypeEditor(typeName) {
-            const testEditor = document.getElementById('testEditorBlock');
-            const matchingEditor = document.getElementById('matchingEditorBlock');
-            const questEditor = document.getElementById('questEditorBlock');
-            
-            testEditor.style.display = 'none';
-            matchingEditor.style.display = 'none';
-            questEditor.style.display = 'none';
-            
-            if (typeName === 'Тест') {
-                testEditor.style.display = 'block';
-                renderQuestionsList();
-            } else if (typeName === 'Сопоставление') {
-                matchingEditor.style.display = 'block';
-                renderPairsList();
-            } else if (typeName === 'Квест') {
-                questEditor.style.display = 'block';
-                renderStagesList();
-            }
-        }
+    const testEditor = document.getElementById('testEditorBlock');
+    const matchingEditor = document.getElementById('matchingEditorBlock');
+    const questEditor = document.getElementById('questEditorBlock');
+    
+    testEditor.style.display = 'none';
+    matchingEditor.style.display = 'none';
+    questEditor.style.display = 'none';
+    
+    if (typeName === 'Тест') {
+        testEditor.style.display = 'block';
+        renderQuestionsList();
+    } else if (typeName === 'Сопоставление') {
+        matchingEditor.style.display = 'block';
+        renderPairsList();
+    } else if (typeName === 'Квест') {
+        questEditor.style.display = 'block';
+        renderStagesList();
+    }
+}
 
         function renderQuestionsList() {
             const container = document.getElementById('questionsList');
@@ -621,9 +613,6 @@
             if (deleteQuestionId) {
                 try {
                     await fetch(`/api/admin/content/questions/${deleteQuestionId}`, { method: 'DELETE' });
-                    if (typeof window.addAdminAction === 'function') {
-                        window.addAdminAction('🗑️', `Удалён вопрос теста: ID ${deleteQuestionId}`);
-                    }
                     showToast('Вопрос удалён');
                 } catch (error) { showToast('Ошибка при удалении'); }
             }
@@ -671,104 +660,127 @@
         }
 
         function editQuestionInPlace(questionId, index) {
-            const question = currentQuestions[index];
-            if (!question) return;
-            
-            const item = document.querySelector(`.sortable-item[data-index="${index}"]`);
-            if (!item) return;
-            
-            const answersHtml = (question.answers || []).map((ans, ansIdx) => `
-                <div class="inline-answer">
-                    <input type="text" class="inline-answer-text" value="${escapeHtml(ans.answerText)}" placeholder="Вариант ответа" data-ans-index="${ansIdx}">
-                    <label class="inline-correct"><input type="radio" name="correct_answer_${index}" value="${ansIdx}" ${ans.isCorrect ? 'checked' : ''}> Верно</label>
-                    <button class="action-btn remove-answer" data-ans-index="${ansIdx}">🗑️</button>
-                </div>
-            `).join('');
-            
-            const editHtml = `
-                <div class="inline-editor">
-                    <div class="inline-editor-field">
-                        <label>Текст вопроса</label>
-                        <textarea class="question-text-input" rows="2">${escapeHtml(question.questionText)}</textarea>
-                    </div>
-                    <div class="inline-editor-row">
-                        <div class="inline-editor-field"><label>Уровень</label><select class="question-level"><option value="1" ${question.questionLevel === 1 ? 'selected' : ''}>Легкий</option><option value="2" ${question.questionLevel === 2 ? 'selected' : ''}>Средний</option><option value="3" ${question.questionLevel === 3 ? 'selected' : ''}>Сложный</option></select></div>
-                        <div class="inline-editor-field"><label>Вес (баллы)</label><input type="number" class="question-weight" value="${question.questionWeight}"></div>
-                    </div>
-                    <div class="inline-editor-field"><label>Варианты ответов</label><div class="answers-editor">${answersHtml}</div><button class="inline-add-answer">+ Добавить вариант</button></div>
-                    <div class="inline-editor-buttons"><button class="save-question-inline">✓ Сохранить</button><button class="cancel-question-inline">✗ Отмена</button></div>
-                </div>
-            `;
-            
-            const contentDiv = item.querySelector('.sortable-content');
-            const originalContent = contentDiv.innerHTML;
-            contentDiv.innerHTML = editHtml;
-            
-            const addAnswerBtn = contentDiv.querySelector('.inline-add-answer');
-            
-            const updateAnswersList = () => {
-                const inputs = contentDiv.querySelectorAll('.inline-answer-text');
-                const radios = contentDiv.querySelectorAll('.inline-correct input');
-                const newAnswers = [];
-                inputs.forEach((input, i) => {
-                    newAnswers.push({
-                        answerText: input.value,
-                        isCorrect: radios[i]?.checked || false
-                    });
-                });
-                question.answers = newAnswers;
-            };
-            
-            if (addAnswerBtn) {
-                addAnswerBtn.addEventListener('click', () => {
-                    question.answers.push({ answerText: '', isCorrect: false });
-                    editQuestionInPlace(questionId, index);
-                });
-            }
-            
-            contentDiv.querySelectorAll('.remove-answer').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const ansIdx = parseInt(btn.dataset.ansIndex);
-                    question.answers.splice(ansIdx, 1);
-                    editQuestionInPlace(questionId, index);
-                });
+    const question = currentQuestions[index];
+    if (!question) return;
+    
+    const item = document.querySelector(`.sortable-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    const answersHtml = (question.answers || []).map((ans, ansIdx) => `
+        <div class="inline-answer">
+            <input type="text" class="inline-answer-text" value="${escapeHtml(ans.answerText)}" placeholder="Вариант ответа" data-ans-index="${ansIdx}">
+            <label class="inline-correct"><input type="radio" name="correct_answer_${index}" value="${ansIdx}" ${ans.isCorrect ? 'checked' : ''}> Верно</label>
+            <button type="button" class="action-btn remove-answer" data-ans-index="${ansIdx}">🗑️</button>
+        </div>
+    `).join('');
+    
+    const editHtml = `
+        <div class="inline-editor">
+            <div class="inline-editor-field">
+                <label>Текст вопроса</label>
+                <textarea class="question-text-input" rows="2">${escapeHtml(question.questionText)}</textarea>
+            </div>
+            <div class="inline-editor-row">
+                <div class="inline-editor-field"><label>Уровень</label><select class="question-level"><option value="1" ${question.questionLevel === 1 ? 'selected' : ''}>Легкий</option><option value="2" ${question.questionLevel === 2 ? 'selected' : ''}>Средний</option><option value="3" ${question.questionLevel === 3 ? 'selected' : ''}>Сложный</option></select></div>
+                <div class="inline-editor-field"><label>Вес (баллы)</label><input type="number" class="question-weight" value="${question.questionWeight}"></div>
+            </div>
+            <div class="inline-editor-field"><label>Варианты ответов</label><div class="answers-editor">${answersHtml}</div><button type="button" class="inline-add-answer">+ Добавить вариант</button></div>
+            <div class="inline-editor-buttons"><button type="button" class="save-question-inline">✓ Сохранить</button><button type="button" class="cancel-question-inline">✗ Отмена</button></div>
+        </div>
+    `;
+    
+    const contentDiv = item.querySelector('.sortable-content');
+    const originalContent = contentDiv.innerHTML;
+    contentDiv.innerHTML = editHtml;
+    
+    // Функция для сбора данных из редактора
+    const collectDataFromEditor = () => {
+        question.questionText = contentDiv.querySelector('.question-text-input').value;
+        question.questionLevel = parseInt(contentDiv.querySelector('.question-level').value);
+        question.questionWeight = parseInt(contentDiv.querySelector('.question-weight').value);
+        
+        // Собираем ответы
+        const answerInputs = contentDiv.querySelectorAll('.inline-answer-text');
+        const radioButtons = contentDiv.querySelectorAll('input[type="radio"]');
+        const newAnswers = [];
+        
+        answerInputs.forEach((input, i) => {
+            const isChecked = radioButtons[i]?.checked || false;
+            newAnswers.push({
+                answerText: input.value,
+                isCorrect: isChecked
             });
-            
-            contentDiv.querySelector('.save-question-inline')?.addEventListener('click', async () => {
-                question.questionText = contentDiv.querySelector('.question-text-input').value;
-                question.questionLevel = parseInt(contentDiv.querySelector('.question-level').value);
-                question.questionWeight = parseInt(contentDiv.querySelector('.question-weight').value);
-                updateAnswersList();
-                await saveQuestionToServer(question, index, question.questionId);
-                renderQuestionsList();
-                showToast('Вопрос сохранён');
-            });
-            
-            contentDiv.querySelector('.cancel-question-inline')?.addEventListener('click', () => {
-                contentDiv.innerHTML = originalContent;
-            });
-        }
+        });
+        question.answers = newAnswers;
+    };
+    
+    // Добавление варианта ответа
+    const addAnswerBtn = contentDiv.querySelector('.inline-add-answer');
+    if (addAnswerBtn) {
+        addAnswerBtn.addEventListener('click', () => {
+            question.answers.push({ answerText: '', isCorrect: false });
+            editQuestionInPlace(questionId, index);
+        });
+    }
+    
+    // Удаление варианта ответа
+    contentDiv.querySelectorAll('.remove-answer').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const ansIdx = parseInt(btn.dataset.ansIndex);
+            question.answers.splice(ansIdx, 1);
+            editQuestionInPlace(questionId, index);
+        });
+    });
+    
+    // Сохранение
+    contentDiv.querySelector('.save-question-inline')?.addEventListener('click', async () => {
+        collectDataFromEditor(); // Синхронизируем данные из DOM в переменную question
+        renderQuestionsList(); // Перерисовываем список
+        showToast('Вопрос сохранён локально');
+    });
+    
+    // Отмена
+    contentDiv.querySelector('.cancel-question-inline')?.addEventListener('click', () => {
+        contentDiv.innerHTML = originalContent;
+    });
+}
 
-        async function saveQuestionToServer(question, index, questionId) {
-            const questionData = {
-                taskId: editingTaskId,
-                questionText: question.questionText,
-                questionLevel: question.questionLevel,
-                questionOrder: index + 1,
-                questionWeight: question.questionWeight,
-                answers: question.answers
-            };
-            try {
-                const url = questionId ? `/api/admin/content/questions/${questionId}` : '/api/admin/content/questions';
-                const method = questionId ? 'PUT' : 'POST';
-                const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(questionData) });
-                const result = await response.json();
-                if (response.ok && result.questionId) {
-                    question.questionId = result.questionId;
-                }
-                if (!response.ok) showToast('Ошибка при сохранении вопроса');
-            } catch (error) { showToast('Произошла ошибка'); }
+        async function saveQuestionToServer(question, index, questionId, taskId) {
+    const actualTaskId = taskId || editingTaskId;
+    
+    if (!actualTaskId) {
+        console.error('Нет taskId для сохранения вопроса');
+        return false;
+    }
+    
+    const questionData = {
+        taskId: actualTaskId,
+        questionText: question.questionText,
+        questionLevel: question.questionLevel,
+        questionOrder: index + 1,
+        questionWeight: question.questionWeight,
+        answers: question.answers
+    };
+    
+    try {
+        const url = questionId ? `/api/admin/content/questions/${questionId}` : '/api/admin/content/questions';
+        const method = questionId ? 'PUT' : 'POST';
+        const response = await fetch(url, { 
+            method, 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(questionData) 
+        });
+        const result = await response.json();
+        if (response.ok && result.questionId) {
+            question.questionId = result.questionId;
+            return true;
         }
+        return false;
+    } catch (error) { 
+        console.error('Ошибка сохранения вопроса:', error);
+        return false;
+    }
+}
 
         function renderPairsList() {
             const container = document.getElementById('pairsList');
@@ -826,32 +838,37 @@
         }
 
         function editPairInPlace(index) {
-            const pair = currentPairs[index];
-            if (!pair) return;
-            
-            const item = document.querySelector(`.sortable-item[data-idx="${index}"]`);
-            if (!item) return;
-            
-            const editHtml = `
-                <div class="inline-editor">
-                    <div class="inline-editor-row">
-                        <div class="inline-editor-field"><label>Термин / Левая часть</label><input type="text" class="pair-left-input" value="${escapeHtml(pair.leftText)}" placeholder="Например: FDM"></div>
-                        <div class="inline-editor-field"><label>Определение / Правая часть</label><input type="text" class="pair-right-input" value="${escapeHtml(pair.rightText)}" placeholder="Например: Экструзия пластика"></div>
-                    </div>
-                    <div class="inline-editor-buttons"><button class="save-pair-inline">✓ Сохранить</button><button class="cancel-pair-inline">✗ Отмена</button></div>
-                </div>
-            `;
-            const contentDiv = item.querySelector('.sortable-content');
-            const originalContent = contentDiv.innerHTML;
-            contentDiv.innerHTML = editHtml;
-            
-            contentDiv.querySelector('.save-pair-inline')?.addEventListener('click', () => {
-                pair.leftText = contentDiv.querySelector('.pair-left-input').value;
-                pair.rightText = contentDiv.querySelector('.pair-right-input').value;
-                renderPairsList();
-            });
-            contentDiv.querySelector('.cancel-pair-inline')?.addEventListener('click', () => { contentDiv.innerHTML = originalContent; });
-        }
+    const pair = currentPairs[index];
+    if (!pair) return;
+    
+    const item = document.querySelector(`.sortable-item[data-idx="${index}"]`);
+    if (!item) return;
+    
+    const editHtml = `
+        <div class="inline-editor">
+            <div class="inline-editor-row">
+                <div class="inline-editor-field"><label>Термин / Левая часть</label><input type="text" class="pair-left-input" value="${escapeHtml(pair.leftText)}" placeholder="Например: FDM"></div>
+                <div class="inline-editor-field"><label>Определение / Правая часть</label><input type="text" class="pair-right-input" value="${escapeHtml(pair.rightText)}" placeholder="Например: Экструзия пластика"></div>
+            </div>
+            <div class="inline-editor-buttons"><button type="button" class="save-pair-inline">✓ Сохранить</button><button type="button" class="cancel-pair-inline">✗ Отмена</button></div>
+        </div>
+    `;
+    const contentDiv = item.querySelector('.sortable-content');
+    const originalContent = contentDiv.innerHTML;
+    contentDiv.innerHTML = editHtml;
+    
+    contentDiv.querySelector('.save-pair-inline')?.addEventListener('click', () => {
+        // Обновляем данные в currentPairs
+        pair.leftText = contentDiv.querySelector('.pair-left-input').value;
+        pair.rightText = contentDiv.querySelector('.pair-right-input').value;
+        renderPairsList(); // Перерисовываем
+        showToast('Пара сохранена локально');
+    });
+    
+    contentDiv.querySelector('.cancel-pair-inline')?.addEventListener('click', () => {
+        contentDiv.innerHTML = originalContent;
+    });
+}
 
         async function deletePairInPlace(index) {
             if (!confirm('Удалить эту пару?')) return;
@@ -859,42 +876,55 @@
             renderPairsList();
         }
         
-        async function saveMatchingToServer() {
-            const leftItems = currentPairs.map(p => p.leftText);
-            const rightItems = currentPairs.map(p => p.rightText);
-            const correctMatches = currentPairs.map((p, idx) => ({ left: idx, right: idx }));
-            const maxScore = parseInt(document.getElementById('taskMaxScore').value);
+       async function saveMatchingToServer(taskId) {
+    if (!taskId) {
+        console.error('Нет taskId для сохранения сопоставления');
+        return false;
+    }
+    
+    const leftItems = currentPairs.map(p => p.leftText);
+    const rightItems = currentPairs.map(p => p.rightText);
+    const correctMatches = currentPairs.map((p, idx) => ({ left: idx, right: idx }));
+    const maxScore = parseInt(document.getElementById('taskMaxScore').value);
+    
+    const data = {
+        leftItems: leftItems,
+        rightItems: rightItems,
+        correctMatches: correctMatches,
+        maxScore: maxScore
+    };
+    
+    console.log('Сохранение сопоставления для taskId:', taskId, data);
+    
+    try {
+        // Сначала удаляем старые данные, если они есть
+        await fetch(`/api/admin/content/matching/by-task/${taskId}`, { method: 'DELETE' }).catch(() => {});
+        
+        // Если есть хотя бы одна пара с заполненными полями - сохраняем
+        const hasValidPairs = leftItems.some(l => l && l.trim()) && rightItems.some(r => r && r.trim());
+        
+        if (hasValidPairs && leftItems.length > 0) {
+            const response = await fetch(`/api/admin/content/matching/by-task/${taskId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
             
-            const data = {
-                leftItems: leftItems,
-                rightItems: rightItems,
-                correctMatches: correctMatches,
-                maxScore: maxScore
-            };
-            
-            console.log('Saving matching data:', data);
-            
-            try {
-                const response = await fetch(`/api/admin/content/matching/by-task/${editingTaskId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await response.json();
-                console.log('Save result:', result);
-                
-                if (response.ok) {
-                    if (typeof window.addAdminAction === 'function') {
-                        window.addAdminAction('🔄', `Сохранены пары сопоставления для задания ID ${editingTaskId}`);
-                    }
-                }
-                
-                if (!response.ok) showToast('Ошибка при сохранении пар');
-            } catch (error) {
-                console.error('Ошибка:', error);
-                showToast('Произошла ошибка');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Ошибка сохранения сопоставления:', errorText);
+                showToast('Ошибка при сохранении пар сопоставления');
+                return false;
             }
         }
+        return true;
+    } catch (error) {
+        console.error('Ошибка:', error);
+        showToast('Произошла ошибка при сохранении сопоставления');
+        return false;
+    }
+}
+
 
                 // ========== ФУНКЦИИ ДЛЯ КВЕСТА С ПОНЯТНЫМ UI ==========
         
@@ -1013,129 +1043,169 @@
             editStageWithNiceUI(null, currentStages.length - 1);
         }
 
-        function editStageWithNiceUI(stageId, index) {
-            const stage = currentStages[index];
-            if (!stage) return;
-            
-            tempStageId = stageId;
-            tempStageIndex = index;
-            tempStageOriginalTitle = stage.stageTitle;
-            
-            // Парсим существующие данные
-            let existingData = {};
-            try {
-                if (stage.stageDescription && stage.stageDescription !== '') {
-                    existingData = JSON.parse(stage.stageDescription);
-                }
-            } catch(e) {
-                existingData = {};
-            }
-            
-            // Заполняем глобальные переменные
-            editingStageDataGlobal = {
-                type: existingData.type || 'single_choice',
-                question: existingData.question || '',
-                options: existingData.options && existingData.options.length ? [...existingData.options] : ['', ''],
-                correctAnswer: existingData.correctAnswer !== undefined ? existingData.correctAnswer : 0,
-                correctAnswers: existingData.correctAnswers ? [...existingData.correctAnswers] : [0],
-                points: existingData.points || 10,
-                hint: existingData.hint || '',
-                items: existingData.items && existingData.items.length ? [...existingData.items] : ['', ''],
-                alternatives: existingData.alternatives || []
-            };
-            
-            const item = document.querySelector(`.sortable-item[data-index="${index}"]`);
-            if (!item) return;
-            
-            // Генерируем HTML редактора
-            const editHtml = `
-                <div class="inline-editor quest-editor">
-                    <div class="inline-editor-field">
-                        <label>Название этапа *</label>
-                        <input type="text" class="stage-title-input" value="${escapeHtml(stage.stageTitle)}" placeholder="Например: Выбор технологии">
-                    </div>
-                    <div class="inline-editor-row">
-                        <div class="inline-editor-field">
-                            <label>Тип вопроса</label>
-                            <select class="quest-type-select">
-                                <option value="single_choice" ${editingStageDataGlobal.type === 'single_choice' ? 'selected' : ''}>📝 Одиночный выбор</option>
-                                <option value="multiple_choice" ${editingStageDataGlobal.type === 'multiple_choice' ? 'selected' : ''}>☑️ Множественный выбор</option>
-                                <option value="true_false" ${editingStageDataGlobal.type === 'true_false' ? 'selected' : ''}>✅ Верно/Неверно</option>
-                                <option value="text_input" ${editingStageDataGlobal.type === 'text_input' ? 'selected' : ''}>✏️ Текстовый ввод</option>
-                                <option value="fill_blank" ${editingStageDataGlobal.type === 'fill_blank' ? 'selected' : ''}>📝 Заполнить пропуск</option>
-                                <option value="sequence" ${editingStageDataGlobal.type === 'sequence' ? 'selected' : ''}>🔄 Сортировка</option>
-                            </select>
-                        </div>
-                        <div class="inline-editor-field">
-                            <label>Баллы за этап</label>
-                            <input type="number" class="stage-points-input" value="${editingStageDataGlobal.points}">
-                        </div>
-                    </div>
-                    <div class="inline-editor-field">
-                        <label>Текст вопроса</label>
-                        <textarea class="stage-question-input" rows="2" placeholder="Введите вопрос...">${escapeHtml(editingStageDataGlobal.question)}</textarea>
-                    </div>
-                    <div id="questTypeSpecificEditor">
-                        ${renderQuestTypeEditorByType()}
-                    </div>
-                    <div class="inline-editor-field">
-                        <label>Подсказка (необязательно)</label>
-                        <textarea class="stage-hint-input" rows="2" placeholder="Подсказка для студентов...">${escapeHtml(editingStageDataGlobal.hint)}</textarea>
-                    </div>
-                    <div class="inline-editor-buttons">
-                        <button class="save-stage-inline">✓ Сохранить</button>
-                        <button class="cancel-stage-inline">✗ Отмена</button>
-                    </div>
-                </div>
-            `;
-            
-            const contentDiv = item.querySelector('.sortable-content');
-            const originalContent = contentDiv.innerHTML;
-            contentDiv.innerHTML = editHtml;
-            
-            // Обработчик изменения типа вопроса
-            const typeSelect = contentDiv.querySelector('.quest-type-select');
-            typeSelect?.addEventListener('change', (e) => {
-                editingStageDataGlobal.type = e.target.value;
-                if (editingStageDataGlobal.type === 'single_choice') {
-                    editingStageDataGlobal.options = ['', ''];
-                    editingStageDataGlobal.correctAnswer = 0;
-                } else if (editingStageDataGlobal.type === 'multiple_choice') {
-                    editingStageDataGlobal.options = ['', ''];
-                    editingStageDataGlobal.correctAnswers = [0];
-                } else if (editingStageDataGlobal.type === 'sequence') {
-                    editingStageDataGlobal.items = ['', ''];
-                } else if (editingStageDataGlobal.type === 'true_false') {
-                    editingStageDataGlobal.correctAnswer = true;
-                } else if (editingStageDataGlobal.type === 'text_input' || editingStageDataGlobal.type === 'fill_blank') {
-                    editingStageDataGlobal.correctAnswer = '';
-                }
-                const editorDiv = contentDiv.querySelector('#questTypeSpecificEditor');
-                if (editorDiv) editorDiv.innerHTML = renderQuestTypeEditorByType();
-                attachQuestEditorHandlers(contentDiv);
-            });
-            
-            attachQuestEditorHandlers(contentDiv);
-            
-            contentDiv.querySelector('.save-stage-inline')?.addEventListener('click', async () => {
-                stage.stageTitle = contentDiv.querySelector('.stage-title-input').value;
-                if (!stage.stageTitle) {
-                    showToast('Введите название этапа');
-                    return;
-                }
-                
-                const stageData = buildStageDataFromGlobal();
-                stage.stageDescription = JSON.stringify(stageData);
-                stage.stageOrder = tempStageIndex + 1;
-                await saveStageToServer(stage, tempStageIndex, stage.questStageId);
-                renderStagesList();
-                showToast('Этап сохранён');
-            });
-            
-            contentDiv.querySelector('.cancel-stage-inline')?.addEventListener('click', () => {
-                contentDiv.innerHTML = originalContent;
-            });
+       function editStageWithNiceUI(stageId, index) {
+    const stage = currentStages[index];
+    if (!stage) return;
+    
+    tempStageId = stageId;
+    tempStageIndex = index;
+    tempStageOriginalTitle = stage.stageTitle;
+    
+    // Парсим существующие данные
+    let existingData = {};
+    try {
+        if (stage.stageDescription && stage.stageDescription !== '') {
+            existingData = JSON.parse(stage.stageDescription);
         }
+    } catch(e) {
+        existingData = {};
+    }
+    
+    // Заполняем глобальные переменные
+    editingStageDataGlobal = {
+        type: existingData.type || 'single_choice',
+        question: existingData.question || '',
+        options: existingData.options && existingData.options.length ? [...existingData.options] : ['', ''],
+        correctAnswer: existingData.correctAnswer !== undefined ? existingData.correctAnswer : 0,
+        correctAnswers: existingData.correctAnswers ? [...existingData.correctAnswers] : [0],
+        points: existingData.points || 10,
+        hint: existingData.hint || '',
+        items: existingData.items && existingData.items.length ? [...existingData.items] : ['', ''],
+        alternatives: existingData.alternatives || []
+    };
+    
+    const item = document.querySelector(`.sortable-item[data-index="${index}"]`);
+    if (!item) return;
+    
+    // Функция для сбора данных из редактора в editingStageDataGlobal
+    const collectStageDataFromEditor = (container) => {
+        editingStageDataGlobal.question = container.querySelector('.stage-question-input')?.value || '';
+        editingStageDataGlobal.points = parseInt(container.querySelector('.stage-points-input')?.value) || 10;
+        editingStageDataGlobal.hint = container.querySelector('.stage-hint-input')?.value || '';
+        
+        // Собираем данные в зависимости от типа
+        const type = editingStageDataGlobal.type;
+        if (type === 'single_choice') {
+            const options = [];
+            container.querySelectorAll('.option-text').forEach((input, idx) => {
+                options.push(input.value);
+            });
+            editingStageDataGlobal.options = options;
+            const selectedRadio = container.querySelector('input[name="correct_option"]:checked');
+            if (selectedRadio) {
+                editingStageDataGlobal.correctAnswer = parseInt(selectedRadio.value);
+            }
+        } else if (type === 'multiple_choice') {
+            const options = [];
+            container.querySelectorAll('.option-text').forEach((input, idx) => {
+                options.push(input.value);
+            });
+            editingStageDataGlobal.options = options;
+            const correctAnswers = [];
+            container.querySelectorAll('.correct-checkbox:checked').forEach(cb => {
+                correctAnswers.push(parseInt(cb.value));
+            });
+            editingStageDataGlobal.correctAnswers = correctAnswers;
+        } else if (type === 'true_false') {
+            const tfSelect = container.querySelector('.true-false-select');
+            editingStageDataGlobal.correctAnswer = tfSelect?.value === 'true';
+        } else if (type === 'text_input' || type === 'fill_blank') {
+            editingStageDataGlobal.correctAnswer = container.querySelector('.correct-answer-input')?.value || '';
+            const alternativesInput = container.querySelector('.alternatives-input');
+            if (alternativesInput) {
+                editingStageDataGlobal.alternatives = alternativesInput.value.split(',').map(s => s.trim()).filter(s => s);
+            }
+        } else if (type === 'sequence') {
+            const items = [];
+            container.querySelectorAll('.sequence-item-text').forEach((input, idx) => {
+                items.push(input.value);
+            });
+            editingStageDataGlobal.items = items;
+        }
+    };
+    
+    // Генерируем HTML редактора
+    const editHtml = `
+        <div class="inline-editor quest-editor">
+            <div class="inline-editor-field">
+                <label>Название этапа *</label>
+                <input type="text" class="stage-title-input" value="${escapeHtml(stage.stageTitle)}" placeholder="Например: Выбор технологии">
+            </div>
+            <div class="inline-editor-row">
+                <div class="inline-editor-field">
+                    <label>Тип вопроса</label>
+                    <select class="quest-type-select">
+                        <option value="single_choice" ${editingStageDataGlobal.type === 'single_choice' ? 'selected' : ''}>📝 Одиночный выбор</option>
+                        <option value="multiple_choice" ${editingStageDataGlobal.type === 'multiple_choice' ? 'selected' : ''}>☑️ Множественный выбор</option>
+                        <option value="true_false" ${editingStageDataGlobal.type === 'true_false' ? 'selected' : ''}>✅ Верно/Неверно</option>
+                        <option value="text_input" ${editingStageDataGlobal.type === 'text_input' ? 'selected' : ''}>✏️ Текстовый ввод</option>
+                        <option value="fill_blank" ${editingStageDataGlobal.type === 'fill_blank' ? 'selected' : ''}>📝 Заполнить пропуск</option>
+                        <option value="sequence" ${editingStageDataGlobal.type === 'sequence' ? 'selected' : ''}>🔄 Сортировка</option>
+                    </select>
+                </div>
+                <div class="inline-editor-field">
+                    <label>Баллы за этап</label>
+                    <input type="number" class="stage-points-input" value="${editingStageDataGlobal.points}">
+                </div>
+            </div>
+            <div class="inline-editor-field">
+                <label>Текст вопроса</label>
+                <textarea class="stage-question-input" rows="2" placeholder="Введите вопрос...">${escapeHtml(editingStageDataGlobal.question)}</textarea>
+            </div>
+            <div id="questTypeSpecificEditor">
+                ${renderQuestTypeEditorByType()}
+            </div>
+            <div class="inline-editor-field">
+                <label>Подсказка (необязательно)</label>
+                <textarea class="stage-hint-input" rows="2" placeholder="Подсказка для студентов...">${escapeHtml(editingStageDataGlobal.hint)}</textarea>
+            </div>
+            <div class="inline-editor-buttons">
+                <button type="button" class="save-stage-inline">✓ Сохранить</button>
+                <button type="button" class="cancel-stage-inline">✗ Отмена</button>
+            </div>
+        </div>
+    `;
+    
+    const contentDiv = item.querySelector('.sortable-content');
+    const originalContent = contentDiv.innerHTML;
+    contentDiv.innerHTML = editHtml;
+    
+    // Обработчик изменения типа вопроса
+    const typeSelect = contentDiv.querySelector('.quest-type-select');
+    if (typeSelect) {
+        typeSelect.addEventListener('change', (e) => {
+            editingStageDataGlobal.type = e.target.value;
+            const editorDiv = contentDiv.querySelector('#questTypeSpecificEditor');
+            if (editorDiv) {
+                editorDiv.innerHTML = renderQuestTypeEditorByType();
+                attachQuestEditorHandlers(contentDiv);
+            }
+        });
+    }
+    
+    attachQuestEditorHandlers(contentDiv);
+    
+    // Сохранение
+    contentDiv.querySelector('.save-stage-inline')?.addEventListener('click', () => {
+        // Собираем данные из редактора
+        collectStageDataFromEditor(contentDiv);
+        
+        // Обновляем stage
+        stage.stageTitle = contentDiv.querySelector('.stage-title-input').value;
+        
+        // Сохраняем JSON в stageDescription
+        const stageData = buildStageDataFromGlobal();
+        stage.stageDescription = JSON.stringify(stageData);
+        stage.stageOrder = tempStageIndex + 1;
+        
+        renderStagesList(); // Перерисовываем
+        showToast('Этап сохранён локально');
+    });
+    
+    contentDiv.querySelector('.cancel-stage-inline')?.addEventListener('click', () => {
+        contentDiv.innerHTML = originalContent;
+    });
+}
         
         function renderQuestTypeEditorByType() {
             switch(editingStageDataGlobal.type) {
@@ -1388,9 +1458,6 @@
             if (deleteStageId) {
                 try {
                     await fetch(`/api/admin/content/quest-stages/${deleteStageId}`, { method: 'DELETE' });
-                    if (typeof window.addAdminAction === 'function') {
-                        window.addAdminAction('🗑️', `Удалён этап квеста: ID ${deleteStageId}`);
-                    }
                     showToast('Этап удалён');
                 } catch (error) { showToast('Ошибка при удалении'); }
             }
@@ -1404,77 +1471,122 @@
             deleteStageIndex = null;
         }
 
-        async function saveStageToServer(stage, index, stageId) {
-            const stageData = {
-                taskId: editingTaskId,
-                stageTitle: stage.stageTitle,
-                stageDescription: stage.stageDescription || '',
-                stageOrder: index + 1,
-                successCondition: stage.successCondition || ''
-            };
-            try {
-                const url = stageId ? `/api/admin/content/quest-stages/${stageId}` : '/api/admin/content/quest-stages';
-                const method = stageId ? 'PUT' : 'POST';
-                const response = await fetch(url, { 
-                    method, 
-                    headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(stageData) 
-                });
-                const result = await response.json();
-                if (response.ok && result.questStageId && !stageId) {
-                    stage.questStageId = result.questStageId;
+        async function saveStageToServer(stage, index, stageId, taskId) {
+    const actualTaskId = taskId || editingTaskId;
+    
+    if (!actualTaskId) {
+        console.error('Нет taskId для сохранения этапа');
+        return false;
+    }
+    
+    const stageData = {
+        taskId: actualTaskId,
+        stageTitle: stage.stageTitle,
+        stageDescription: stage.stageDescription || '',
+        stageOrder: index + 1,
+        successCondition: stage.successCondition || ''
+    };
+    
+    console.log('Сохранение этапа для taskId:', actualTaskId, stageData);
+    
+    try {
+        const url = stageId ? `/api/admin/content/quest-stages/${stageId}` : '/api/admin/content/quest-stages';
+        const method = stageId ? 'PUT' : 'POST';
+        const response = await fetch(url, { 
+            method, 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(stageData) 
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Ошибка сохранения этапа:', errorText);
+            showToast('Ошибка при сохранении этапа');
+            return false;
+        }
+        
+        const result = await response.json();
+        if (result.questStageId && !stageId) {
+            stage.questStageId = result.questStageId;
+        }
+        return true;
+    } catch (error) { 
+        console.error('Ошибка:', error);
+        showToast('Произошла ошибка при сохранении этапа'); 
+        return false;
+    }
+}
+
+async function saveTask() {
+    const data = {
+        lessonId: currentLessonId,
+        typeName: document.getElementById('taskType').value,
+        taskTitle: document.getElementById('taskTitle').value.trim(),
+        taskDescription: document.getElementById('taskDescription').value.trim(),
+        difficultyLevel: parseInt(document.getElementById('taskDifficulty').value),
+        maxScore: parseInt(document.getElementById('taskMaxScore').value),
+        isActive: document.getElementById('taskActive').checked
+    };
+    
+    if (!data.taskTitle) { 
+        showToast('Введите название задания'); 
+        return; 
+    }
+    
+    try {
+        const url = editingTaskId ? `/api/admin/content/tasks/${editingTaskId}` : '/api/admin/content/tasks';
+        const method = editingTaskId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, { 
+            method, 
+            headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify(data) 
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            const currentTaskId = result.taskId || editingTaskId;
+            
+            const taskType = data.typeName;
+            
+            if (taskType === 'Тест') {
+                // Сохраняем все вопросы
+                for (let i = 0; i < currentQuestions.length; i++) {
+                    const question = currentQuestions[i];
+                    if (question.questionText && question.questionText.trim()) {
+                        await saveQuestionToServer(question, i, question.questionId, currentTaskId);
+                    }
                 }
-                if (!response.ok) showToast('Ошибка при сохранении этапа');
-            } catch (error) { 
-                console.error('Ошибка:', error);
-                showToast('Произошла ошибка'); 
+                showToast('Задание и вопросы сохранены');
+            } 
+            else if (taskType === 'Сопоставление') {
+                await saveMatchingToServer(currentTaskId);
+                showToast('Задание и пары сопоставления сохранены');
             }
+            else if (taskType === 'Квест') {
+                // Сохраняем все этапы квеста
+                for (let i = 0; i < currentStages.length; i++) {
+                    const stage = currentStages[i];
+                    if (stage.stageTitle && stage.stageTitle.trim()) {
+                        await saveStageToServer(stage, i, stage.questStageId, currentTaskId);
+                    }
+                }
+                showToast('Задание и этапы квеста сохранены');
+            }
+            
+            document.getElementById('taskModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+            loadContent();
+        } else {
+            const errorText = await response.text();
+            console.error('Ошибка сохранения задания:', errorText);
+            showToast('Ошибка при сохранении задания');
         }
-
-        async function saveTask() {
-            const data = {
-                lessonId: currentLessonId,
-                typeName: document.getElementById('taskType').value,
-                taskTitle: document.getElementById('taskTitle').value.trim(),
-                taskDescription: document.getElementById('taskDescription').value.trim(),
-                difficultyLevel: parseInt(document.getElementById('taskDifficulty').value),
-                maxScore: parseInt(document.getElementById('taskMaxScore').value),
-                isActive: document.getElementById('taskActive').checked
-            };
-            if (!data.taskTitle) { showToast('Введите название задания'); return; }
-            try {
-                const url = editingTaskId ? `/api/admin/content/tasks/${editingTaskId}` : '/api/admin/content/tasks';
-                const method = editingTaskId ? 'PUT' : 'POST';
-                const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                if (response.ok) {
-
-                    if (typeof window.addAdminAction === 'function') {
-                        if (editingTaskId) {
-                            window.addAdminAction('✏️', `Отредактировано задание: ${data.taskTitle}`);
-                        } else {
-                            window.addAdminAction('📝', `Добавлено задание: ${data.taskTitle}`);
-                        }
-                    }
-
-                    const result = await response.json();
-                    const newTaskId = result.taskId || editingTaskId;
-                    
-                    if (!editingTaskId && newTaskId) {
-                        editingTaskId = newTaskId;
-                    }
-                    
-                    if (data.typeName === 'Сопоставление') {
-                        await saveMatchingToServer();
-                    }
-                    
-                    showToast(editingTaskId ? 'Задание обновлено' : 'Задание создано');
-                    document.getElementById('taskModal').style.display = 'none';
-                    document.body.classList.remove('modal-open');
-                    loadContent();
-                } else showToast('Ошибка при сохранении');
-            } catch (error) { showToast('Произошла ошибка'); }
-        }
-
+    } catch (error) { 
+        console.error('Ошибка:', error);
+        showToast('Произошла ошибка'); 
+    }
+}
         function initSortable(containerId, onOrderChange) {
             const container = document.getElementById(containerId);
             if (!container) return;
@@ -1527,40 +1639,22 @@
         }
         
         async function deleteItem() {
-        if (!deleteId) return;
-        let url = '';
-        let actionText = '';
-        
-        if (deleteType === 'module') {
-            url = `/api/admin/content/modules/${deleteId}`;
-            actionText = `Удалён модуль: ID ${deleteId}`;
-        }
-        else if (deleteType === 'lesson') {
-            url = `/api/admin/content/lessons/${deleteId}`;
-            actionText = `Удалён урок: ID ${deleteId}`;
-        }
-        else if (deleteType === 'task') {
-            url = `/api/admin/content/tasks/${deleteId}`;
-            actionText = `Удалено задание: ID ${deleteId}`;
-        }
-        
-        try {
-            const response = await fetch(url, { method: 'DELETE' });
-            if (response.ok) { 
-                if (typeof window.addAdminAction === 'function') {
-                    window.addAdminAction('🗑️', actionText);
+            if (!deleteId) return;
+            let url = '';
+            if (deleteType === 'module') url = `/api/admin/content/modules/${deleteId}`;
+            else if (deleteType === 'lesson') url = `/api/admin/content/lessons/${deleteId}`;
+            else if (deleteType === 'task') url = `/api/admin/content/tasks/${deleteId}`;
+            try {
+                const response = await fetch(url, { method: 'DELETE' });
+                if (response.ok) { 
+                    showToast('Элемент удалён'); 
+                    document.getElementById('deleteModal').style.display = 'none'; 
+                    document.body.classList.remove('modal-open'); 
+                    loadContent(); 
                 }
-                showToast('Элемент удалён'); 
-                document.getElementById('deleteModal').style.display = 'none'; 
-                document.body.classList.remove('modal-open'); 
-                loadContent(); 
-            }
-            else showToast('Ошибка при удалении');
-        } catch (error) { 
-            console.error('Ошибка:', error);
-            showToast('Произошла ошибка'); 
+                else showToast('Ошибка при удалении');
+            } catch (error) { showToast('Произошла ошибка'); }
         }
-    }
 
         function showToast(message) {
             const toast = document.createElement('div');

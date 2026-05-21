@@ -681,7 +681,7 @@ namespace AdditiveEdu.Controllers
             }
         }
 
-        // ========== ЭТАПЫ КВЕСТА ==========
+               // ========== ЭТАПЫ КВЕСТА ==========
         [HttpGet("quest-stages/by-task/{taskId}")]
         public async Task<IActionResult> GetQuestStagesByTask(int taskId)
         {
@@ -741,6 +741,8 @@ namespace AdditiveEdu.Controllers
         {
             try
             {
+                Console.WriteLine($"Создание этапа квеста: TaskId={dto.TaskId}, Title={dto.StageTitle}");
+                
                 var stage = new QuestStage
                 {
                     TaskID = dto.TaskId,
@@ -751,10 +753,13 @@ namespace AdditiveEdu.Controllers
                 };
                 _context.QuestStages.Add(stage);
                 await _context.SaveChangesAsync();
+                
+                Console.WriteLine($"Этап создан с ID: {stage.QuestStageID}");
                 return Ok(new { success = true, questStageId = stage.QuestStageID });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Ошибка создания этапа: {ex.Message}");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
@@ -764,6 +769,8 @@ namespace AdditiveEdu.Controllers
         {
             try
             {
+                Console.WriteLine($"Обновление этапа квеста: ID={id}, TaskId={dto.TaskId}, Title={dto.StageTitle}");
+                
                 var stage = await _context.QuestStages.FindAsync(id);
                 if (stage == null) return NotFound(new { message = "Этап не найден" });
 
@@ -773,10 +780,12 @@ namespace AdditiveEdu.Controllers
                 stage.StageOrder = dto.StageOrder;
                 stage.SuccessCondition = dto.SuccessCondition ?? "";
                 await _context.SaveChangesAsync();
+                
                 return Ok(new { success = true });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Ошибка обновления этапа: {ex.Message}");
                 return StatusCode(500, new { error = ex.Message });
             }
         }
@@ -994,8 +1003,17 @@ namespace AdditiveEdu.Controllers
         public bool IsCorrect { get; set; }
     }
 
-    public class CreateQuestStageDto
+        public class CreateQuestStageDto
     {
+        public int TaskId { get; set; }
+        public string StageTitle { get; set; } = "";
+        public string StageDescription { get; set; } = "";
+        public int StageOrder { get; set; }
+        public string SuccessCondition { get; set; } = "";
+    }
+        public class QuestStageResponseDto
+    {
+        public int QuestStageId { get; set; }
         public int TaskId { get; set; }
         public string StageTitle { get; set; } = "";
         public string StageDescription { get; set; } = "";
