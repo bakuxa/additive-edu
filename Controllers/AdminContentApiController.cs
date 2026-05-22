@@ -955,6 +955,20 @@ namespace AdditiveEdu.Controllers
                 return StatusCode(500, new { success = false, error = ex.Message });
             }
         }
+        [HttpDelete("matching/by-task/{taskId}")]
+public async Task<IActionResult> DeleteMatchingData(int taskId)
+{
+    var question = await _context.Questions
+        .FirstOrDefaultAsync(q => q.TaskID == taskId);
+    
+    if (question != null)
+    {
+        _context.Questions.Remove(question);
+        await _context.SaveChangesAsync();
+    }
+    
+    return Ok(new { success = true });
+}
     }
 
     // DTO классы

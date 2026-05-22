@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/css/admin-content.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="/js/admin-common.js"></script>
 </head>
 <body>
     <div class="page-container">
@@ -372,6 +373,10 @@
                 const method = editingModuleId ? 'PUT' : 'POST';
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (response.ok) {
+                    const actionText = editingModuleId ? `Изменён модуль "${data.moduleTitle}"` : `Создан модуль "${data.moduleTitle}"`;
+                    if (typeof window.addAdminAction === 'function') {
+                        window.addAdminAction('📚', actionText);
+                    }
                     showToast(editingModuleId ? 'Модуль обновлён' : 'Модуль создан');
                     document.getElementById('moduleModal').style.display = 'none';
                     document.body.classList.remove('modal-open');
@@ -440,6 +445,10 @@
                 const method = editingLessonId ? 'PUT' : 'POST';
                 const response = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 if (response.ok) {
+                    const actionText = editingLessonId ? `Изменён урок "${data.lessonTitle}"` : `Создан урок "${data.lessonTitle}"`;
+                    if (typeof window.addAdminAction === 'function') {
+                        window.addAdminAction('📖', actionText);
+                    }
                     showToast(editingLessonId ? 'Урок обновлён' : 'Урок создан');
                     document.getElementById('lessonModal').style.display = 'none';
                     document.body.classList.remove('modal-open');
@@ -450,32 +459,64 @@
 
         document.getElementById('lessonOrder')?.addEventListener('input', checkLessonOrder);
 
-        // ========== ЗАГРУЗКА ДАННЫХ ЗАДАНИЯ ==========
-async function loadTaskData(taskId) {
+        async function loadTaskData(taskId) {
     try {
-        // Загружаем вопросы для теста
+        // Загружаем вопросы для теста (это также содержит данные сопоставления)
         const questionsRes = await fetch(`/api/admin/content/questions/by-task/${taskId}`);
         if (questionsRes.ok) {
-            currentQuestions = await questionsRes.json();
-            console.log('Загружено вопросов:', currentQuestions.length);
-        } else {
-            currentQuestions = [];
-        }
-        
-        // Загружаем данные сопоставления
-        const matchingRes = await fetch(`/api/admin/content/matching/by-task/${taskId}`);
-        if (matchingRes.ok) {
-            const matchingData = await matchingRes.json();
-            console.log('Загружено данных сопоставления:', matchingData);
-            if (matchingData.leftItems && matchingData.leftItems.length) {
-                currentPairs = matchingData.leftItems.map((left, idx) => ({
+            const allQuestions = await questionsRes.json();
+            console.log('Загружено вопросов (сырые):', allQuestions);
+            
+            // Разделяем: обычные вопросы для теста vs данные сопоставления
+            const testQuestions = [];
+            let matchingDataFound = null;
+            
+            for (const q of allQuestions) {
+                // Проверяем, является ли вопрос данными для сопоставления
+                if (q.questionText && q.questionText.trim().startsWith('{') && 
+                    (q.questionText.includes('"leftItems"') || q.questionText.includes('"rightItems"'))) {
+                    try {
+                        const parsed = JSON.parse(q.questionText);
+                        if (parsed.leftItems && parsed.rightItems) {
+                            matchingDataFound = parsed;
+                            console.log('Найдены данные сопоставления:', matchingDataFound);
+                            continue; // Не добавляем в обычные вопросы
+                        }
+                    } catch(e) {
+                        console.error('Ошибка парсинга questionText как matching:', e);
+                    }
+                }
+                testQuestions.push(q);
+            }
+            
+            currentQuestions = testQuestions;
+            
+            // Если нашли данные сопоставления - загружаем их в currentPairs
+            if (matchingDataFound && matchingDataFound.leftItems && matchingDataFound.rightItems) {
+                currentPairs = matchingDataFound.leftItems.map((left, idx) => ({
                     leftText: left,
-                    rightText: matchingData.rightItems[idx] || ''
+                    rightText: matchingDataFound.rightItems[idx] || ''
                 }));
+                console.log('Загружено пар сопоставления из questionText:', currentPairs);
             } else {
-                currentPairs = [];
+                // Пробуем загрузить через отдельный API (на всякий случай)
+                const matchingRes = await fetch(`/api/admin/content/matching/by-task/${taskId}`);
+                if (matchingRes.ok) {
+                    const matchingData = await matchingRes.json();
+                    if (matchingData.leftItems && matchingData.leftItems.length) {
+                        currentPairs = matchingData.leftItems.map((left, idx) => ({
+                            leftText: left,
+                            rightText: matchingData.rightItems[idx] || ''
+                        }));
+                    } else {
+                        currentPairs = [];
+                    }
+                } else {
+                    currentPairs = [];
+                }
             }
         } else {
+            currentQuestions = [];
             currentPairs = [];
         }
         
@@ -494,7 +535,6 @@ async function loadTaskData(taskId) {
         currentStages = [];
     }
 }
-
         function showAddTask(lessonId, moduleId) {
     currentLessonId = lessonId;
     currentModuleId = moduleId;
@@ -521,7 +561,6 @@ async function editTask(taskId, lessonId, moduleId) {
     currentModuleId = moduleId;
     editingTaskId = taskId;
     
-    // Находим задание в загруженных данных
     const module = modules.find(m => m.moduleId === moduleId);
     const lesson = module?.lessons.find(l => l.lessonId === lessonId);
     const task = lesson?.tasks.find(t => t.taskId === taskId);
@@ -529,6 +568,10 @@ async function editTask(taskId, lessonId, moduleId) {
     if (task) {
         // Загружаем связанные данные
         await loadTaskData(taskId);
+        
+        console.log('После загрузки - currentPairs:', currentPairs);
+        console.log('После загрузки - currentStages:', currentStages);
+        console.log('После загрузки - currentQuestions:', currentQuestions);
         
         document.getElementById('taskModalTitle').textContent = 'Редактирование задания';
         document.getElementById('taskType').value = task.typeName;
@@ -544,8 +587,7 @@ async function editTask(taskId, lessonId, moduleId) {
     }
 }
 
-
-        function toggleTaskTypeEditor(typeName) {
+       function toggleTaskTypeEditor(typeName) {
     const testEditor = document.getElementById('testEditorBlock');
     const matchingEditor = document.getElementById('matchingEditorBlock');
     const questEditor = document.getElementById('questEditorBlock');
@@ -556,13 +598,15 @@ async function editTask(taskId, lessonId, moduleId) {
     
     if (typeName === 'Тест') {
         testEditor.style.display = 'block';
-        renderQuestionsList();
+        renderQuestionsList(); // Перерисовываем вопросы
     } else if (typeName === 'Сопоставление') {
         matchingEditor.style.display = 'block';
-        renderPairsList();
+        console.log('Текущие пары для отображения:', currentPairs);
+        renderPairsList(); // Перерисовываем пары
     } else if (typeName === 'Квест') {
         questEditor.style.display = 'block';
-        renderStagesList();
+        console.log('Текущие этапы для отображения:', currentStages);
+        renderStagesList(); // Перерисовываем этапы
     }
 }
 
@@ -783,36 +827,38 @@ async function editTask(taskId, lessonId, moduleId) {
 }
 
         function renderPairsList() {
-            const container = document.getElementById('pairsList');
-            if (!currentPairs.length) {
-                container.innerHTML = '<div class="empty-editor">🔄 Нет пар. Добавьте первую пару!</div>';
-                return;
-            }
-            
-            container.innerHTML = currentPairs.map((pair, idx) => `
-                <div class="sortable-item" data-idx="${idx}">
-                    <div class="sortable-handle" draggable="true">⋮⋮</div>
-                    <div class="sortable-content pair-content">
-                        <div class="pair-left">${escapeHtml(pair.leftText)}</div>
-                        <div class="pair-arrow">→</div>
-                        <div class="pair-right">${escapeHtml(pair.rightText)}</div>
-                    </div>
-                    <div class="sortable-actions">
-                        <button class="action-btn edit-pair" data-idx="${idx}" title="Редактировать пару">✏️</button>
-                        <button class="action-btn delete-pair" data-idx="${idx}" title="Удалить пару">🗑️</button>
-                    </div>
-                </div>
-            `).join('');
-            
-            initSortable('pairsList', updatePairsOrder);
-            
-            document.querySelectorAll('.edit-pair').forEach(btn => btn.addEventListener('click', () => editPairInPlace(parseInt(btn.dataset.idx))));
-            document.querySelectorAll('.delete-pair').forEach(btn => btn.addEventListener('click', () => {
-                if (confirm('Вы уверены, что хотите удалить эту пару? Это действие нельзя отменить.')) {
-                    deletePairInPlace(parseInt(btn.dataset.idx));
-                }
-            }));
+    const container = document.getElementById('pairsList');
+    if (!currentPairs.length) {
+        container.innerHTML = '<div class="empty-editor">🔄 Нет пар. Добавьте первую пару!</div>';
+        return;
+    }
+    
+    console.log('Рендеринг пар:', currentPairs);
+    
+    container.innerHTML = currentPairs.map((pair, idx) => `
+        <div class="sortable-item" data-idx="${idx}">
+            <div class="sortable-handle" draggable="true">⋮⋮</div>
+            <div class="sortable-content pair-content">
+                <div class="pair-left">${escapeHtml(pair.leftText)}</div>
+                <div class="pair-arrow">→</div>
+                <div class="pair-right">${escapeHtml(pair.rightText)}</div>
+            </div>
+            <div class="sortable-actions">
+                <button class="action-btn edit-pair" data-idx="${idx}" title="Редактировать пару">✏️</button>
+                <button class="action-btn delete-pair" data-idx="${idx}" title="Удалить пару">🗑️</button>
+            </div>
+        </div>
+    `).join('');
+    
+    initSortable('pairsList', updatePairsOrder);
+    
+    document.querySelectorAll('.edit-pair').forEach(btn => btn.addEventListener('click', () => editPairInPlace(parseInt(btn.dataset.idx))));
+    document.querySelectorAll('.delete-pair').forEach(btn => btn.addEventListener('click', () => {
+        if (confirm('Вы уверены, что хотите удалить эту пару? Это действие нельзя отменить.')) {
+            deletePairInPlace(parseInt(btn.dataset.idx));
         }
+    }));
+}
 
         function updatePairsOrder() {
             const items = document.querySelectorAll('#pairsList .sortable-item');
@@ -882,9 +928,14 @@ async function editTask(taskId, lessonId, moduleId) {
         return false;
     }
     
-    const leftItems = currentPairs.map(p => p.leftText);
-    const rightItems = currentPairs.map(p => p.rightText);
-    const correctMatches = currentPairs.map((p, idx) => ({ left: idx, right: idx }));
+    // Убираем пустые пары
+    const validPairs = currentPairs.filter(p => 
+        p.leftText && p.leftText.trim() && p.rightText && p.rightText.trim()
+    );
+    
+    const leftItems = validPairs.map(p => p.leftText.trim());
+    const rightItems = validPairs.map(p => p.rightText.trim());
+    const correctMatches = validPairs.map((p, idx) => ({ left: idx, right: idx }));
     const maxScore = parseInt(document.getElementById('taskMaxScore').value);
     
     const data = {
@@ -897,25 +948,17 @@ async function editTask(taskId, lessonId, moduleId) {
     console.log('Сохранение сопоставления для taskId:', taskId, data);
     
     try {
-        // Сначала удаляем старые данные, если они есть
-        await fetch(`/api/admin/content/matching/by-task/${taskId}`, { method: 'DELETE' }).catch(() => {});
+        const response = await fetch(`/api/admin/content/matching/by-task/${taskId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
         
-        // Если есть хотя бы одна пара с заполненными полями - сохраняем
-        const hasValidPairs = leftItems.some(l => l && l.trim()) && rightItems.some(r => r && r.trim());
-        
-        if (hasValidPairs && leftItems.length > 0) {
-            const response = await fetch(`/api/admin/content/matching/by-task/${taskId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('Ошибка сохранения сопоставления:', errorText);
-                showToast('Ошибка при сохранении пар сопоставления');
-                return false;
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Ошибка сохранения сопоставления:', errorText);
+            showToast('Ошибка при сохранении пар сопоставления');
+            return false;
         }
         return true;
     } catch (error) {
@@ -924,7 +967,6 @@ async function editTask(taskId, lessonId, moduleId) {
         return false;
     }
 }
-
 
                 // ========== ФУНКЦИИ ДЛЯ КВЕСТА С ПОНЯТНЫМ UI ==========
         
@@ -1546,34 +1588,36 @@ async function saveTask() {
         if (response.ok) {
             const result = await response.json();
             const currentTaskId = result.taskId || editingTaskId;
-            
             const taskType = data.typeName;
             
+            const actionText = editingTaskId ? `изменено задание "${data.taskTitle}" (${taskType})` : `создано задание "${data.taskTitle}" (${taskType})`;
+            
             if (taskType === 'Тест') {
-                // Сохраняем все вопросы
                 for (let i = 0; i < currentQuestions.length; i++) {
                     const question = currentQuestions[i];
                     if (question.questionText && question.questionText.trim()) {
                         await saveQuestionToServer(question, i, question.questionId, currentTaskId);
                     }
                 }
-                showToast('Задание и вопросы сохранены');
             } 
             else if (taskType === 'Сопоставление') {
                 await saveMatchingToServer(currentTaskId);
-                showToast('Задание и пары сопоставления сохранены');
             }
             else if (taskType === 'Квест') {
-                // Сохраняем все этапы квеста
                 for (let i = 0; i < currentStages.length; i++) {
                     const stage = currentStages[i];
                     if (stage.stageTitle && stage.stageTitle.trim()) {
                         await saveStageToServer(stage, i, stage.questStageId, currentTaskId);
                     }
                 }
-                showToast('Задание и этапы квеста сохранены');
             }
             
+            if (typeof window.addAdminAction === 'function') {
+                const icon = taskType === 'Тест' ? '📝' : (taskType === 'Сопоставление' ? '🔄' : '🗺️');
+                window.addAdminAction(icon, actionText);
+            }
+            
+            showToast('Задание сохранено');
             document.getElementById('taskModal').style.display = 'none';
             document.body.classList.remove('modal-open');
             loadContent();
@@ -1641,12 +1685,50 @@ async function saveTask() {
         async function deleteItem() {
             if (!deleteId) return;
             let url = '';
-            if (deleteType === 'module') url = `/api/admin/content/modules/${deleteId}`;
-            else if (deleteType === 'lesson') url = `/api/admin/content/lessons/${deleteId}`;
-            else if (deleteType === 'task') url = `/api/admin/content/tasks/${deleteId}`;
+            let actionText = '';
+            let icon = '';
+            
+            if (deleteType === 'module') {
+                url = `/api/admin/content/modules/${deleteId}`;
+                const module = modules.find(m => m.moduleId === deleteId);
+                actionText = `Удалён модуль "${module?.moduleTitle || '#' + deleteId}"`;
+                icon = '📚';
+            }
+            else if (deleteType === 'lesson') {
+                url = `/api/admin/content/lessons/${deleteId}`;
+                let lessonTitle = '';
+                for (const m of modules) {
+                    const lesson = m.lessons?.find(l => l.lessonId === deleteId);
+                    if (lesson) {
+                        lessonTitle = lesson.lessonTitle;
+                        break;
+                    }
+                }
+                actionText = `Удалён урок "${lessonTitle || '#' + deleteId}"`;
+                icon = '📖';
+            }
+            else if (deleteType === 'task') {
+                url = `/api/admin/content/tasks/${deleteId}`;
+                let taskTitle = '';
+                for (const m of modules) {
+                    for (const l of (m.lessons || [])) {
+                        const task = l.tasks?.find(t => t.taskId === deleteId);
+                        if (task) {
+                            taskTitle = task.taskTitle;
+                            break;
+                        }
+                    }
+                }
+                actionText = `Удалено задание "${taskTitle || '#' + deleteId}"`;
+                icon = '📝';
+            }
+            
             try {
                 const response = await fetch(url, { method: 'DELETE' });
                 if (response.ok) { 
+                    if (typeof window.addAdminAction === 'function') {
+                        window.addAdminAction(icon, actionText);
+                    }
                     showToast('Элемент удалён'); 
                     document.getElementById('deleteModal').style.display = 'none'; 
                     document.body.classList.remove('modal-open'); 
